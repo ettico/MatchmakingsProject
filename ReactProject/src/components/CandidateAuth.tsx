@@ -14,6 +14,9 @@ const CandidateAuth = () => {
                 <Button variant="contained" color="secondary" onClick={() => navigate("signup/candidate")}>
                     הרשמה
                 </Button>
+                <Button variant="contained" color="secondary" onClick={() => navigate("Post-Details-Auth")}>
+                    למילוי פרטים אישיים
+                </Button>
             </Box>
             <Outlet></Outlet>
         </Container>

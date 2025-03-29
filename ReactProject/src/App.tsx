@@ -8,6 +8,7 @@ import SignIn from "./components/register";
 import GetMales from "./components/getCandidate";
 import GetCandidates1 from "./components/get-candidate";
 import Details from "./components/DetailsAuth";
+import PostDetailsAuth from "./components/PostDetailsAuth";
 
 
 const routes = createBrowserRouter([
@@ -21,6 +22,8 @@ const routes = createBrowserRouter([
     children: [
       { path: "login/:userType", element: <Login /> },
       { path: "signup/:userType", element: <SignIn /> },
+      { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
+
     ],
   },
   {

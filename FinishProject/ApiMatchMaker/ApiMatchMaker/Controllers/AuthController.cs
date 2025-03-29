@@ -37,13 +37,14 @@ namespace ApiMatchMaker.Controllers
             var user = await _authService.RegisterUser(registerDto);
             return Ok(new { Message = "נרשמת בהצלחה!", User = user });
         }
-        [HttpGet]
-        public async Task<ActionResult> Get()
-        {
-            var list = await _authService.GetListOfMaleAsync();
-            var maleDTO = _mapper.Map<IEnumerable<MaleDTO>>(list);
-            return Ok(maleDTO);
-        }
+        //[HttpGet]
+        //public async Task<ActionResult> Get()
+        //{
+        //    var list = await _authService.GetListOfMaleAsync();
+        //    var maleDTO = _mapper.Map<IEnumerable<MaleDTO>>(list);
+        //    return Ok(maleDTO);
+        //}
+     
 
     }
 }
