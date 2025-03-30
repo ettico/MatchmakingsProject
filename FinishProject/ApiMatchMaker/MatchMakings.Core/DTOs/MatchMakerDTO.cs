@@ -28,13 +28,15 @@ namespace MatchMakings.Core.DTOs
         public string? LandlinePhone { get; set; } // טלפון נייח (אופציונלי)
         public string? PhoneType { get; set; } // סוג טלפון (כשר, מוגן או לא כשר)
 
+       
+
         public string? PersonalClub { get; set; } // חוג אישי
         public string? Community { get; set; } // קהילה
         public string? Occupation { get; set; } // עיסוק - יש לציין שם ומיקום
         public string? PreviousWorkplaces { get; set; } // מקומות עבודה בעבר - יש לציין שם ומיקום
         public bool? IsSeminarGraduate { get; set; } // בוגרת סמינר
         public bool? HasChildrenInShidduchim { get; set; } // האם יש ילדים בשידוכים או לא
-
+     
         public string? ExperienceInShidduchim { get; set; } // נסיון בתחום השידוכים - חובה למלא ברצינות
         public string? LifeSkills { get; set; } // כישורי חיים
         public int? YearsInShidduchim { get; set; } // כמה זמן עוסק בשידוכים

@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-// import { UserContext } from './userContext';
+import { userContext } from './UserContext';
 import { TextField, Button, Container, Typography } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -13,7 +13,7 @@ const schema = yup.object().shape({
 });
 
 const Login = () => {
-    // const  {setMyUser }= useContext(UserContext);
+    const  {setMyUser }= useContext(userContext);
     const navigate = useNavigate();
     const [errorMsg, setErrorMsg] = useState('');
 
@@ -25,7 +25,8 @@ const Login = () => {
         try {
             const res = await axios.post("https://localhost:7012/api/Auth/login", data);
             console.log("Login successful");
-            // setMyUser(res.data);
+            setMyUser(res.data);
+            
             navigate('/home');
         } catch (error: any) {
             console.error("Error:", error);
@@ -65,10 +66,10 @@ const Login = () => {
             {errorMsg && (
                 <div>
                     <Typography color="error">{errorMsg}</Typography>
-                    <Link to="/signin">לרישום לחצו כאן</Link>
+                    <Link to="signup/:userType">לרישום לחצו כאן</Link>
                 </div>
             )}
-            {!errorMsg&&<Link to="/signin">אין לכם חשבון אצלינו? הכנסו עכשיו</Link>}
+            {!errorMsg&&<Link to="signup/:userType">אין לכם חשבון אצלינו? הכנסו עכשיו</Link>}
         </Container>
     );
 };

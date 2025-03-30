@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form';
 import { TextField, Button, Container, Typography, Box, CircularProgress, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import axios from 'axios';
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { userContext } from './UserContext';
 
 type FormValues = {
     firstName: string;
@@ -13,6 +14,9 @@ type FormValues = {
 };
 
 export default function SignIn() {
+    const  { setMyUser }= useContext(userContext);
+     //const { user, setMyUser } = useContext(userContext);
+
     const { userType } = useParams(); // קבלת ה-role מה-params
     const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormValues>();
     const navigate = useNavigate();

@@ -47,19 +47,68 @@ namespace ApiProject.Controllers
 
         //POST api/<CustomerController>
         [HttpPost]
-        public async Task<ActionResult<MatchMaker>> Post([FromBody] MatchMaker m)
+        public async Task<ActionResult<MatchMaker>> Post([FromBody] MatchMakerDTO m)
         {
+            var mm = new MatchMaker()
+            {
+                MatchmakerName =m.MatchmakerName,
+                IdNumber =m.IdNumber,
+                BirthDate =m.BirthDate,
+                Email =m.Email,
+                Gender =m.Gender,
+                City =m.City,
+                Address =m.Address,
+                MobilePhone =m.MobilePhone,
+                LandlinePhone =m.LandlinePhone,
+                PhoneType =m.PhoneType,
+                PersonalClub =m.PersonalClub,
+                Community =m.Community,
+                Occupation =m.Occupation,
+                PreviousWorkplaces =m. PreviousWorkplaces,
+                IsSeminarGraduate =m.IsSeminarGraduate,
+                HasChildrenInShidduchim = m.HasChildrenInShidduchim,
+                ExperienceInShidduchim =m.ExperienceInShidduchim,
+                LifeSkills = m.LifeSkills,
+                YearsInShidduchim = m.YearsInShidduchim,
+                IsInternalMatchmaker = m.IsInternalMatchmaker,
+                PrintingNotes = m.PrintingNotes,
+            };
+
             //var customer = new Contact { castName = c.castName, castAddress = c.castAddress, castPhone = c.castPhone, castEmail = c.castEmail, VolunteerId = c.VolunteerId };
-            return await _matchMakerService.AddMatchMakerAsync(m);
+            return await _matchMakerService.AddMatchMakerAsync(mm);
         }
 
         //PUT api/<CustomerController>/5
         [HttpPut("{id}")]
-        public async Task<ActionResult<MatchMaker>> Put(int id, [FromBody] MatchMaker m)
+        public async Task<ActionResult<MatchMaker>> Put(int id, [FromBody] MatchMakerDTO m)
         {
             //var customer = new Customer { castName = c.castName, castAddress = c.castAddress, castPhone = c.castPhone, castEmail = c.castEmail, VolunteerId = c.VolunteerId };
+            var mm = new MatchMaker()
+            {
+                MatchmakerName = m.MatchmakerName,
+                IdNumber = m.IdNumber,
+                BirthDate = m.BirthDate,
+                Email = m.Email,
+                Gender = m.Gender,
+                City = m.City,
+                Address = m.Address,
+                MobilePhone = m.MobilePhone,
+                LandlinePhone = m.LandlinePhone,
+                PhoneType = m.PhoneType,
+                PersonalClub = m.PersonalClub,
+                Community = m.Community,
+                Occupation = m.Occupation,
+                PreviousWorkplaces = m.PreviousWorkplaces,
+                IsSeminarGraduate = m.IsSeminarGraduate,
+                HasChildrenInShidduchim = m.HasChildrenInShidduchim,
+                ExperienceInShidduchim = m.ExperienceInShidduchim,
+                LifeSkills = m.LifeSkills,
+                YearsInShidduchim = m.YearsInShidduchim,
+                IsInternalMatchmaker = m.IsInternalMatchmaker,
+                PrintingNotes = m.PrintingNotes,
+            };
 
-            return await _matchMakerService.UpdateMatchMakerAsync(id, m);
+            return await _matchMakerService.UpdateMatchMakerAsync(id, mm);
         }
 
         // DELETE api/<CustomerController>/5

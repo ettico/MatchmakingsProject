@@ -1,0 +1,122 @@
+.happy {
+    background-image: url('../תמונות/התאמה-מעודכן.png');
+    height: 250px;
+    width: 550px;
+    background-size: cover;
+    background-position: center;
+    margin: 0;
+ position: relative;
+border: 30px solid white;
+border-radius: 30px;
+    /* overflow: hidden; */
+    /* background-color: rgba(83, 80, 80, 0.79); */
+}
+.giff {
+    background-image: url('../תמונות/arrowAnimation.gif');
+    display: flex;
+    /* background-color: rgba(255, 0, 0, 0.5); צבע רקע אדום עם שקיפות */
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    width: 50px;
+    z-index: 9999;
+    position: absolute;
+    top: 50%; /* מיקום במרכז הדיב */
+    left: 50%; /* מיקום במרכז הדיב */
+    transform: translate(-50%, -50%); /* ממרכז את הדיב */
+}.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+    position: relative;
+    background-color: rgb(179, 230, 243);
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.marquee-content {
+    display: inline-block;
+    animation: marquee 45s linear infinite;
+    animation-play-state: running; /* ברירת מחדל */
+}
+
+.marquee-container:hover .marquee-content {
+    animation-play-state: paused; /* עצירת האנימציה כאשר העכבר מעל */
+}
+
+.marquee-item {
+    background-image: url('../תמונות/תמונת מאורסים.png');
+    height: 180px;
+    width: 350px;
+    background-size: cover;
+    background-position: center;
+    margin: 0 10px;
+    border-radius: 5px;
+    display: inline-block;
+    /* background-color: #00152b; */
+}
+
+
+@keyframes marquee {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.counters-container{
+    height: 200px;
+    width: 100%;
+    display: flex;
+    background-color: white;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 50px;
+}
+.fff{
+
+/* flex-direction: column-reverse; */
+font-weight: bold;
+
+}
+.text{
+display: flex;
+justify-content: space-around;
+/* align-items: center; */
+margin-top: -70px;
+width: 100%;
+}
+#icon1{
+    background-image: url('https://hashadchan.co.il/meetingIcon.svg');
+    height: 100px;
+    width: 100px;
+    margin-left: -140px;
+    padding-top: -80px;
+}
+#icon2{
+    background-image: url('https://hashadchan.co.il/candidatesIcon.svg');
+    height: 70px;
+    width: 70px;
+    margin-right: -150px;
+}
+#icon3{
+    background-image: url('  https://hashadchan.co.il/matchIcon.svg');
+    height: 100px;
+    width: 100px;
+    z-index: 9999;
+    position: absolute;
+    
+}
+.icons{
+    position: relative;
+display: flex;
+z-index: 999;
+justify-content: space-around;
+/* align-items: center; */
+margin-bottom: -90px;
+width: 100%;
+padding-top: 10px;
+
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     Button,
     TextField,
@@ -14,6 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import axios from 'axios';
+import userContext from './UserContext';
 
 // הגדרת הסכמות
 const commonSchema = yup.object().shape({
@@ -46,8 +47,8 @@ const commonSchema = yup.object().shape({
 });
 
 const maleSchema = commonSchema.concat(yup.object().shape({
-    driversLicense: yup.boolean().required('שדה חובה'),
-    smoker: yup.boolean().required('שדה חובה'),
+    driversLicense: yup.boolean(),
+    smoker: yup.boolean(),
     beard: yup.string(),
     hot: yup.string(),
     suit: yup.string(),
@@ -77,6 +78,8 @@ const femaleSchema = commonSchema.concat(yup.object().shape({
 }));
 
 const Form = () => {
+    // const { user, setMyUser } = useContext(userContext);
+
     const [gender, setGender] = useState('male');
     const schema = gender === 'male' ? maleSchema : femaleSchema;
 

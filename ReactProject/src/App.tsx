@@ -9,6 +9,7 @@ import GetMales from "./components/getCandidate";
 import GetCandidates1 from "./components/get-candidate";
 import Details from "./components/DetailsAuth";
 import PostDetailsAuth from "./components/PostDetailsAuth";
+import MatchMakerForm from "./components/PostDetailsMM";
 
 
 const routes = createBrowserRouter([
@@ -32,10 +33,10 @@ const routes = createBrowserRouter([
     children: [
       { path: "login/:userType", element: <Login /> },
       { path: "signup/:userType", element: <SignIn /> },
-      { path: "allMales", element: <GetCandidates1 /> ,
-        
-      },
+      { path: "allMales", element: <GetCandidates1 /> ,},
       { path: "allMales/details/:role/:id", element: <Details /> },
+      { path: "post-details-matchmaker", element: <MatchMakerForm /> ,},
+       
     ],
   },
   {

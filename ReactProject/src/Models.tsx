@@ -124,3 +124,33 @@ export type Contact = {
     womenId: number,
     matchMakerId: number
 }
+
+export type MatchMaker = {
+    id: number,
+  firstName: string,
+  lastName: string,
+  username: string,
+  password: string,
+  role: string,
+  matchmakerName: string,
+  idNumber: string,
+  birthDate: string,
+  email: string,
+  gender: string,
+  city: string,
+  address: string,
+  mobilePhone: string,
+  landlinePhone: string,
+  phoneType: string,
+  personalClub: string,
+  community: string,
+  occupation: string,
+  previousWorkplaces: string,
+  isSeminarGraduate: boolean,
+  hasChildrenInShidduchim: boolean,
+  experienceInShidduchim: string,
+  lifeSkills: string,
+  yearsInShidduchim: number,
+  isInternalMatchmaker: boolean,
+  printingNotes: string
+}
