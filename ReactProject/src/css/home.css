@@ -10,6 +10,7 @@ border: 30px solid white;
 border-radius: 30px;
     /* overflow: hidden; */
     /* background-color: rgba(83, 80, 80, 0.79); */
+
 }
 .giff {
     background-image: url('../תמונות/arrowAnimation.gif');
@@ -119,4 +120,17 @@ margin-bottom: -90px;
 width: 100%;
 padding-top: 10px;
 
+}
+.bsoraTova{
+    color: rgb(255, 217, 0);
+    font-family: Guttman Frank;
+    font-size: 50px;
+    font-weight: bold;
+}
+#logoSite{
+    background-image: url('../תמונות/לוגו-1.png');
+    height:100px ;
+    margin-right: 10px;
+    width: 100px;
+    
 }

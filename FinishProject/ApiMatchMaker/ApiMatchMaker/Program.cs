@@ -55,7 +55,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddDbContext<DataContext>();
 
-
+builder.Services.AddHttpClient<MatchService>();
 
 
 

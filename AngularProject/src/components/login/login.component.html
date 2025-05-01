@@ -1,0 +1,31 @@
+
+<form [formGroup]="registerForm" (ngSubmit)="onLogin()" class="centered-form" >
+    <h1>כניסה</h1>
+    <div formGroupName="user">
+      <mat-form-field appearance="fill">
+        <mat-label>מייל</mat-label>
+        <input matInput formControlName="email" type="email" required>
+        @if(registerForm.get('user.email')){
+         <mat-error>
+          Email Is Required
+         </mat-error>
+        }
+      </mat-form-field>
+  <br>
+      <mat-form-field class="input">
+        <mat-label>סיסמא</mat-label>
+        <input matInput [type]="show?'password':'text'" formControlName="password">
+        <mat-icon matSuffix (click)="showpassword()">   {{ show ? 'visibility_off' : 'visibility' }}</mat-icon  >
+        @if(registerForm.get('user.password')?.invalid&&registerForm.get('user.password')?.touched){
+          <mat-error>
+           Password Is Required
+          </mat-error>
+         }
+      </mat-form-field>
+    </div>
+    <button mat-raised-button type="submit" [disabled]="registerForm.invalid">Login</button>
+     <h1>{{login?'🎉✨התחברת בהצלחה למערכת':''}}</h1>
+   
+  </form>
+  
+  

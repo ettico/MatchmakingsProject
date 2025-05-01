@@ -26,8 +26,9 @@ const Login = () => {
             const res = await axios.post("https://localhost:7012/api/Auth/login", data);
             console.log("Login successful");
             setMyUser(res.data);
+            console.log("data---"+res.data);
             
-            navigate('/home');
+            navigate('/candidate-auth');
         } catch (error: any) {
             console.error("Error:", error);
             setErrorMsg('Login failed, please register if you do not have an account.');

@@ -61,7 +61,7 @@ namespace MatchMakings.Core.DTOs
         public int AgeFrom { get; set; } // מגיל
         public int AgeTo { get; set; } // עד גיל
         public string ImportantTraitsInMe { get; set; } // תכונות חשובות בי
-        public string ImportantTraitsIAmLookingFor { get; set; } // תכונות חשובות שאני מחפש
+        public string ImportantTraitsIMLookingFor { get; set; } // תכונות חשובות שאני מחפש
         public string PreferredSeminarStyle { get; set; } // סגנון הסמינרים המועדף
         public string PreferredProfessionalPath { get; set; } // מסלול מקצועי מועדף
         public string HeadCovering { get; set; } // כיסוי ראש

@@ -27,39 +27,40 @@ const Home = () => {
         >
             {/* Header */}
             <AppBar position="fixed" sx={{ backgroundColor: "#00152b", width: "100%", boxShadow: "none", borderBottom: "1.5px solid white" }}>
-                <Toolbar>
-                    <Box sx={{ flexGrow: 1 }} />
-                    <Button
-                        color="inherit"
-                        onClick={() => navigate("/candidate-auth")}
-                        sx={{
-                            '&:hover': { backgroundColor: '#FFFFFF', color: '#000000' }, // מעבר עכבר
-                            transition: "background-color 0.3s, color 0.3s",
-                        }}
-                    >
-                        כניסה כמועמד
-                    </Button>
-                    <Button
-                        color="inherit"
-                        onClick={() => navigate("/matchmaker-auth")}
-                        sx={{
-                            '&:hover': { backgroundColor: '#FFFFFF', color: '#000000' }, // מעבר עכבר
-                            transition: "background-color 0.3s, color 0.3s",
-                        }}
-                    >
-                        כניסה כשדכנית
-                    </Button>
-                    <Button
-                        color="inherit"
-                        onClick={() => navigate("/allMales")}
-                        sx={{
-                            '&:hover': { backgroundColor: '#FFFFFF', color: '#000000' }, // מעבר עכבר
-                            transition: "background-color 0.3s, color 0.3s",
-                        }}
-                    >
-                        לכל המועמדים
-                    </Button>
-                </Toolbar>
+            <Toolbar>
+    {/* לוגו בצד שמאל */}
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+        {/* <div id="logoSite"></div> */}
+        <img
+              src="../תמונות/לוגו-1.png" 
+             alt="לוגו בשורה טובה" 
+              style={{ height: "50px", marginRight: "10px" }} 
+         /> 
+    </Box>
+
+    <Box sx={{ flexGrow: 1 }} />
+
+    <Button
+        color="inherit"
+        onClick={() => navigate("/candidate-auth")}
+        sx={{
+            '&:hover': { backgroundColor: '#FFFFFF', color: '#000000' },
+            transition: "background-color 0.3s, color 0.3s",
+        }}
+    >
+        כניסה כמועמד
+    </Button>
+    <Button
+        color="inherit"
+        onClick={() => navigate("/matchmaker-auth")}
+        sx={{
+            '&:hover': { backgroundColor: '#FFFFFF', color: '#000000' },
+            transition: "background-color 0.3s, color 0.3s",
+        }}
+    >
+        כניסה כשדכנית
+    </Button>
+</Toolbar>
             </AppBar>
 
             {/* טקסט מחפשים שידוך */}
@@ -68,8 +69,8 @@ const Home = () => {
                     ?מחפשים שידוך
                 </Typography>
                 <Typography variant="h4" sx={{ color: "#00BFFF", fontWeight: "bold", marginBottom: "20px" }}> {/* צבע תכלת מודגש */}
-                    אנחנו כאן <br />
-                    !!! כדי לעזור לכם למצוא
+                     אנחנו כאן כדי לבשר לכם  <br />
+                  <div className="bsoraTova">"בשורה טובה"</div> 
                 </Typography>
             </Box>
             <div className="happy">

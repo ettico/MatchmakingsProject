@@ -36,13 +36,13 @@ console.log(userType);
         try {
             const response = await axios.post('https://localhost:7012/api/Auth/register', data);
             console.log('Response:', response.data);
-
+            setMyUser(response.data)
             setTimeout(() => {
                 setLoading(false);
                 setSuccessMessage("הנתונים נשמרו בהצלחה✔️");
 
                 setTimeout(() => {
-                    navigate('/home');
+                    navigate('/candidate-auth');
                 }, 2000);
             }, 3000);
         } catch (error) {

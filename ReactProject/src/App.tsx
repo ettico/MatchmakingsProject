@@ -10,6 +10,7 @@ import GetCandidates1 from "./components/get-candidate";
 import Details from "./components/DetailsAuth";
 import PostDetailsAuth from "./components/PostDetailsAuth";
 import MatchMakerForm from "./components/PostDetailsMM";
+import RegistrationForm from "./components/xxx";
 
 
 const routes = createBrowserRouter([
@@ -24,6 +25,7 @@ const routes = createBrowserRouter([
       { path: "login/:userType", element: <Login /> },
       { path: "signup/:userType", element: <SignIn /> },
       { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
+
 
     ],
   },
