@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect,
+  //  useContext
+   } from "react"
 import {
   TextField,
   Button,
@@ -20,7 +22,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  useTheme,
+  // useTheme,
   Stepper,
   Step,
   StepLabel,
@@ -35,7 +37,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import axios from "axios"
 import { motion } from "framer-motion"
-import { userContext } from "./UserContext"
+// import { userContext } from "./UserContext"
 
 // אייקונים
 import PersonIcon from "@mui/icons-material/Person"
@@ -353,7 +355,7 @@ const contactSchema = yup.object().shape({
 })
 
 const UserRegistrationForm = () => {
-  const theme = useTheme()
+  // const theme = useTheme()
   const [activeStep, setActiveStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState<{
@@ -366,16 +368,16 @@ const UserRegistrationForm = () => {
     severity: "info",
   })
   const [gender, setGender] = useState<string>("")
-  const { user } = useContext(userContext)
+  // const { user } = useContext(userContext)
   const [userId, setUserId] = useState<number | null>(null)
   const [userToken, setUserToken] = useState<string>("")
   const [initialDataLoaded, setInitialDataLoaded] = useState(false)
   const [userEmail, setUserEmail] = useState<string>("")
   const [userPassword, setUserPassword] = useState<string>("")
-  const [userName, setUserName] = useState<string>("")
+  const [, setUserName] = useState<string>("")
   const [firstName, setFirstName] = useState<string>("")
   const [lastName, setLastName] = useState<string>("")
-  const [userRole, setUserRole] = useState<string>("")
+  const [, setUserRole] = useState<string>("")
 
   // 🔧 הוספת state לניהול נתונים קיימים
   const [existingFamilyId, setExistingFamilyId] = useState<number | null>(null)
@@ -803,15 +805,15 @@ const UserRegistrationForm = () => {
     setGender(newGender)
   }
 
-  const handleNext = () => {
-    if (activeStep === 0) {
-      personalForm.handleSubmit(onSubmitPersonalInfo)()
-    } else if (activeStep === 1) {
-      familyForm.handleSubmit(onSubmitFamilyInfo)()
-    } else {
-      contactForm.handleSubmit(onSubmitContactInfo)()
-    }
-  }
+  // const handleNext = () => {
+  //   if (activeStep === 0) {
+  //     personalForm.handleSubmit(onSubmitPersonalInfo)()
+  //   } else if (activeStep === 1) {
+  //     familyForm.handleSubmit(onSubmitFamilyInfo)()
+  //   } else {
+  //     contactForm.handleSubmit(onSubmitContactInfo)()
+  //   }
+  // }
 
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1)

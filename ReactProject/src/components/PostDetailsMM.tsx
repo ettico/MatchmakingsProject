@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect } from "react"
 import {
   TextField,
   Button,
@@ -21,7 +21,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  useTheme,
+  // useTheme,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { useForm, Controller } from "react-hook-form"
@@ -29,7 +29,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import axios from "axios"
 import { motion } from "framer-motion"
-import { userContext } from "./UserContext"
+// import { userContext } from "./UserContext"
 
 // אייקונים
 import PersonIcon from "@mui/icons-material/Person"
@@ -39,7 +39,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import LocationOnIcon from "@mui/icons-material/LocationOn"
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
 import NoteIcon from "@mui/icons-material/Note"
-import { Password } from "@mui/icons-material"
+// import { Password } from "@mui/icons-material"
 
 // הגדרת סכמת ולידציה באמצעות Yup
 const schema = yup.object().shape({
@@ -98,20 +98,20 @@ const AnimatedButton = styled(motion.div)(({ theme }) => ({
 }))
 
 const MatchMakerForm = () => {
-  const theme = useTheme()
+  // const theme = useTheme()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { user } = useContext(userContext)
+  // const { user } = useContext(userContext)
   const [userId, setUserId] = useState<number | null>(null)
   const [userToken, setUserToken] = useState<string | null>(null)
-  const [initialDataLoaded, setInitialDataLoaded] = useState(false)
+  const [, setInitialDataLoaded] = useState(false)
   const [userEmail, setUserEmail] = useState<string>("")
   const [userPassword, setUserPassword] = useState<string>("")
-  const [userName, setUserName] = useState<string>("")
+  const [, setUserName] = useState<string>("")
   const [firstName, setFirstName] = useState<string>("")
   const [lastName, setLastName] = useState<string>("")
-  const [userRole, setUserRole] = useState<string>("MatchMaker")
+  const [, setUserRole] = useState<string>("MatchMaker")
 
   const {
     handleSubmit,

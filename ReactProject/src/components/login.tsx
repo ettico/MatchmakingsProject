@@ -12,8 +12,8 @@ import {
   InputAdornment,
   IconButton,
   Divider,
-  useMediaQuery,
-  useTheme,
+//   useMediaQuery,
+//   useTheme,
   Avatar,
 } from "@mui/material"
 import { useForm } from "react-hook-form"
@@ -45,8 +45,8 @@ interface LoginProps {
 }
 
 const Login = ({ userType }: LoginProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+//   const theme = useTheme()
+//   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const { login, error: contextError } = useContext(userContext)
   const navigate = useNavigate()
   const [error, setError] = useState("")

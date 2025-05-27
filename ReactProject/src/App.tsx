@@ -7,15 +7,15 @@ import SignIn from "./components/register";
 // import FileUploader from "./components/Files";
 // import GetMales from "./components/getCandidate";
 import GetCandidates1 from "./components/get-candidate";
-import Details from "./components/DetailsAuth";
+// import Details from "./components/DetailsAuth";
 import PostDetailsAuth from "./components/PostDetailsAuth";
 import MatchMakerForm from "./components/PostDetailsMM";
 // import RegistrationForm from "./components/xxx";
 
 import MatchmakerNotes from "./components/MatchmakerNotes";
 import { UserProvider } from "./components/UserContext";
-import { FileUpload } from "@mui/icons-material";
-import FileUploader from "./components/Files";
+// import { FileUpload } from "@mui/icons-material";
+// import FileUploader from "./components/Files";
 import About from "./components/about";
 import UserProfile from "./components/Candidateprofile";
 // import HowItWorks from "./components/HowItWork";
@@ -43,7 +43,7 @@ const routes = createBrowserRouter([
       { path: "login/:userType", element: <Login userType={"MatchMaker"} /> },
       { path: "signup/:userType", element: <SignIn /> },
       { path: "allMales", element: <GetCandidates1 />, },
-      { path: "allMales/details/:role/:id", element: <Details /> },
+      // { path: "allMales/details/:role/:id", element: <Details /> },
       { path: "post-details-matchmaker", element: <MatchMakerForm />, },
       { path: "matchmaker-notes", element: <MatchmakerNotes />, },
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect } from "react"
 import {
   Box,
   Container,
@@ -16,12 +16,12 @@ import {
   CircularProgress,
   Alert,
   Collapse,
-  Button,
+  
 } from "@mui/material"
 import { styled, keyframes } from "@mui/material/styles"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
-import { userContext } from "./UserContext"
+// import { userContext } from "./UserContext"
 
 // אייקונים
 import PersonIcon from "@mui/icons-material/Person"
@@ -127,7 +127,7 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
   },
 }))
 
-const ProfileAvatar = styled(Avatar)(({ theme }) => ({
+const ProfileAvatar = styled(Avatar)(({ }) => ({
   width: 180,
   height: 180,
   border: "4px solid rgba(255, 255, 255, 0.9)",
@@ -213,22 +213,22 @@ const ContactCard = styled(Paper)(({ theme }) => ({
   },
 }))
 
-const ExpandButton = styled(Button)(({ theme }) => ({
-  width: "100%",
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(2),
-  background: "linear-gradient(135deg, #b87333, #d4af37)",
-  color: "white",
-  fontWeight: "700",
-  fontSize: "1.1rem",
-  marginTop: theme.spacing(2),
-  transition: "all 0.3s ease",
-  "&:hover": {
-    background: "linear-gradient(135deg, #d4af37, #b87333)",
-    transform: "translateY(-2px)",
-    boxShadow: "0 8px 16px rgba(184, 115, 51, 0.4)",
-  },
-}))
+// const ExpandButton = styled(Button)(({ theme }) => ({
+//   width: "100%",
+//   padding: theme.spacing(2),
+//   borderRadius: theme.spacing(2),
+//   background: "linear-gradient(135deg, #b87333, #d4af37)",
+//   color: "white",
+//   fontWeight: "700",
+//   fontSize: "1.1rem",
+//   marginTop: theme.spacing(2),
+//   transition: "all 0.3s ease",
+//   "&:hover": {
+//     background: "linear-gradient(135deg, #d4af37, #b87333)",
+//     transform: "translateY(-2px)",
+//     boxShadow: "0 8px 16px rgba(184, 115, 51, 0.4)",
+//   },
+// }))
 
 const DetailItem = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -316,7 +316,7 @@ const UserProfile = () => {
   const [contactsData, setContactsData] = useState<ContactData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
-  const { user } = useContext(userContext)
+//   const { user } = useContext(userContext)
 
   // State לניהול הרחבת כרטיסים
   const [expandedSections, setExpandedSections] = useState({
@@ -614,9 +614,9 @@ const UserProfile = () => {
                           עדה וזרם
                         </Typography>
                         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                          <Chip label={userData.class} size="large" variant="outlined" />
-                          <Chip label={userData.backGround} size="large" variant="outlined" />
-                          <Chip label={userData.openness} size="large" variant="outlined" />
+                          <Chip label={userData.class} size="medium" variant="outlined" />
+                          <Chip label={userData.backGround} size="medium" variant="outlined" />
+                          <Chip label={userData.openness} size="medium" variant="outlined" />
                         </Box>
                       </Grid>
 
@@ -786,8 +786,8 @@ const UserProfile = () => {
                       העדפות שידוך
                     </Typography>
                     <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                      <Chip label={userData.pairingType} size="large" color="primary" />
-                      <Chip label={userData.status} size="large" />
+                      <Chip label={userData.pairingType} size="medium" color="primary" />
+                      <Chip label={userData.status} size="medium" />
                     </Box>
                   </motion.div>
                 )}
@@ -914,7 +914,7 @@ const UserProfile = () => {
                       transition={{ duration: 0.3 }}
                     >
                       <Grid container spacing={3}>
-                        {contactsData.map((contact, index) => (
+                        {contactsData.map((contact) => (
                           <Grid item xs={12} md={6} key={contact.id}>
                             <ContactCard elevation={2}>
                               <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>

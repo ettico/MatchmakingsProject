@@ -20,8 +20,8 @@ import {
   FormHelperText,
   Avatar,
   Divider,
-  useMediaQuery,
-  useTheme,
+//   useMediaQuery,
+//   useTheme,
   Stepper,
   Step,
   StepLabel,
@@ -62,16 +62,16 @@ type FormValues = {
 }
 
 export default function SignIn() {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-  const { user, login } = useContext(userContext)
+//   const theme = useTheme()
+//   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const {  login } = useContext(userContext)
   const { userType } = useParams()
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     setValue,
-    watch,
+    // watch,
   } = useForm<FormValues>({
     mode: "onChange",
   })
@@ -80,9 +80,9 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [activeStep, setActiveStep] = useState(0)
+  const [activeStep] = useState(0)
 
-  const selectedRole = watch("role")
+//   const selectedRole = watch("role")
   const steps = ["פרטים אישיים", "אימות", "סיום"]
 
   useEffect(() => {

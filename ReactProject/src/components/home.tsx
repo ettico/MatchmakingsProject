@@ -201,7 +201,7 @@ const Home = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const [currentCoupleIndex, setCurrentCoupleIndex] = useState(0)
-  const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0)
+  const [, setCurrentAnnouncementIndex] = useState(0)
   const announcementRef = useRef(null)
   const [pauseAnnouncements, setPauseAnnouncements] = useState(false)
 
@@ -860,7 +860,7 @@ const Home = () => {
           }}
           ref={announcementRef}
         >
-          {engagementAnnouncements.map((announcement, index) => (
+          {engagementAnnouncements.map((announcement) => (
             <motion.div
               key={announcement.id}
               style={{

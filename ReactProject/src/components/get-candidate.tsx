@@ -72,7 +72,7 @@ import { userContext } from "./UserContext"
 import type { Candidate, Male, Women, Note, FamilyDetails, Contact } from "../Models"
 
 // קומפוננטים מעוצבים
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Card)(({  }) => ({
   transition: "all 0.3s ease",
   position: "relative",
   overflow: "hidden",
@@ -113,7 +113,7 @@ const StatusChip = styled(Chip)(({ theme, status }: { theme: any; status: boolea
   zIndex: 1,
 }))
 
-const DetailDialog = styled(Dialog)(({ theme }) => ({
+const DetailDialog = styled(Dialog)(({  }) => ({
   "& .MuiDialog-paper": {
     width: "100%",
     maxWidth: 1000,
@@ -199,7 +199,7 @@ const NoteItem = styled(Paper)(({ theme }) => ({
   },
 }))
 
-const NoteActions = styled(Box)(({ theme }) => ({
+const NoteActions = styled(Box)(({  }) => ({
   position: "absolute",
   top: 8,
   right: 8,
@@ -394,7 +394,7 @@ const CandidatesPage = () => {
   }
 
   // החלפת לשוניות בדיאלוג פרטים
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
   }
 
