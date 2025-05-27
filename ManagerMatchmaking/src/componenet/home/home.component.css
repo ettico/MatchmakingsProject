@@ -1,0 +1,31 @@
+
+.button-container {
+    display: flex;
+    justify-content: center; /* מרכז את הכפתורים בכיוון הרוחב */
+    align-items: center; /* מרכז את הכפתורים בכיוון הגובה */
+    gap: 20px; /* רווח של 20 פיקסלים בין הכפתורים */
+background-color: rgba(165, 160, 160, 0.708);
+padding-top: 20px;
+padding-bottom: 20px;
+}
+.bt {
+    /* background-color: #4CAF50; צבע כהה יותר */
+    color: white;
+    transition: all 0.3s ease; /* אנימציה קלה */
+    border: 2px solid rgba(255, 255, 255, 0.386); /* מסגרת בעת מעבר עכבר */
+    border-radius: 20px 20px 20px 20px;
+}
+
+.bt:hover {
+    border: 2px solid #a03927; /* מסגרת בעת מעבר עכבר */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* צל */
+    /* background-color: #45a049; שינוי צבע בעת מעבר עכבר */
+}
+body{
+    background-image: url('../תמונה/צבעים.jpg');
+    background-size: cover; /* כדי שהתמונה תכסה את כל הרקע */
+    background-repeat: no-repeat; /* כדי שהתמונה לא תחזור על עצמה */
+    background-position: center; /* למרכז את התמונה */
+    /* overflow: hidden; */
+    /* z-index: 999; */
+}

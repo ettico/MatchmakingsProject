@@ -4,6 +4,7 @@ using MatchMakings.Core.DTOs;
 using MatchMakings.Core.IServices;
 using MatchMakings.Core.Models;
 using MatchMakings.Data;
+using MatchMakings.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -104,6 +105,11 @@ namespace ApiProject.Controllers
         {
             var women = new Women
             {
+                FirstName = w.FirstName,
+                LastName = w.LastName,
+                Username = w.Username,
+                //Password = w.Password,
+                Role = w.Role,
                 Country = w.Country,
                 City = w.City,
                 Address = w.Address,
@@ -147,7 +153,12 @@ namespace ApiProject.Controllers
                 Suit = w.Suit,
                 Occupation = w.Occupation
             };
-            return await _womenService.UpdateWomenAsync(id, women);
+            var updatedMale = await _womenService.UpdateWomenAsync(id, women);
+            if (updatedMale == null)
+                return NotFound();
+
+            var maleDTO = _mapper.Map<WomenDTO>(updatedMale); // נחזיר ללקוח DTO
+            return Ok(maleDTO);
         }
 
         // DELETE api/<CustomerController>/5

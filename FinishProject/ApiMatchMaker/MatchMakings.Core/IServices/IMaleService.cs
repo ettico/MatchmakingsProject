@@ -14,5 +14,8 @@ namespace MatchMakings.Core.IServices
         public Task<Male> AddMaleAsync(Male male);
         public Task<Male> DeleteMaleAsync(int id);
         public Task<Male> UpdateMaleAsync(int id, Male male);
+        //Task UpdateDirectAsync(Male existingMale);
+        //public Task<Male> GetMaleByIdAsync(int id);
+
     }
 }

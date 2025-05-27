@@ -39,7 +39,6 @@ namespace MatchMakings.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
@@ -258,7 +257,120 @@ namespace MatchMakings.Data.Migrations
 
                     b.HasIndex("MatchMakingId");
 
-                    b.ToTable("Meetings");
+                    b.ToTable("Meeting");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.Note", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("MaleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MatchMakerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("WomenId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaleId");
+
+                    b.HasIndex("MatchMakerId");
+
+                    b.HasIndex("WomenId");
+
+                    b.ToTable("Notes");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PermissionName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.RolePermission", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("MatchMakings.Core.Models.Male", b =>
@@ -825,9 +937,82 @@ namespace MatchMakings.Data.Migrations
                     b.Navigation("MatchMaking");
                 });
 
+            modelBuilder.Entity("MatchMakings.Core.Models.Note", b =>
+                {
+                    b.HasOne("MatchMakings.Core.Models.Male", "Male")
+                        .WithMany()
+                        .HasForeignKey("MaleId");
+
+                    b.HasOne("MatchMakings.Core.Models.MatchMaker", "MatchMaker")
+                        .WithMany()
+                        .HasForeignKey("MatchMakerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MatchMakings.Core.Models.Women", "Women")
+                        .WithMany()
+                        .HasForeignKey("WomenId");
+
+                    b.Navigation("Male");
+
+                    b.Navigation("MatchMaker");
+
+                    b.Navigation("Women");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.RolePermission", b =>
+                {
+                    b.HasOne("MatchMakings.Core.Models.Permission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MatchMakings.Core.Models.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.UserRole", b =>
+                {
+                    b.HasOne("MatchMakings.Core.Models.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MatchMakings.Core.Models.BaseUser", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.BaseUser", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
             modelBuilder.Entity("MatchMakings.Core.Models.MatchMaking", b =>
                 {
                     b.Navigation("Meetings");
+                });
+
+            modelBuilder.Entity("MatchMakings.Core.Models.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("MatchMakings.Core.Models.Male", b =>

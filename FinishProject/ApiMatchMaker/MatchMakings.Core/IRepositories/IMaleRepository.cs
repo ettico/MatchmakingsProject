@@ -14,5 +14,7 @@ namespace MatchMakings.Core.IRepositories
         public Task<Male> AddMaleAsync(Male male);
         public Task<Male> DeleteMaleAsync(int id);
         public Task<Male> UpdateMaleAsync(int id, Male male);
+        //public Task<Male> GetMaleByokIdAsync(int id);
+
     }
 }

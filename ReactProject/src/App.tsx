@@ -5,46 +5,56 @@ import Login from "./components/login";
 import Home from "./components/home";
 import SignIn from "./components/register";
 // import FileUploader from "./components/Files";
-import GetMales from "./components/getCandidate";
+// import GetMales from "./components/getCandidate";
 import GetCandidates1 from "./components/get-candidate";
 import Details from "./components/DetailsAuth";
 import PostDetailsAuth from "./components/PostDetailsAuth";
 import MatchMakerForm from "./components/PostDetailsMM";
-import RegistrationForm from "./components/xxx";
+// import RegistrationForm from "./components/xxx";
+
+import MatchmakerNotes from "./components/MatchmakerNotes";
+import { UserProvider } from "./components/UserContext";
+import { FileUpload } from "@mui/icons-material";
+import FileUploader from "./components/Files";
+import About from "./components/about";
+import UserProfile from "./components/Candidateprofile";
+// import HowItWorks from "./components/HowItWork";
 
 
 const routes = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: < Home/>,
   },
   {
     path: "/candidate-auth",
     element: <CandidateAuth />,
     children: [
-      { path: "login/:userType", element: <Login /> },
+      {path: "login/:userType", element: <Login userType={"auth"} />},
       { path: "signup/:userType", element: <SignIn /> },
       { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
-
-
+      { path: "CandidateProfile", element: < UserProfile/> },
     ],
   },
   {
     path: "/matchmaker-auth",
     element: <MatchmakerAuth />,
     children: [
-      { path: "login/:userType", element: <Login /> },
+      { path: "login/:userType", element: <Login userType={"MatchMaker"} /> },
       { path: "signup/:userType", element: <SignIn /> },
-      { path: "allMales", element: <GetCandidates1 /> ,},
+      { path: "allMales", element: <GetCandidates1 />, },
       { path: "allMales/details/:role/:id", element: <Details /> },
-      { path: "post-details-matchmaker", element: <MatchMakerForm /> ,},
-       
+      { path: "post-details-matchmaker", element: <MatchMakerForm />, },
+      { path: "matchmaker-notes", element: <MatchmakerNotes />, },
+
+
     ],
   },
   {
-   path: "allMales", element: <GetMales /> ,
+    path: "/about", element: <About />, 
+    
   },
-  
+
   {
     path: "*",
     element: <Navigate to="/" />, // כל נתיב לא מוכר מפנה לדף הבית
@@ -52,7 +62,8 @@ const routes = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={routes} />;
+  return <UserProvider><RouterProvider router={routes} /></UserProvider>
+
 }
 
 export default App;

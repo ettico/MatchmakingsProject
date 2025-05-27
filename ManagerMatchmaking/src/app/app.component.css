@@ -1,0 +1,99 @@
+/* // @import '../../styles/variables';
+// @import '../../styles/animations';
+
+// :host {
+//   display: block;
+//   min-height: 100vh;
+//   background: linear-gradient(135deg, $gray-lighter 0%, #f9f9f9 100%);
+// }
+
+// .app-container {
+//   display: flex;
+//   flex-direction: column;
+//   min-height: 100vh;
+// }
+
+// .button-container {
+//   display: flex;
+//   align-items: center;
+//   padding: $spacing-md $spacing-lg;
+//   background-color: $white;
+//   box-shadow: $shadow;
+//   position: sticky;
+//   top: 0;
+//   z-index: $z-index-sticky;
+//   animation: fadeIn 0.5s ease;
+  
+//   button {
+//     margin-right: $spacing-md;
+    
+//     &:last-child {
+//       margin-right: 0;
+//     }
+    
+//     &.bt {
+//       background-color: $primary;
+//       color: $white;
+//       border: none;
+//       padding: $spacing-sm $spacing-md;
+//       border-radius: $border-radius;
+//       font-weight: 500;
+//       transition: all $transition-fast;
+//       display: flex;
+//       align-items: center;
+//       justify-content: center;
+      
+//       &:hover {
+//         background-color: $primary-light;
+//         transform: translateY(-2px);
+//         box-shadow: $shadow-sm;
+//       }
+      
+//       &:active {
+//         background-color: $primary-dark;
+//         transform: translateY(0);
+//       }
+//     }
+    
+//     &[mat-icon-button] {
+//       color: $primary;
+//       transition: all $transition-fast;
+      
+//       &:hover {
+//         transform: scale(1.1);
+//         color: $primary-light;
+//       }
+//     }
+//   }
+  
+//   @media (max-width: 768px) {
+//     padding: $spacing-sm;
+//     flex-wrap: wrap;
+    
+//     button {
+//       margin-bottom: $spacing-sm;
+//     }
+//   }
+// }
+
+// router-outlet {
+//   display: block;
+//   padding: $spacing-lg;
+  
+//   @media (max-width: 768px) {
+//     padding: $spacing-md;
+//   }
+// }
+
+// // Add a subtle background pattern
+// .app-container::before {
+//   content: '';
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   height: 100%;
+//   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+//   pointer-events: none;
+//   z-index: -1;
+// } */

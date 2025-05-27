@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace MatchMakings.Core.IRepositories
 {
-    public interface IMeetingRepository
+    public interface INoteRepository
     {
-        public Task<IEnumerable<Meeting>> GetListOfMeetingAsync();
-        public Task<Meeting> GetMeetingByIdAsync(int id);
-        public Task<Meeting> AddMeetingAsync(Meeting meeting);
-        public Task<Meeting> DeleteMeetingAsync(int id);
-        public Task<Meeting> UpdateMeetingAsync(int id, Meeting meeting);
+        public Task<IEnumerable<Note>> GetListOfNoteAsync();
+        public Task<Note> GetNoteByIdAsync(int id);
+        public Task<Note> AddNoteAsync(Note note);
+        public Task<Note> DeleteNoteAsync(int id);
+        public Task<Note> UpdateNoteAsync(int id, Note note);
     }
 }

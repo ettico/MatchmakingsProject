@@ -1,0 +1,103 @@
+<div class="analytics-container">
+  <header class="dashboard-header">
+    <h1>Candidate Analytics Dashboard</h1>
+    <p class="description">Insights and statistics about our candidate database</p>
+  </header>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading candidate data...</p>
+    </div>
+  } @else if (error) {
+    <div class="error-container">
+      <p class="error-message">{{ error }}</p>
+      <button class="retry-button" (click)="fetchCandidates()">Retry</button>
+    </div>
+  } @else {
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <div class="stat-value">{{ candidates.length }}</div>
+        <div class="stat-label">Total Candidates</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-value">{{ getMaleCount() }}</div>
+        <div class="stat-label">Male Candidates</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-value">{{ getFemaleCount() }}</div>
+        <div class="stat-label">Female Candidates</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-value">{{ getUniqueSectorsCount() }}</div>
+        <div class="stat-label">Sectors</div>
+      </div>
+    </div>
+
+    <div class="tabs-container">
+      <div class="tabs-header">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'all'" 
+          (click)="setActiveTab('all')">All Charts</button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'age'" 
+          (click)="setActiveTab('age')">Age Distribution</button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'sector'" 
+          (click)="setActiveTab('sector')">Sector Distribution</button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'gender'" 
+          (click)="setActiveTab('gender')">Gender Distribution</button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'rating'" 
+          (click)="setActiveTab('rating')">Rating Distribution</button>
+      </div>
+
+      <div class="tabs-content">
+        @if (activeTab === 'all') {
+          <div class="charts-grid">
+            <div class="chart-container">
+              <canvas #ageChartCanvas width="400" height="300"></canvas>
+            </div>
+            
+            <div class="chart-container">
+              <canvas #sectorChartCanvas width="400" height="300"></canvas>
+            </div>
+            
+            <div class="chart-container">
+              <canvas #genderChartCanvas width="400" height="300"></canvas>
+            </div>
+            
+            <div class="chart-container">
+              <canvas #ratingChartCanvas width="400" height="300"></canvas>
+            </div>
+          </div>
+        } @else if (activeTab === 'age') {
+          <div class="chart-container chart-container-large">
+            <canvas #ageChartCanvas width="800" height="400"></canvas>
+          </div>
+        } @else if (activeTab === 'sector') {
+          <div class="chart-container chart-container-large">
+            <canvas #sectorChartCanvas width="800" height="400"></canvas>
+          </div>
+        } @else if (activeTab === 'gender') {
+          <div class="chart-container chart-container-large">
+            <canvas #genderChartCanvas width="800" height="400"></canvas>
+          </div>
+        } @else if (activeTab === 'rating') {
+          <div class="chart-container chart-container-large">
+            <canvas #ratingChartCanvas width="800" height="400"></canvas>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

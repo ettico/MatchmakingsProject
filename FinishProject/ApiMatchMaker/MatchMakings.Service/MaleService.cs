@@ -44,5 +44,7 @@ namespace MatchMakings.Service
         {
             return await _MaleRepository.UpdateMaleAsync(id, male);
         }
+
+
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MatchMakings.Core.DTOs
 {
-    public class MaleDTO:BaseUser
+    public class MaleDTO:BaseUserDTO
     {
         public MaleDTO(string FName, string LName, string Username, string Password, string Role) : base(FName, LName, Username, Password, Role)
         {

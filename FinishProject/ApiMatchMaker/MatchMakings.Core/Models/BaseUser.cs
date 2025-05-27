@@ -15,8 +15,9 @@ namespace MatchMakings.Core.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; }
+        public string? Password { get; set; }
         public string Role { get; set; } // "Male", "Women", "MatchMaker"
+        public ICollection<UserRole> UserRoles { get; set; }
         public BaseUser(string FName,string LName, string Username,string Password,string Role)
         {
             this.FirstName = FName;

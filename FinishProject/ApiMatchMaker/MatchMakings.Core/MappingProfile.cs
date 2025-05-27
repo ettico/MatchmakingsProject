@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using ApiMatchMaker.PostModels;
+using AutoMapper;
 using MatchMakings.Core.DTOs;
 using MatchMakings.Core.Models;
 using System;
@@ -19,6 +20,13 @@ namespace MatchMakings.Core
             CreateMap<Male, MaleDTO>().ReverseMap();
             CreateMap<MatchMaker, MatchMakerDTO>().ReverseMap();
             CreateMap<Women, WomenDTO>().ReverseMap();
+            CreateMap<Note, NoteDTO>().ReverseMap();
+
+            CreateMap<MalePostModels, Male>()
+     .ForMember(dest => dest.Id, opt => opt.Ignore())
+     .ForMember(dest => dest.Acquaintances, opt => opt.Ignore())
+     .ForMember(dest => dest.FamilyDetails, opt => opt.Ignore())
+     .ForMember(dest => dest.Matchings, opt => opt.Ignore());
         }
     }
 }

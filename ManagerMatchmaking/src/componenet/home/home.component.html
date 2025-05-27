@@ -1,0 +1,27 @@
+<body>
+    
+<div class="button-container">
+    <button mat-icon-button [routerLink]="['/']" aria-label="חזרה לדף הבית">
+        <mat-icon color="primary">home</mat-icon> <!-- אייקון הבית -->
+    </button>
+@if(user===null){
+<button mat-raised-button class="bt" color="success" [routerLink]="['/Login']">
+    כניסה
+</button>
+}
+<!-- @if(user!==null){ -->
+<button mat-raised-button class="bt" color="success" [routerLink]="['/matchmakers']">
+    שדכנים
+</button>
+
+<button mat-raised-button class="bt" color="success" [routerLink]="['/analytics']">
+    גרפים
+</button>
+<!-- <button mat-raised-button class="bt" color="success" [routerLink]="['/matchmakers']">
+    שדכנים
+</button> -->
+
+</div>
+
+<router-outlet></router-outlet>
+</body>

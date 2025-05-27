@@ -1,0 +1,84 @@
+<!-- src/app/components/matchmakers/matchmakers.component.html -->
+<div class="matchmakers-container">
+  <div class="header">
+    <h1>Matchmakers Management</h1>
+    <div class="actions">
+      <button class="refresh-btn" (click)="loadMatchmakers()">
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Loading matchmakers...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="error-message">
+      <p>{{ errorMessage() }}</p>
+      <button (click)="loadMatchmakers()">Try Again</button>
+    </div>
+  } @else if (matchmakers().length === 0) {
+    <div class="no-data">
+      <p>No matchmakers found in the system.</p>
+    </div>
+  } @else {
+    <div class="matchmakers-grid">
+      @for (matchmaker of matchmakers(); track matchmaker.id) {
+        <div class="matchmaker-card">
+          <div class="matchmaker-info">
+            <h3>{{ getFullName(matchmaker) }}</h3>
+            <p class="matchmaker-name"><strong>Matchmaker Name:</strong> {{ matchmaker.matchmakerName }}</p>
+            <div class="info-section">
+              <p><strong>ID Number:</strong> {{ matchmaker.idNumber }}</p>
+              <p><strong>Email:</strong> {{ matchmaker.email }}</p>
+              <p><strong>Gender:</strong> {{ matchmaker.gender }}</p>
+              <p><strong>Location:</strong> {{ matchmaker.city }}, {{ matchmaker.address }}</p>
+              <p><strong>Birth Date:</strong> {{ matchmaker.birthDate | date:'mediumDate' }}</p>
+            </div>
+            
+            <div class="contact-info">
+              <p><strong>Mobile:</strong> {{ matchmaker.mobilePhone }}</p>
+              @if (matchmaker.landlinePhone) {
+                <p><strong>Landline:</strong> {{ matchmaker.landlinePhone }}</p>
+              }
+              <p><strong>Phone Type:</strong> {{ matchmaker.phoneType }}</p>
+            </div>
+            
+            <div class="professional-info">
+              <p><strong>Community:</strong> {{ matchmaker.community }}</p>
+              <p><strong>Club:</strong> {{ matchmaker.personalClub }}</p>
+              <p><strong>Occupation:</strong> {{ matchmaker.occupation }}</p>
+              <p><strong>Years in Shidduchim:</strong> {{ matchmaker.yearsInShidduchim }}</p>
+              <p><strong>Experience:</strong> {{ matchmaker.experienceInShidduchim }}</p>
+              <p><strong>Life Skills:</strong> {{ matchmaker.lifeSkills }}</p>
+            </div>
+            
+            <div class="additional-info">
+              <p><strong>Seminar Graduate:</strong> {{ matchmaker.isSeminarGraduate ? 'Yes' : 'No' }}</p>
+              <p><strong>Has Children in Shidduchim:</strong> {{ matchmaker.hasChildrenInShidduchim ? 'Yes' : 'No' }}</p>
+              <p><strong>Internal Matchmaker:</strong> {{ matchmaker.isInternalMatchmaker ? 'Yes' : 'No' }}</p>
+              @if (matchmaker.printingNotes) {
+                <p><strong>Notes:</strong> {{ matchmaker.printingNotes }}</p>
+              }
+            </div>
+          </div>
+          <div class="card-actions">
+            <button 
+              class="delete-btn" 
+              [disabled]="deletingId() === matchmaker.id"
+              (click)="deleteMatchmaker(matchmaker.id)"
+            >
+              @if (deletingId() === matchmaker.id) {
+                Deleting...
+              } @else {
+                Delete
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

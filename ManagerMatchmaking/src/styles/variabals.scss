@@ -1,0 +1,59 @@
+// Color Palette
+$primary: #8e44ad;         // Rich purple - main brand color
+$primary-light: #9b59b6;   // Lighter purple for hover states
+$primary-dark: #7d3c98;    // Darker purple for active states
+
+$secondary: #d35400;       // Copper/orange - accent color
+$secondary-light: #e67e22; // Lighter copper for hover states
+$secondary-dark: #a04000;  // Darker copper for active states
+
+$success: #27ae60;         // Green for success states
+$warning: #f39c12;         // Amber for warning states
+$danger: #c0392b;          // Red for error/danger states
+$info: #2980b9;            // Blue for info states
+
+// Neutrals
+$dark: #2c3e50;            // Dark blue-gray for text
+$gray-dark: #34495e;       // Dark gray for secondary text
+$gray: #7f8c8d;            // Medium gray for disabled states
+$gray-light: #bdc3c7;      // Light gray for borders
+$gray-lighter: #ecf0f1;    // Very light gray for backgrounds
+$white: #ffffff;           // White
+
+// Typography
+$font-family-base: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-family-heading: 'Poppins', $font-family-base;
+
+// Spacing
+$spacing-xs: 0.25rem;  // 4px
+$spacing-sm: 0.5rem;   // 8px
+$spacing-md: 1rem;     // 16px
+$spacing-lg: 1.5rem;   // 24px
+$spacing-xl: 2rem;     // 32px
+$spacing-xxl: 3rem;    // 48px
+
+// Border radius
+$border-radius-sm: 0.25rem;  // 4px
+$border-radius: 0.5rem;      // 8px
+$border-radius-lg: 1rem;     // 16px
+$border-radius-xl: 1.5rem;   // 24px
+
+// Shadows
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+$shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+$shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+$shadow-xl: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+
+// Transitions
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Z-index
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;

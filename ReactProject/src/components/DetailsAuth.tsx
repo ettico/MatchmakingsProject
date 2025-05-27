@@ -1,562 +1,993 @@
-import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Card, CardContent, CircularProgress, Typography, Table, TableHead, TableBody, TableRow, TableCell, TableContainer } from '@mui/material';
-import { Contact, FamilyDetails, Male, Women } from '../Models';
+"use client"
 
-const Details = () => {
-    const { role, id } = useParams();
-    const [Women, setWomen] = useState<Women>();
-    const [Male, setmale] = useState<Male>();
-    const [familyDetails, setFamilyDetails] = useState<FamilyDetails>();
-    const [contactDetails, setContactDetails] = useState<Contact[]>([]);
-    const [loading, setLoading] = useState(false);
+import type React from "react"
 
-    useEffect(() => {
-        const fetchUserDetails = async () => {
-            setLoading(true);
-            try {
-                const userResponse = await axios.get<Male | Women>(`https://localhost:7012/api/${role}/${id}`);
-                console.log("detailsForUser:" + userResponse.data);
+import { useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Grid,
+  Chip,
+  Avatar,
+  Button,
+  Paper,
+  Tabs,
+  Tab,
+  styled,
+  useTheme,
+  alpha,
+} from "@mui/material"
+import {
+  Person,
+  School,
+  Home,
+  Favorite,
+  Phone,
+  LocationOn,
+  Cake,
+  Height,
+  Visibility,
+  FamilyRestroom,
+  ContactPhone,
+  Print,
+  Share,
+  ArrowBack,
+  CheckCircle,
+  Cancel,
+  HealthAndSafety,
+  Work,
+  Face,
+  Interests,
+} from "@mui/icons-material"
 
-                if (role === 'Male') {
-                    setmale(userResponse.data);
-                }
-                if (role === 'Women') {
-                    setWomen(userResponse.data);
-                    console.log(userResponse.data);
+// מודלים
+interface Contact {
+  id: number
+  name: string
+  contactType: string
+  phone: string
+  maleId?: number
+  womenId?: number
+}
 
-                }
+interface FamilyDetails {
+  id: number
+  fatherName: string
+  fatherOrigin: string
+  fatherYeshiva: string
+  fatherAffiliation: string
+  fatherOccupation: string
+  motherName: string
+  motherOrigin: string
+  motherGraduateSeminar: string
+  motherPreviousName: string
+  motherOccupation: string
+  parentsStatus: string
+  healthStatus: string
+  familyRabbi: string
+  familyAbout: string
+  maleId?: number
+  womenId?: number
+}
 
-                // קריאה לקבלת פרטי משפחה
-                const familyResponse = await axios.get<FamilyDetails[]>(`https://localhost:7012/api/FamilyDetails`);
-                const x = familyResponse.data.filter((item) => {
-                    return item.maleId === Number(id) || item.womenId === Number(id);
-                });
+interface CommonUserFields {
+  id: number
+  firstName: string
+  lastName: string
+  tz: string
+  burnDate: string
+  address: string
+  age: number
+  city: string
+  country: string
+  class: string
+  anOutsider: boolean
+  backGround: string
+  openness: string
+  healthCondition: boolean
+  status: string
+  height: number
+  generalAppearance: string
+  facePaint: string
+  appearance: string
+  club: string
+  ageFrom: number
+  ageTo: number
+  importantTraitsInMe: string
+  importantTraitsIAmLookingFor: string
+}
 
-                setFamilyDetails(x[0]);
+interface Male extends CommonUserFields {
+  driversLicense: boolean
+  smoker: boolean
+  beard: string
+  hot: string // כובע
+  suit: string
+  smallYeshiva: string
+  bigYeshiva: string
+  yeshivaType: string
+  kibbutz: string
+  occupation: string
+  expectationsFromPartner: string
+  preferredSeminarStyle: string
+  preferredProfessionalPath: string
+  headCovering: string
+  preferredHeadCovering: string
+}
 
-                // קריאה לקבלת פרטי התקשרות
-                const contactResponse = await axios.get(`https://localhost:7012/api/Contact`);
-                const contacts = contactResponse.data.filter((item: any) => {
-                    return item.maleId === Number(id) || item.womenId === Number(id);
-                });
-                setContactDetails(contacts);
+interface Women extends CommonUserFields {
+  headCovering: string
+  highSchool: string
+  seminar: string
+  seminarType: string
+  studyPath: string
+  additionalEducationalInstitution: string
+  currentOccupation: string
+  interestedInBoy: string
+  drivingLicense: string
+  smoker: boolean
+  preferredBeard: string
+  preferredHat: string
+  preferredSuit: string
+  preferredYeshiva: string
+  preferredOccupation: string
+  preferredSittingStyle: string
+  importantTraitsIMLookingFor: string
+  beard: string
+  hat: string
+  suit: string
+  occupation: string
+}
 
-            } catch (error) {
-                console.error("Error fetching user details:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+// קומפוננטות מעוצבות
+const SectionCard = styled(Paper)(({ theme }) => ({
+  borderRadius: 16,
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+  overflow: "hidden",
+  marginBottom: 24,
+  border: `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+  transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+  "&:hover": {
+    transform: "translateY(-5px)",
+    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
+  },
+}))
 
-        fetchUserDetails();
-    }, [role, id]);
+const SectionHeader = styled(Box)(({ theme }) => ({
+  padding: "16px 24px",
+  background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+}))
 
-    if (loading) return <CircularProgress />;
+const SectionContent = styled(Box)(({ theme }) => ({
+  padding: 24,
+  backgroundColor: "white",
+}))
 
+const InfoRow = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "12px 0",
+  borderBottom: `1px solid ${alpha(theme.palette.primary.light, 0.1)}`,
+  "&:last-child": {
+    borderBottom: "none",
+  },
+}))
+
+const InfoLabel = styled(Typography)(({ theme }) => ({
+  fontWeight: 600,
+  color: theme.palette.text.secondary,
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+}))
+
+const InfoValue = styled(Typography)(({ theme }) => ({
+  color: theme.palette.text.primary,
+  fontWeight: 500,
+}))
+
+const ProfileHeader = styled(Box)(({ theme }) => ({
+  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.light, 0.8)} 100%)`,
+  padding: "40px 24px 24px",
+  color: "white",
+  borderRadius: "16px 16px 0 0",
+  position: "relative",
+}))
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: 20,
+  padding: "8px 16px",
+  textTransform: "none",
+  fontWeight: 600,
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  transition: "transform 0.2s ease",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.15)",
+  },
+}))
+
+const StatusChip = styled(Chip)(({ theme }) => ({
+  borderRadius: 16,
+  fontWeight: 600,
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+}))
+
+const TabPanel = (props: { children?: React.ReactNode; value: number; index: number }) => {
+  const { children, value, index, ...other } = props
+  return (
+    <div role="tabpanel" hidden={value !== index} id={`tabpanel-${index}`} aria-labelledby={`tab-${index}`} {...other}>
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  )
+}
+
+const CandidateDetails = () => {
+  const { role, id } = useParams()
+  const [women, setWomen] = useState<Women | null>(null)
+  const [male, setMale] = useState<Male | null>(null)
+  const [familyDetails, setFamilyDetails] = useState<FamilyDetails | null>(null)
+  const [contactDetails, setContactDetails] = useState<Contact[]>([])
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState(0)
+  const theme = useTheme()
+
+  // צבעים מותאמים לפרויקט
+  const colors = {
+    primary: "#1976d2", // כחול
+    secondary: "#4fc3f7", // תכלת
+    accent: "#ffeb3b", // צהוב
+    light: "#f5f5f5", // לבן-אפור בהיר
+    success: "#4caf50",
+    error: "#f44336",
+    warning: "#ff9800",
+    info: "#2196f3",
+  }
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      setLoading(true)
+      try {
+        // קריאה לקבלת פרטי המועמד
+        const userResponse = await axios.get(`https://localhost:7012/api/${role}/${id}`)
+
+        if (role === "Male") {
+          setMale(userResponse.data)
+        }
+        if (role === "Women") {
+          setWomen(userResponse.data)
+        }
+
+        // קריאה לקבלת פרטי משפחה
+        const familyResponse = await axios.get<FamilyDetails[]>(`https://localhost:7012/api/FamilyDetails`)
+        const familyData = familyResponse.data.filter((item) => {
+          return item.maleId === Number(id) || item.womenId === Number(id)
+        })
+
+        if (familyData.length > 0) {
+          setFamilyDetails(familyData[0])
+        }
+
+        // קריאה לקבלת פרטי התקשרות
+        const contactResponse = await axios.get(`https://localhost:7012/api/Contact`)
+        const contacts = contactResponse.data.filter((item: any) => {
+          return item.maleId === Number(id) || item.womenId === Number(id)
+        })
+        setContactDetails(contacts)
+      } catch (error) {
+        console.error("Error fetching user details:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserDetails()
+  }, [role, id])
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue)
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "רווק/ה":
+        return colors.success
+      case "גרוש/ה":
+        return colors.info
+      case "אלמן/ה":
+        return colors.warning
+      default:
+        return colors.primary
+    }
+  }
+
+  const getAgeRangeText = (from: number, to: number) => {
+    return `${from} - ${to}`
+  }
+
+  const getBooleanIcon = (value: boolean | undefined) => {
+    if (value === undefined) return null
+    return value ? (
+      <CheckCircle sx={{ color: colors.success, fontSize: 20 }} />
+    ) : (
+      <Cancel sx={{ color: colors.error, fontSize: 20 }} />
+    )
+  }
+
+  if (loading) {
     return (
-        <div>
-            {Male && (
-                <Card sx={{ margin: 2 }}>
-                    <CardContent>
-                        <Typography variant="h4" gutterBottom>{Male?.firstName} {Male?.lastName}</Typography>
-                        <Typography variant="h5">פרטים אישיים</Typography>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.tz}</TableCell>
-                                    <TableCell align="left">מס זהות</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.burnDate}</TableCell>
-                                    <TableCell align="left">תאריך לידה</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.address}</TableCell>
-                                    <TableCell align="left">כתובת</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.age}</TableCell>
-                                    <TableCell align="left">גיל</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.city}</TableCell>
-                                    <TableCell align="left">עיר</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.country}</TableCell>
-                                    <TableCell align="left">מדינה</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.class}</TableCell>
-                                    <TableCell align="left">חוג</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.anOutsider ? 'v' : 'x'}</TableCell>
-                                    <TableCell align="left">חוצניק?</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.backGround}</TableCell>
-                                    <TableCell align="left">רקע</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.openness}</TableCell>
-                                    <TableCell align="left">פתיחות</TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                        <Typography variant="h5">פרטים נוספים</Typography>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.healthCondition ? 'v' : 'x'}</TableCell>
-                                    <TableCell align="left">מצב בריאותי</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.status}</TableCell>
-                                    <TableCell align="left"> סטטוס</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.driversLicense ? 'v' : 'x'}</TableCell>
-                                    <TableCell align="left"> רשיון נהיגה</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.smoker}</TableCell>
-                                    <TableCell align="left"> מעשן</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.beard}</TableCell>
-                                    <TableCell align="left"> זקן</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.hot}</TableCell>
-                                    <TableCell align="left"> כובע</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.suit}</TableCell>
-                                    <TableCell align="left"> חליפה</TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                        <Typography variant="h5">רקע ישיבתי</Typography>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.smallYeshiva}</TableCell>
-                                    <TableCell align="left"> ישיבה קטנה</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.bigYeshiva}</TableCell>
-                                    <TableCell align="left"> ישיבה גדולה</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.kibbutz}</TableCell>
-                                    <TableCell align="left"> קיבוץ</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.occupation}</TableCell>
-                                    <TableCell align="left"> עיסוק</TableCell>
-                                </TableRow>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
+        <CircularProgress size={60} sx={{ color: colors.primary }} />
+      </Box>
+    )
+  }
 
-                            </TableBody>
-                        </Table>
-                        <Typography variant="h5">מראה חיצוני</Typography>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.height} ס"מ</TableCell>
-                                    <TableCell align="left"> גובה</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.generalAppearance}</TableCell>
-                                    <TableCell align="left"> מראה כללי</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.facePaint}</TableCell>
-                                    <TableCell align="left"> צבע פנים</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.appearance}</TableCell>
-                                    <TableCell align="left"> מראה</TableCell>
-                                </TableRow>
+  const candidate = male || women
+  if (!candidate) {
+    return (
+      <Box sx={{ textAlign: "center", p: 4 }}>
+        <Typography variant="h5" color="error">
+          לא נמצאו פרטים עבור המועמד/ת
+        </Typography>
+      </Box>
+    )
+  }
 
-                            </TableBody>
-                        </Table>
-                        <Typography variant="h5">ציפיות מבת הזוג </Typography>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.club}</TableCell>
-                                    <TableCell align="left"> חוג</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.ageFrom}</TableCell>
-                                    <TableCell align="left"> גיל מינימלי</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.ageTo}</TableCell>
-                                    <TableCell align="left"> גיל מקסימלי</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.importantTraitsInMe}</TableCell>
-                                    <TableCell align="left"> תכונות חשובות בי</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.importantTraitsIAmLookingFor}</TableCell>
-                                    <TableCell align="left"> תכונות חשובות שאני מחפש</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.preferredSeminarStyle}</TableCell>
-                                    <TableCell align="left"> סגנון סמינר מועדף</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.preferredProfessionalPath}</TableCell>
-                                    <TableCell align="left"> מסלול מקצועי מועדף</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">{Male?.headCovering}</TableCell>
-                                    <TableCell align="left"> כיסוי ראש</TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            )}
+  return (
+    <Box
+      sx={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        p: { xs: 2, md: 4 },
+        direction: "rtl",
+        backgroundColor: alpha(colors.light, 0.5),
+        minHeight: "100vh",
+      }}
+    >
+      {/* כפתור חזרה */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          startIcon={<ArrowBack />}
+          variant="outlined"
+          color="primary"
+          onClick={() => window.history.back()}
+          sx={{
+            borderRadius: 20,
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          חזרה לרשימה
+        </Button>
+      </Box>
 
-            {Women && (
-                <Card sx={{ margin: 2 }} >
-                    <CardContent>
-                        <Typography variant="h4" gutterBottom>{Women?.firstName} {Women?.lastName}</Typography>
-                        <Typography variant="h5">פרטים אישיים</Typography>
-                        <Table>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell align="right">מס זהות</TableCell>
-                                    <TableCell align="left">{Women?.tz}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">תאריך לידה</TableCell>
-                                    <TableCell align="left">{Women?.burnDate}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">כתובת</TableCell>
-                                    <TableCell align="left">{Women?.address}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">גיל</TableCell>
-                                    <TableCell align="left">{Women.age}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">עיר</TableCell>
-                                    <TableCell align="left">{Women.city}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">מדינה</TableCell>
-                                    <TableCell align="left">{Women.country}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">חוג</TableCell>
-                                    <TableCell align="left">{Women.class}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">חוצניקית?</TableCell>
-                                    <TableCell align="left">{Women.class}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">רקע</TableCell>
-                                    <TableCell align="left">{Women.backGround}</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell align="right">פתיחות</TableCell>
-                                    <TableCell align="left">{Women.openness}</TableCell>
-                                </TableRow>
-                              
-                            </TableBody>
-                        </Table>
+      {/* כותרת ראשית ופרטים בסיסיים */}
+      <SectionCard elevation={3}>
+        <ProfileHeader>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                {candidate.firstName} {candidate.lastName}
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
+                <StatusChip
+                  label={candidate.status}
+                  sx={{ backgroundColor: getStatusColor(candidate.status), color: "white" }}
+                />
+                <Chip
+                  icon={<Cake sx={{ color: colors.primary }} />}
+                  label={`גיל ${candidate.age}`}
+                  sx={{ backgroundColor: "white", color: colors.primary }}
+                />
+                <Chip
+                  icon={<LocationOn sx={{ color: colors.primary }} />}
+                  label={candidate.city}
+                  sx={{ backgroundColor: "white", color: colors.primary }}
+                />
+              </Box>
+            </Box>
+            <Avatar
+              sx={{
+                width: 100,
+                height: 100,
+                border: "4px solid white",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                backgroundColor: colors.secondary,
+              }}
+            >
+              {candidate.firstName.charAt(0)}
+              {candidate.lastName.charAt(0)}
+            </Avatar>
+          </Box>
 
+          {/* כפתורי פעולה */}
+          <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
+            <ActionButton
+              variant="contained"
+              startIcon={<Print />}
+              sx={{ backgroundColor: "white", color: colors.primary }}
+            >
+              הדפסת פרופיל
+            </ActionButton>
+            <ActionButton
+              variant="contained"
+              startIcon={<Share />}
+              sx={{ backgroundColor: "white", color: colors.primary }}
+            >
+              שיתוף פרופיל
+            </ActionButton>
+            <ActionButton
+              variant="contained"
+              startIcon={<ContactPhone />}
+              sx={{ backgroundColor: colors.accent, color: "rgba(0,0,0,0.7)" }}
+            >
+              יצירת קשר
+            </ActionButton>
+          </Box>
+        </ProfileHeader>
 
+        {/* טאבים לניווט בין הקטגוריות */}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", backgroundColor: "white" }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            textColor="primary"
+            indicatorColor="primary"
+            sx={{
+              "& .MuiTab-root": {
+                fontWeight: 600,
+                fontSize: "1rem",
+                py: 2,
+              },
+            }}
+          >
+            <Tab label="פרטים אישיים" icon={<Person />} iconPosition="start" />
+            <Tab label="פרטי משפחה" icon={<FamilyRestroom />} iconPosition="start" />
+            <Tab label="פרטי התקשרות" icon={<ContactPhone />} iconPosition="start" />
+          </Tabs>
+        </Box>
 
-                        <TableContainer>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                                            <Typography variant="h5">פרטים נוספים</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>מצב בריאותי:</TableCell>
-                                        <TableCell>{Women.healthCondition ? 'כן' : 'לא'}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>סטטוס:</TableCell>
-                                        <TableCell>{Women.status}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>כיסוי ראש:</TableCell>
-                                        <TableCell>{Women.headCovering}</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                                            <Typography variant="h5">רקע השכלתי </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>תיכון:</TableCell>
-                                        <TableCell>{Women.highSchool}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>סמינר:</TableCell>
-                                        <TableCell>{Women.seminar}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>מסלול לימודי:</TableCell>
-                                        <TableCell>{Women.studyPath}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>מוסד לימודי נוסף:</TableCell>
-                                        <TableCell>{Women.additionalEducationalInstitution}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>עיסוק כיום:</TableCell>
-                                        <TableCell>{Women.currentOccupation}</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                        <TableContainer>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                                            <Typography variant="h5">מראה חיצוני</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>גובה:</TableCell>
-                                        <TableCell>{Women.height} ס"מ</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>מראה כללי:</TableCell>
-                                        <TableCell>{Women.generalAppearance}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>צבע פנים:</TableCell>
-                                        <TableCell>{Women.facePaint}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>מראה:</TableCell>
-                                        <TableCell>{Women.appearance}</TableCell>
-                                    </TableRow>
-                                </TableBody>
+        {/* תוכן הטאבים */}
+        <Box sx={{ backgroundColor: "white", p: 0 }}>
+          <TabPanel value={activeTab} index={0}>
+            <Grid container spacing={3}>
+              {/* פרטים אישיים בסיסיים */}
+              <Grid item xs={12} md={6}>
+                <SectionCard>
+                  <SectionHeader>
+                    <Person />
+                    <Typography variant="h6">פרטים אישיים בסיסיים</Typography>
+                  </SectionHeader>
+                  <SectionContent>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Person fontSize="small" /> שם מלא
+                      </InfoLabel>
+                      <InfoValue>
+                        {candidate.firstName} {candidate.lastName}
+                      </InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>תעודת זהות</InfoLabel>
+                      <InfoValue>{candidate.tz}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Cake fontSize="small" /> תאריך לידה
+                      </InfoLabel>
+                      <InfoValue>{candidate.burnDate}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Home fontSize="small" /> כתובת
+                      </InfoLabel>
+                      <InfoValue>{candidate.address}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <LocationOn fontSize="small" /> עיר
+                      </InfoLabel>
+                      <InfoValue>{candidate.city}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>מדינה</InfoLabel>
+                      <InfoValue>{candidate.country}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>חוצניק</InfoLabel>
+                      <InfoValue>{getBooleanIcon(candidate.anOutsider)}</InfoValue>
+                    </InfoRow>
+                  </SectionContent>
+                </SectionCard>
+              </Grid>
 
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                                            <Typography variant="h5">ציפיות מבן הזוג</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>חוג:</TableCell>
-                                        <TableCell>{Women.club}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>גיל מינימלי:</TableCell>
-                                        <TableCell>{Women.ageFrom}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>גיל מקסימלי:</TableCell>
-                                        <TableCell>{Women.ageTo}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>תכונות חשובות בי:</TableCell>
-                                        <TableCell>{Women.importantTraitsInMe}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>תכונות חשובות שאני מחפש:</TableCell>
-                                        <TableCell>{Women.importantTraitsIMLookingFor}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>סגנון הישיבות המועדף:</TableCell>
-                                        <TableCell>{Women.preferredSittingStyle}</TableCell>
-                                    </TableRow>
-                                </TableBody>
+              {/* רקע ומידע בסיסי */}
+              <Grid item xs={12} md={6}>
+                <SectionCard>
+                  <SectionHeader>
+                    <School />
+                    <Typography variant="h6">רקע ומידע בסיסי</Typography>
+                  </SectionHeader>
+                  <SectionContent>
+                    <InfoRow>
+                      <InfoLabel>עדה</InfoLabel>
+                      <InfoValue>{candidate.class}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>רקע</InfoLabel>
+                      <InfoValue>{candidate.backGround}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>פתיחות</InfoLabel>
+                      <InfoValue>{candidate.openness}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <HealthAndSafety fontSize="small" /> מצב בריאותי
+                      </InfoLabel>
+                      <InfoValue>{getBooleanIcon(candidate.healthCondition)}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>סטטוס</InfoLabel>
+                      <InfoValue>
+                        <Chip
+                          label={candidate.status}
+                          size="small"
+                          sx={{
+                            backgroundColor: getStatusColor(candidate.status),
+                            color: "white",
+                            fontWeight: 600,
+                          }}
+                        />
+                      </InfoValue>
+                    </InfoRow>
+                  </SectionContent>
+                </SectionCard>
+              </Grid>
 
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                                            <Typography variant="h6">מעונינת שהבחור יהיה</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {Women.drivingLicense && (
-                                        <TableRow>
-                                            <TableCell>רשיון נהיגה</TableCell>
-                                            <TableCell>v</TableCell>
-                                        </TableRow>
-                                    )}
-                                    {Women.smoker && (
-                                        <TableRow>
-                                            <TableCell>לא מעשן</TableCell>
-                                            <TableCell></TableCell>
-                                        </TableRow>
-                                    )}
-                                    <TableRow>
-                                        <TableCell>זקן:</TableCell>
-                                        <TableCell>{Women.beard}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>כובע:</TableCell>
-                                        <TableCell>{Women.hat}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>חליפה:</TableCell>
-                                        <TableCell>{Women.suit}</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell>עיסוק:</TableCell>
-                                        <TableCell>{Women.occupation}</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </CardContent>
-                </Card>
-            )}
+              {/* מראה חיצוני */}
+              <Grid item xs={12} md={6}>
+                <SectionCard>
+                  <SectionHeader>
+                    <Visibility />
+                    <Typography variant="h6">מראה חיצוני</Typography>
+                  </SectionHeader>
+                  <SectionContent>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Height fontSize="small" /> גובה
+                      </InfoLabel>
+                      <InfoValue>{candidate.height} ס"מ</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>מראה כללי</InfoLabel>
+                      <InfoValue>{candidate.generalAppearance}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Face fontSize="small" /> צבע פנים
+                      </InfoLabel>
+                      <InfoValue>{candidate.facePaint}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>מראה</InfoLabel>
+                      <InfoValue>{candidate.appearance}</InfoValue>
+                    </InfoRow>
+                  </SectionContent>
+                </SectionCard>
+              </Grid>
 
-            <Typography variant="h5">פרטי משפחה</Typography>
-            {familyDetails && (
-                <Card sx={{ margin: 2 }}>
-                    <CardContent>
-                    <Typography variant="h6">פרטי האב:</Typography>
-                    <Table>
-    <TableHead>
-        <TableRow>
-            <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                <Typography variant="h5">פרטי האב</Typography>
-            </TableCell>
-        </TableRow>
-    </TableHead>
-    <TableBody>
-        <TableRow>
-            <TableCell align="right">שם</TableCell>
-            <TableCell align="left">{familyDetails.fatherName}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">מוצא</TableCell>
-            <TableCell align="left">{familyDetails.fatherOrigin}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">יוצא ישיבת</TableCell>
-            <TableCell align="left">{familyDetails.fatherYeshiva}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">השתייכות</TableCell>
-            <TableCell align="left">{familyDetails.fatherAffiliation}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">עיסוק</TableCell>
-            <TableCell align="left">{familyDetails.fatherOccupation}</TableCell>
-        </TableRow>
-    </TableBody>
-    
-    <TableHead>
-        <TableRow>
-            <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                <Typography variant="h5">פרטי האם</Typography>
-            </TableCell>
-        </TableRow>
-    </TableHead>
-    <TableBody>
-        <TableRow>
-            <TableCell align="right">שם האם</TableCell>
-            <TableCell align="left">{familyDetails.motherName}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">מוצא האם</TableCell>
-            <TableCell align="left">{familyDetails.motherOrigin}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">בוגרת סמינר</TableCell>
-            <TableCell align="left">{familyDetails.motherGraduateSeminar}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">שם קודם</TableCell>
-            <TableCell align="left">{familyDetails.motherPreviousName}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">עיסוק האם</TableCell>
-            <TableCell align="left">{familyDetails.motherOccupation}</TableCell>
-        </TableRow>
-    </TableBody>
+              {/* ציפיות ודרישות */}
+              <Grid item xs={12} md={6}>
+                <SectionCard>
+                  <SectionHeader>
+                    <Favorite />
+                    <Typography variant="h6">ציפיות ודרישות</Typography>
+                  </SectionHeader>
+                  <SectionContent>
+                    <InfoRow>
+                      <InfoLabel>טווח גילאים מבוקש</InfoLabel>
+                      <InfoValue>{getAgeRangeText(candidate.ageFrom, candidate.ageTo)}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Interests fontSize="small" /> תכונות חשובות בי
+                      </InfoLabel>
+                      <InfoValue>{candidate.importantTraitsInMe}</InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>
+                        <Interests fontSize="small" /> תכונות שאני מחפש/ת
+                      </InfoLabel>
+                      <InfoValue>
+                        {male ? male.importantTraitsIAmLookingFor : women?.importantTraitsIMLookingFor}
+                      </InfoValue>
+                    </InfoRow>
+                    <InfoRow>
+                      <InfoLabel>חוג</InfoLabel>
+                      <InfoValue>{candidate.club}</InfoValue>
+                    </InfoRow>
+                  </SectionContent>
+                </SectionCard>
+              </Grid>
 
-    <TableHead>
-        <TableRow>
-            <TableCell colSpan={2} style={{ textAlign: 'center' }}>
-                <Typography variant="h5">פרטים נוספים</Typography>
-            </TableCell>
-        </TableRow>
-    </TableHead>
-    <TableBody>
-        <TableRow>
-            <TableCell align="right">מצב הורים</TableCell>
-            <TableCell align="left">{familyDetails.parentsStatus ? 'נוכחים' : 'לא נוכחים'}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">מצב בריאותי</TableCell>
-            <TableCell align="left">{familyDetails.healthStatus ? 'תקין' : 'לא תקין'}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">רב משפחתי</TableCell>
-            <TableCell align="left">{familyDetails.familyRabbi}</TableCell>
-        </TableRow>
-        <TableRow>
-            <TableCell align="right">מידע נוסף על המשפחה</TableCell>
-            <TableCell align="left">{familyDetails.familyAbout}</TableCell>
-        </TableRow>
-    </TableBody>
-</Table>
-</CardContent>
-                </Card>
-            )}
-            {!familyDetails && <div>לא נמצאו פרטים</div>}
+              {/* פרטים ייחודיים לפי מגדר */}
+              {male && (
+                <>
+                  <Grid item xs={12} md={6}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <School />
+                        <Typography variant="h6">רקע ישיבתי</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <InfoRow>
+                          <InfoLabel>ישיבה קטנה</InfoLabel>
+                          <InfoValue>{male.smallYeshiva}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>ישיבה גדולה</InfoLabel>
+                          <InfoValue>{male.bigYeshiva}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>סוג ישיבה</InfoLabel>
+                          <InfoValue>{male.yeshivaType}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>קיבוץ</InfoLabel>
+                          <InfoValue>{male.kibbutz}</InfoValue>
+                        </InfoRow>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <Person />
+                        <Typography variant="h6">מאפיינים אישיים</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <InfoRow>
+                          <InfoLabel>רישיון נהיגה</InfoLabel>
+                          <InfoValue>{getBooleanIcon(male.driversLicense)}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>מעשן</InfoLabel>
+                          <InfoValue>{getBooleanIcon(male.smoker)}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>זקן</InfoLabel>
+                          <InfoValue>{male.beard}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>כובע</InfoLabel>
+                          <InfoValue>{male.hot}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>חליפה</InfoLabel>
+                          <InfoValue>{male.suit}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>כיסוי ראש</InfoLabel>
+                          <InfoValue>{male.headCovering}</InfoValue>
+                        </InfoRow>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <Favorite />
+                        <Typography variant="h6">ציפיות מבת הזוג</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} md={6}>
+                            <InfoRow>
+                              <InfoLabel>ציפיות מבת הזוג</InfoLabel>
+                              <InfoValue>{male.expectationsFromPartner}</InfoValue>
+                            </InfoRow>
+                            <InfoRow>
+                              <InfoLabel>סגנון סמינר מועדף</InfoLabel>
+                              <InfoValue>{male.preferredSeminarStyle}</InfoValue>
+                            </InfoRow>
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <InfoRow>
+                              <InfoLabel>מסלול מקצועי מועדף</InfoLabel>
+                              <InfoValue>{male.preferredProfessionalPath}</InfoValue>
+                            </InfoRow>
+                            <InfoRow>
+                              <InfoLabel>כיסוי ראש מועדף</InfoLabel>
+                              <InfoValue>{male.preferredHeadCovering}</InfoValue>
+                            </InfoRow>
+                          </Grid>
+                        </Grid>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                </>
+              )}
 
-            <Typography variant="h5">פרטי התקשרות</Typography>
-            {contactDetails.length > 0 ? (
-                <Card sx={{ margin: 2 }} >
-                    <CardContent>
-                        <Table>
-                            <TableBody>
-                                {contactDetails.map(contact => (
-                                    <><TableRow key={contact.id}>
-                                        <TableCell align="right">שם איש קשר</TableCell>
-                                        <TableCell align="left">{contact.name}</TableCell>
-                                    </TableRow><TableRow>
-                                            <TableCell align="right">טלפון</TableCell>
-                                            <TableCell align="left">{contact.phone}</TableCell>
-                                        </TableRow></>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+              {women && (
+                <>
+                  <Grid item xs={12} md={6}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <School />
+                        <Typography variant="h6">רקע השכלתי</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <InfoRow>
+                          <InfoLabel>תיכון</InfoLabel>
+                          <InfoValue>{women.highSchool}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>סמינר</InfoLabel>
+                          <InfoValue>{women.seminar}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>סוג סמינר</InfoLabel>
+                          <InfoValue>{women.seminarType}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>מסלול לימודים</InfoLabel>
+                          <InfoValue>{women.studyPath}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>מוסד חינוכי נוסף</InfoLabel>
+                          <InfoValue>{women.additionalEducationalInstitution}</InfoValue>
+                        </InfoRow>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <Person />
+                        <Typography variant="h6">מאפיינים אישיים</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <InfoRow>
+                          <InfoLabel>כיסוי ראש</InfoLabel>
+                          <InfoValue>{women.headCovering}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>רישיון נהיגה</InfoLabel>
+                          <InfoValue>{women.drivingLicense}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>מעשנת</InfoLabel>
+                          <InfoValue>{getBooleanIcon(women.smoker)}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>
+                            <Work fontSize="small" /> עיסוק נוכחי
+                          </InfoLabel>
+                          <InfoValue>{women.currentOccupation}</InfoValue>
+                        </InfoRow>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <Favorite />
+                        <Typography variant="h6">ציפיות מבן הזוג</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} md={6}>
+                            <InfoRow>
+                              <InfoLabel>סוג בחור מועדף</InfoLabel>
+                              <InfoValue>{women.interestedInBoy}</InfoValue>
+                            </InfoRow>
+                            <InfoRow>
+                              <InfoLabel>העדפה לזקן</InfoLabel>
+                              <InfoValue>{women.preferredBeard}</InfoValue>
+                            </InfoRow>
+                            <InfoRow>
+                              <InfoLabel>העדפה לכובע</InfoLabel>
+                              <InfoValue>{women.preferredHat}</InfoValue>
+                            </InfoRow>
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <InfoRow>
+                              <InfoLabel>העדפה לחליפה</InfoLabel>
+                              <InfoValue>{women.preferredSuit}</InfoValue>
+                            </InfoRow>
+                            <InfoRow>
+                              <InfoLabel>העדפת סוג ישיבה</InfoLabel>
+                              <InfoValue>{women.preferredYeshiva}</InfoValue>
+                            </InfoRow>
+                            <InfoRow>
+                              <InfoLabel>עיסוק מועדף לבן הזוג</InfoLabel>
+                              <InfoValue>{women.preferredOccupation}</InfoValue>
+                            </InfoRow>
+                          </Grid>
+                        </Grid>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          </TabPanel>
+
+          <TabPanel value={activeTab} index={1}>
+            {familyDetails ? (
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <SectionCard>
+                    <SectionHeader>
+                      <Person />
+                      <Typography variant="h6">פרטי האב</Typography>
+                    </SectionHeader>
+                    <SectionContent>
+                      <InfoRow>
+                        <InfoLabel>שם האב</InfoLabel>
+                        <InfoValue>{familyDetails.fatherName}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>מוצא האב</InfoLabel>
+                        <InfoValue>{familyDetails.fatherOrigin}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>ישיבת האב</InfoLabel>
+                        <InfoValue>{familyDetails.fatherYeshiva}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>השתייכות האב</InfoLabel>
+                        <InfoValue>{familyDetails.fatherAffiliation}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>עיסוק האב</InfoLabel>
+                        <InfoValue>{familyDetails.fatherOccupation}</InfoValue>
+                      </InfoRow>
+                    </SectionContent>
+                  </SectionCard>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <SectionCard>
+                    <SectionHeader>
+                      <Person />
+                      <Typography variant="h6">פרטי האם</Typography>
+                    </SectionHeader>
+                    <SectionContent>
+                      <InfoRow>
+                        <InfoLabel>שם האם</InfoLabel>
+                        <InfoValue>{familyDetails.motherName}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>מוצא האם</InfoLabel>
+                        <InfoValue>{familyDetails.motherOrigin}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>בוגרת סמינר</InfoLabel>
+                        <InfoValue>{familyDetails.motherGraduateSeminar}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>שם קודם</InfoLabel>
+                        <InfoValue>{familyDetails.motherPreviousName}</InfoValue>
+                      </InfoRow>
+                      <InfoRow>
+                        <InfoLabel>עיסוק האם</InfoLabel>
+                        <InfoValue>{familyDetails.motherOccupation}</InfoValue>
+                      </InfoRow>
+                    </SectionContent>
+                  </SectionCard>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <SectionCard>
+                    <SectionHeader>
+                      <FamilyRestroom />
+                      <Typography variant="h6">פרטי משפחה נוספים</Typography>
+                    </SectionHeader>
+                    <SectionContent>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <InfoRow>
+                            <InfoLabel>מצב הורים</InfoLabel>
+                            <InfoValue>{familyDetails.parentsStatus}</InfoValue>
+                          </InfoRow>
+                          <InfoRow>
+                            <InfoLabel>מצב בריאותי</InfoLabel>
+                            <InfoValue>{familyDetails.healthStatus}</InfoValue>
+                          </InfoRow>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <InfoRow>
+                            <InfoLabel>רב משפחתי</InfoLabel>
+                            <InfoValue>{familyDetails.familyRabbi}</InfoValue>
+                          </InfoRow>
+                          <InfoRow>
+                            <InfoLabel>מידע נוסף על המשפחה</InfoLabel>
+                            <InfoValue>{familyDetails.familyAbout}</InfoValue>
+                          </InfoRow>
+                        </Grid>
+                      </Grid>
+                    </SectionContent>
+                  </SectionCard>
+                </Grid>
+              </Grid>
             ) : (
-                <Typography variant="body1">לא נמצאו פרטי התקשרות.</Typography>
+              <Box sx={{ textAlign: "center", p: 4 }}>
+                <Typography variant="h6" color="text.secondary">
+                  לא נמצאו פרטי משפחה
+                </Typography>
+                <Button variant="contained" color="primary" sx={{ mt: 2, borderRadius: 20 }}>
+                  הוספת פרטי משפחה
+                </Button>
+              </Box>
             )}
-        </div>
-    );
-};
+          </TabPanel>
 
-export default Details;
+          <TabPanel value={activeTab} index={2}>
+            {contactDetails.length > 0 ? (
+              <Grid container spacing={3}>
+                {contactDetails.map((contact, index) => (
+                  <Grid item xs={12} md={6} key={contact.id || index}>
+                    <SectionCard>
+                      <SectionHeader>
+                        <ContactPhone />
+                        <Typography variant="h6">איש קשר {index + 1}</Typography>
+                      </SectionHeader>
+                      <SectionContent>
+                        <InfoRow>
+                          <InfoLabel>
+                            <Person fontSize="small" /> שם איש קשר
+                          </InfoLabel>
+                          <InfoValue>{contact.name}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>סוג הקשר</InfoLabel>
+                          <InfoValue>{contact.contactType}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                          <InfoLabel>
+                            <Phone fontSize="small" /> טלפון
+                          </InfoLabel>
+                          <InfoValue>
+                            <Button
+                              variant="text"
+                              startIcon={<Phone />}
+                              href={`tel:${contact.phone}`}
+                              sx={{ color: colors.primary }}
+                            >
+                              {contact.phone}
+                            </Button>
+                          </InfoValue>
+                        </InfoRow>
+                      </SectionContent>
+                    </SectionCard>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Box sx={{ textAlign: "center", p: 4 }}>
+                <Typography variant="h6" color="text.secondary">
+                  לא נמצאו פרטי התקשרות
+                </Typography>
+                <Button variant="contained" color="primary" sx={{ mt: 2, borderRadius: 20 }}>
+                  הוספת פרטי התקשרות
+                </Button>
+              </Box>
+            )}
+          </TabPanel>
+        </Box>
+      </SectionCard>
+    </Box>
+  )
+}
+
+export default CandidateDetails

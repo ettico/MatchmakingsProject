@@ -3,6 +3,7 @@ using MatchMakings.Core.DTOs;
 using MatchMakings.Core.IServices;
 using MatchMakings.Core.Models;
 using MatchMakings.Data;
+using MatchMakings.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +52,7 @@ namespace ApiProject.Controllers
         {
             var mm = new MatchMaker()
             {
+               
                 MatchmakerName =m.MatchmakerName,
                 IdNumber =m.IdNumber,
                 BirthDate =m.BirthDate,
@@ -85,6 +87,11 @@ namespace ApiProject.Controllers
             //var customer = new Customer { castName = c.castName, castAddress = c.castAddress, castPhone = c.castPhone, castEmail = c.castEmail, VolunteerId = c.VolunteerId };
             var mm = new MatchMaker()
             {
+                FirstName = m.FirstName,
+                LastName = m.LastName,
+                Username = m.Username,
+                Password = m.Password,
+                Role = m.Role,
                 MatchmakerName = m.MatchmakerName,
                 IdNumber = m.IdNumber,
                 BirthDate = m.BirthDate,
@@ -108,7 +115,13 @@ namespace ApiProject.Controllers
                 PrintingNotes = m.PrintingNotes,
             };
 
-            return await _matchMakerService.UpdateMatchMakerAsync(id, mm);
+            //return await _matchMakerService.UpdateMatchMakerAsync(id, mm);
+            var updatedMale = await _matchMakerService.UpdateMatchMakerAsync(id, mm);
+            if (updatedMale == null)
+                return NotFound();
+
+            var maleDTO = _mapper.Map<MatchMakerDTO>(updatedMale); // נחזיר ללקוח DTO
+            return Ok(maleDTO);
         }
 
         // DELETE api/<CustomerController>/5

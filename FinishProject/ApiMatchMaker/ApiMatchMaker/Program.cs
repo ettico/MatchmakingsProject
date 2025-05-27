@@ -1,103 +1,95 @@
-﻿using MatchMakings.Core.IRepositories;
+﻿using Amazon.Extensions.NETCore.Setup;
+using Amazon.S3;
+using MatchMakings.Core.IRepositories;
 using MatchMakings.Core.IServices;
-using MatchMakings.Data;
+using MatchMakings.Core;
 using MatchMakings.Data.Repository;
-using MatchMakings.Service;
+using MatchMakings.Data;
 using MatchMakings.Service.Services;
+using MatchMakings.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Options;
-using Amazon.S3;
-using Amazon.Extensions.NETCore.Setup;
-using MatchMakings.Core;
-
-Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+using ApiMatchMaker.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 
+Env.Load();
+
+
+// Services
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 💡 הוספת שירות CORS עם מדיניות בשם
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5173") // הוספת הדומיינים הרלוונטיים
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // אם משתמשים ב-Credentials
+    });
+});
+
+
+//builder.Services.AddAuthorization(options =>
+//{
+//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+//    options.AddPolicy("MatchMakerOnly", policy => policy.RequireRole("MatchMaker"));
+//    options.AddPolicy("CandidateOnly", policy => policy.RequireRole("Male", "Women"));
+//    options.AddPolicy("AdminOrMatchMaker", policy =>
+//        policy.RequireRole("Admin", "MatchMaker"));
+//});
+
+// 🧠 הזרקת תלויות
 builder.Services.AddScoped<IFamilyDetailsRepository, FamilyDetailsRepository>();
 builder.Services.AddScoped<IFamilyDetailsService, FamilyDetailsService>();
-
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IContactService, ContactService>();
-
-
 builder.Services.AddScoped<IMaleRepository, MaleRepository>();
 builder.Services.AddScoped<IMaleService, MaleService>();
-
-builder.Services.AddScoped<IMeetingRepository, MeetingRepository>();
-builder.Services.AddScoped<IMeetingService, MeetingService>();
-
+builder.Services.AddScoped<INoteRepository, NoteRepository>();
+builder.Services.AddScoped<INoteService, NoteService>();
 builder.Services.AddScoped<IMatchMakerRepository, MatchMakerRepository>();
 builder.Services.AddScoped<IMatchMakerService, MatchMakerService>();
-
 builder.Services.AddScoped<IMatchMakingRepository, MatchMakingRepository>();
 builder.Services.AddScoped<IMatchMakingService, MatchMakingService>();
-
 builder.Services.AddScoped<IWomenRepository, WomenRepository>();
 builder.Services.AddScoped<IWomenService, WomenService>();
-
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-builder.Services.AddDbContext<DataContext>();
-
 builder.Services.AddHttpClient<MatchService>();
+builder.Services.AddDbContext<DataContext>();
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 
-
+// AWS
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
-builder.Services.AddSingleton<IAmazonS3>(serviceProvider =>
+builder.Services.AddSingleton<IAmazonS3>(sp =>
 {
-    var options = serviceProvider.GetRequiredService<IOptions<AWSOptions>>().Value;
-
-    // הגדרת Credentials באופן ידני
+    var options = sp.GetRequiredService<IOptions<AWSOptions>>().Value;
     var credentials = new Amazon.Runtime.BasicAWSCredentials(
         builder.Configuration["AWS:AccessKey"],
         builder.Configuration["AWS:SecretKey"]
     );
-
-    // הגדרת Region
     var region = Amazon.RegionEndpoint.GetBySystemName(builder.Configuration["AWS:Region"]);
-
     return new AmazonS3Client(credentials, region);
 });
-builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-//builder.Services.AddScoped<JwtService>();
-
-builder.Services.AddAuthorization();
-
-
-
-
-//// הוספת מדיניות הרשאות לפי תפקידים
-//builder.Services.AddAuthorization(options =>
-//{
-//    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-//    options.AddPolicy("MatchMaker", policy => policy.RequireRole("MatchMaker"));
-//    options.AddPolicy("Women", policy => policy.RequireRole("Women", "Male"));
-//});
-
-
-// 🔑 הוספת Authentication & Authorization
+// 🔐 Authentication + JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = true; // מאפשר גם ב-HTTP
+        options.RequireHttpsMetadata = true;
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -107,33 +99,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
-          
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
         };
-        Console.WriteLine("-----------"+ builder.Configuration["Jwt:Issuer"]);
-        Console.WriteLine("-----------"+ builder.Configuration["Jwt:Audience"]);
-        Console.WriteLine("-----------"+ builder.Configuration["Jwt:Key"]);
-
-     
-
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine("🔑 JWT Key: " + builder.Configuration["Jwt:Key"]);
-                Console.WriteLine($"❌ Authentication failed: {context.Exception.Message}");
-                 Console.WriteLine($"Token: {context.Request.Headers["Authorization"]}");
+                Console.WriteLine($"❌ Auth failed: {context.Exception.Message}");
+                Console.WriteLine($"Token: {context.Request.Headers["Authorization"]}");
                 return Task.CompletedTask;
             },
             OnTokenValidated = context =>
             {
-                Console.WriteLine("✅ Token validated successfully!");
+                Console.WriteLine("✅ Token validated");
                 return Task.CompletedTask;
             }
         };
     });
-Console.WriteLine("🔑 JWT Key: " + builder.Configuration["Jwt:Key"]);
 
+builder.Services.AddAuthorization();
+
+// Swagger עם תמיכה ב-JWT
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -142,7 +128,7 @@ builder.Services.AddSwaggerGen(options =>
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
         Name = "Authorization",
-        Description = "Bearer Authentication with JWT Token",
+        Description = "Enter JWT with Bearer prefix",
         Type = SecuritySchemeType.Http
     });
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -159,39 +145,51 @@ builder.Services.AddSwaggerGen(options =>
             new List<string>()
         }
     });
-    
-
 });
-Console.WriteLine("🔑 JWT Key: " + builder.Configuration["Jwt:Key"]);
-Console.WriteLine("🔑 JWT Issuer: " + builder.Configuration["Jwt:Issuer"]);
-Console.WriteLine("🔑 JWT Audience: " + builder.Configuration["Jwt:Audience"]);
-IdentityModelEventSource.ShowPII = true;
+
+
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+    var permissions = db.Permissions.Select(p => p.PermissionName).ToList();
+
+    builder.Services.AddAuthorization(options =>
+    {
+        foreach (var permission in permissions)
+        {
+            options.AddPolicy(permission, policy =>
+                policy.Requirements.Add(new PermissionRequirement(permission)));
+        }
+    });
+}
+
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 🌐 Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors(builder =>
-       builder.WithOrigins("http://localhost:5173") // הוסף את הדומיין שלך כאן
-              .AllowAnyHeader()
-              .AllowAnyMethod());
 
 app.UseHttpsRedirection();
 
-app.UseRouting();  // הוספת UseRouting אחרי ה-UseHttpsRedirection
+app.UseRouting();
 
-app.UseAuthentication();  // השתמש בזה אחרי ה-UseRouting
-app.UseAuthorization();   // השתמש בזה אחרי ה-UseAuthentication
+// ✅ שימוש במדיניות CORS בשם
+app.UseCors("AllowLocalhost");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// דיווח על Header
 app.Use(async (context, next) =>
 {
     Console.WriteLine($"Authorization Header: {context.Request.Headers["Authorization"]}");
     await next();
 });
-app.MapControllers();
 
+app.MapControllers();
 app.Run();
-//Console.WriteLine("🔑bbb JWT Key: " + builder.Configuration["Jwt:Key"]);
