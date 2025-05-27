@@ -1,8 +1,8 @@
 // src/app/app.routes.ts
 import { Routes } from '@angular/router';
-import { LoginComponent } from '../componenet/login/login.component';
+import { LoginComponent } from '../component/login/login.component';
 import { authGuard } from './guard/auth.guard';
-import { AnalyticsComponent } from '../componenet/analytics/analytics.component';
+import { AnalyticsComponent } from '../component/analytics/analytics.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -14,7 +14,7 @@ export const routes: Routes = [
   },
   { 
     path: 'matchmakers', 
-    loadComponent: () => import('../componenet/matchmakers/matchmakers.component').then(m => m.MatchmakersComponent),
+    loadComponent: () => import('../component/matchmakers/matchmakers.component').then(m => m.MatchmakersComponent),
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: '/login' }
