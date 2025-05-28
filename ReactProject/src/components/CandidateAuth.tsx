@@ -396,6 +396,26 @@ const CandidateAuth = () => {
             </Box>
           </motion.div>
         </Box>
+<Box display="flex" justifyContent="center" mt={3}>
+  <Button
+    variant="contained"
+    onClick={() => handleNavigate("match","match")}
+    sx={{
+      backgroundColor: colors.primary,
+      color: "#fff",
+      px: 4,
+      py: 1.5,
+      borderRadius: 3,
+      fontWeight: "bold",
+      boxShadow: `0 0 10px ${colors.primaryLight}`,
+      "&:hover": {
+        backgroundColor: colors.primaryDark,
+      },
+    }}
+  >
+    🤖 התאם מועמדים בשבילי עם AI
+  </Button>
+</Box>
 
         {/* How It Works */}
         <Box sx={{ mt: 6, mb: 8 }}>
@@ -575,7 +595,7 @@ const FeaturedCandidate = ({
             },
           }}
         >
-          מעוניינים בפרטיש
+       מעוניינים בפרטיש
         </Button>
       </Box>
     </Paper>

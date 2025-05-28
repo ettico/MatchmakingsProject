@@ -171,6 +171,13 @@ export type Note = {
 //   updatedAt?: string
 }
 
+
+export type Match ={
+  userId: number
+  fullName: string
+  score: number
+  warnings: string[]
+}
 // עדכון הטיפוס Candidate כדי לתקן את בעיית החיפוש
 export type Candidate = (Male | Women) & {
   role: "Male" | "Women" // שינוי מ-"Women" ל-"female" לאחידות

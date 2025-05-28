@@ -16,6 +16,8 @@ import {
   Step,
   StepLabel,
   StepContent,
+  DialogContent,
+  Dialog,
 } from "@mui/material"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect, useRef } from "react"
@@ -36,6 +38,8 @@ import AssignmentIcon from "@mui/icons-material/Assignment"
 import SearchIcon from "@mui/icons-material/Search"
 import FavoriteIcon from "@mui/icons-material/Favorite"
 import NumberCounter from "./numberCounter"
+import { Close } from "@mui/icons-material"
+import About from "./aboutCard"
 
 // צבעים - שחור ונחושת
 const colors = {
@@ -204,7 +208,7 @@ const Home = () => {
   const [, setCurrentAnnouncementIndex] = useState(0)
   const announcementRef = useRef(null)
   const [pauseAnnouncements, setPauseAnnouncements] = useState(false)
-
+  const [open, setOpen] = useState(false)
   // בדיקה אם לשמור כפתור חזרה למעלה
   useEffect(() => {
     const handleScroll = () => {
@@ -387,7 +391,7 @@ const Home = () => {
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          {/* <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               color="inherit"
               onClick={() => navigate("/about")}
@@ -406,8 +410,40 @@ const Home = () => {
             >
               אודות
             </Button>
-          </motion.div>
+          </motion.div> */}
+       <Button
+        onClick={() => setOpen(true)}
+        variant="contained"
+        sx={{
+          border: `2px ${colors.primary} solid`,
+          borderRadius: "30px",
+        //   fontWeight: "bold",
+          backgroundColor:"black",
+        //   mt: 4,
+        }}
+      >
+    קצת עלינו
+      </Button>
+                  {/* דיאלוג שמכיל את ה-About */}
+        <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="md">
+        <DialogContent
+          sx={{
+            backgroundColor: "#111111",
+            position: "relative",
+            borderRadius: "16px",
+            color: "#fff",
+          }}
+        >
+          <Button
+            onClick={() => setOpen(false)}
+            sx={{ position: "absolute", top: 8, left: 8, color: "#fff" }}
+          >
+            <Close />
+          </Button>
 
+          <About />
+        </DialogContent>
+      </Dialog>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               color="inherit"
@@ -1194,13 +1230,7 @@ const Home = () => {
                   >
                     דף הבית
                   </Link>
-                  <Link
-                    component="button"
-                    onClick={() => navigate("/about")}
-                    sx={{ color: colors.text, "&:hover": { color: colors.primary } }}
-                  >
-                    אודות
-                  </Link>
+            
                   <Link
                     component="button"
                     onClick={() => navigate("/how-it-works")}

@@ -14,8 +14,9 @@ import MatchmakerNotes from "./components/MatchmakerNotes";
 import UserProvider from "./components/UserContext";
 // import { FileUpload } from "@mui/icons-material";
 // import FileUploader from "./components/Files";
-import About from "./components/about";
+import About from "./components/aboutCard";
 import UserProfile from "./components/Candidateprofile";
+import MatchCandidates from "./components/matchCandidates";
 // import HowItWorks from "./components/HowItWork";
 
 
@@ -25,15 +26,17 @@ const routes = createBrowserRouter([
     element: < Home/>,
   },
   {
-    path: "/candidate-auth",
-    element: <CandidateAuth />,
-    children: [
-      {path: "login/:userType", element: <Login userType={"auth"} />},
-      { path: "signup/:userType", element: <SignIn /> },
-      { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
-      { path: "CandidateProfile", element: < UserProfile/> },
-    ],
-  },
+  path: "/candidate-auth",
+  element: <CandidateAuth />,
+  children: [
+    { path: "login/:userType", element: <Login userType={"auth"} /> },
+    { path: "signup/:userType", element: <SignIn /> },
+    { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
+    { path: "CandidateProfile", element: <UserProfile /> },
+    { path: "match", element: <MatchCandidates /> } // 👈 הוספנו את זה
+  ],
+},
+
   {
     path: "/matchmaker-auth",
     element: <MatchmakerAuth />,
@@ -48,10 +51,10 @@ const routes = createBrowserRouter([
 
     ],
   },
-  {
-    path: "/about", element: <About />, 
+  // {
+  //   path: "/about", element: <About />, 
     
-  },
+  // },
 
   {
     path: "*",

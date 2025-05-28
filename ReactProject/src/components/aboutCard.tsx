@@ -14,14 +14,14 @@ const colors = {
   darkText: "#111111", // שחור
 }
 
-const About = () => {
+const AboutCard = () => {
 //   const navigate = useNavigate()
 
   return (
     <Container
       maxWidth="lg"
       sx={{
-        minHeight: "100vh",
+      minHeight: "auto",
         py: 12,
         px: { xs: 2, md: 4 },
         backgroundColor: colors.background,
@@ -198,4 +198,4 @@ const About = () => {
   )
 }
 
-export default About
+export default AboutCard
