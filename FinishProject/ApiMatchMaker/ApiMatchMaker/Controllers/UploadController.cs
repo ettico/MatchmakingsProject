@@ -33,5 +33,30 @@ namespace ApiProject.Controllers
             string url = _s3Client.GetPreSignedURL(request);
             return Ok(new { url });
         }
+        [HttpGet("download/{fileName}")]
+        public async Task<IActionResult> DownloadFile(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return BadRequest("Missing fileName");
+
+            var request = new GetObjectRequest
+            {
+                BucketName = "etti",
+                Key = fileName
+            };
+
+            using (var response = await _s3Client.GetObjectAsync(request))
+            {
+                if (response.ResponseStream == null)
+                    return NotFound();
+
+                var stream = new MemoryStream();
+                await response.ResponseStream.CopyToAsync(stream);
+                stream.Position = 0; // Reset stream position
+
+                return File(stream, response.Headers["Content-Type"], fileName);
+            }
+        }
+
     }
 }

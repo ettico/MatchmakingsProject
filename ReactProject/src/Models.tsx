@@ -164,12 +164,11 @@ export type MatchMaker = {
 // מודל להערות שדכנית
 export type Note = {
   id: number
-  matchmakerId: number
-  candidateId: number
-  candidateRole: string
-  text: string
+  matchMakerId: number
+  userId: number
+  content: string
   createdAt: string
-  updatedAt?: string
+//   updatedAt?: string
 }
 
 // עדכון הטיפוס Candidate כדי לתקן את בעיית החיפוש

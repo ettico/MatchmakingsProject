@@ -51,7 +51,7 @@ namespace ApiProject.Controllers
         [HttpPost]
         public async Task<ActionResult<Note>> Post([FromBody] NoteDTO n)
         {
-            var note = new Note { MaleId = n.MaleId, MatchMakerId = n.MatchMakerId, WomenId = n.WomenId, Content = n.Content, CreatedAt = n.CreatedAt };
+            var note = new Note {  MatchMakerId = n.MatchMakerId, UserId = n.UserId, Content = n.Content, CreatedAt = n.CreatedAt };
             return await _noteService.AddNoteAsync(note);
         }
 
@@ -59,7 +59,7 @@ namespace ApiProject.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<Note>> Put(int id, [FromBody] NoteDTO n)
         {
-            var note = new Note { MaleId = n.MaleId, MatchMakerId = n.MatchMakerId, WomenId = n.WomenId, Content = n.Content, CreatedAt = n.CreatedAt };
+            var note = new Note {  MatchMakerId = n.MatchMakerId, UserId   = n.UserId, Content = n.Content, CreatedAt = n.CreatedAt };
 
             return await _noteService.UpdateNoteAsync(id, note);
         }

@@ -47,7 +47,7 @@ interface LoginProps {
 const Login = ({ userType }: LoginProps) => {
 //   const theme = useTheme()
 //   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-  const { login, error: contextError } = useContext(userContext)
+  const { login,error: contextError } = useContext(userContext)
   const navigate = useNavigate()
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)

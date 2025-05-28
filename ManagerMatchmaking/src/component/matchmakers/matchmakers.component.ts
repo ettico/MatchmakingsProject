@@ -6,11 +6,10 @@ import { MatchmakerService } from '../../services/Matchmaker/match-maker.service
 import { Matchmaker } from '../../app/models';
 
 @Component({
-  selector: 'app-matchmakers',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './matchmakers.component.html',
-  styleUrls: ['./matchmakers.component.scss']
+    selector: 'app-matchmakers',
+    imports: [CommonModule, RouterModule],
+    templateUrl: './matchmakers.component.html',
+    styleUrls: ['./matchmakers.component.scss']
 })
 export class MatchmakersComponent implements OnInit {
   matchmakers = signal<Matchmaker[]>([]);

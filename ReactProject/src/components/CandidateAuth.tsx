@@ -16,13 +16,14 @@ import {
   Card,
   CardContent,
   Divider,
+  Tooltip,
   // useMediaQuery,
   // useTheme,
 } from "@mui/material"
 import { useContext, useState, useEffect } from "react"
 import { Outlet, useNavigate } from "react-router-dom"
 import { userContext } from "./UserContext"
-import { motion } from "framer-motion"
+import {  motion } from "framer-motion"
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew"
 import LoginIcon from "@mui/icons-material/Login"
 import PersonAddIcon from "@mui/icons-material/PersonAdd"
@@ -31,6 +32,7 @@ import HomeIcon from "@mui/icons-material/Home"
 import FavoriteIcon from "@mui/icons-material/Favorite"
 import PersonIcon from "@mui/icons-material/Person"
 import WineBarIcon from "@mui/icons-material/WineBar"
+import { Logout } from "@mui/icons-material"
 
 // צבעים חדשים
 const colors = {
@@ -46,7 +48,7 @@ const CandidateAuth = () => {
   // const theme = useTheme()
   // const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const navigate = useNavigate()
-  const { user } = useContext(userContext)
+  const { user,logout } = useContext(userContext)
   const [open, setOpen] = useState(false)
   const [modalType, setModalType] = useState("")
   const [userName, setUserName] = useState("")
@@ -63,6 +65,9 @@ const CandidateAuth = () => {
     setModalType(type)
     setOpen(true)
   }
+ const handleLogout = () => {
+    logout(); // קריאה לפונקציית ה-logout
+  };
 
   const isPostDetails = modalType === "post-details"
 
@@ -166,8 +171,12 @@ const CandidateAuth = () => {
             >
               בשורה טובה
             </Typography>
+               <Tooltip title="ליציאה מהאתר" arrow>
+      <Button onClick={() => handleLogout()} startIcon={<Logout />} sx={{ color: colors.primary }}>
+        {/* אפשר להוסיף טקסט נוסף כאן אם רוצים */}
+      </Button>
+    </Tooltip>
           </Box>
-
           <Box sx={{ display: "flex", gap: 2 }}>
             {user?.role !== "Women" && user?.role !== "Male" && (
               <>

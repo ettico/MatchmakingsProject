@@ -8,12 +8,12 @@ import { Router, RouterLink, RouterModule, RouterOutlet } from '@angular/router'
 import { User } from '../../app/models';
 
 @Component({
-  selector: 'app-home',
-  standalone:true,
-  imports: [MatButtonModule,RouterOutlet,RouterLink,MatButtonModule,MatIconModule,
-    FormsModule   ],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
+    selector: 'app-home',
+    standalone:true,
+    imports: [MatButtonModule, RouterOutlet, RouterLink, MatButtonModule, MatIconModule,
+        FormsModule],
+    templateUrl: './home.component.html',
+    styleUrl: './home.component.css'
 })
 export class HomeComponent {
   

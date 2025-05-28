@@ -1,5 +1,8 @@
-@import '../../styles/variabals.scss';
-@import '../../styles/animation.scss';
+// @import '../../styles/variabals.scss';
+// @import '../../styles/animation.scss';
+@use '../../styles/variabals.scss' as *;
+@use '../../styles/animation.scss' as *;
+
 
 .analytics-container {
   padding: $spacing-lg;

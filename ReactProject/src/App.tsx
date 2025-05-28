@@ -4,8 +4,6 @@ import MatchmakerAuth from "./components/MatchmakerAuth";
 import Login from "./components/login";
 import Home from "./components/home";
 import SignIn from "./components/register";
-// import FileUploader from "./components/Files";
-// import GetMales from "./components/getCandidate";
 import GetCandidates1 from "./components/get-candidate";
 // import Details from "./components/DetailsAuth";
 import PostDetailsAuth from "./components/PostDetailsAuth";
@@ -13,7 +11,7 @@ import MatchMakerForm from "./components/PostDetailsMM";
 // import RegistrationForm from "./components/xxx";
 
 import MatchmakerNotes from "./components/MatchmakerNotes";
-import { UserProvider } from "./components/UserContext";
+import UserProvider from "./components/UserContext";
 // import { FileUpload } from "@mui/icons-material";
 // import FileUploader from "./components/Files";
 import About from "./components/about";

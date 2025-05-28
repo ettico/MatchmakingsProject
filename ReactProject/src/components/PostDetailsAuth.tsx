@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect,
+import {
+  useState,
+  useEffect,
   //  useContext
-   } from "react"
+} from "react"
 import {
   TextField,
   Button,
@@ -512,6 +514,15 @@ const UserRegistrationForm = () => {
         return
       }
 
+      // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת מהלוקל סטורג' לפני כל דבר אחר
+      if (userData.password) {
+        setUserPassword(userData.password)
+        console.log("🔐 שמירת סיסמה קיימת מהלוקל סטורג':", userData.password)
+      }
+
+
+
+
       // פענוח הטוקן לקבלת מזהה המשתמש
       if (userData.token) {
         const decodedToken = decodeAndVerifyToken(userData.token)
@@ -529,11 +540,13 @@ const UserRegistrationForm = () => {
             setUserRole(decodedToken.role)
             console.log("תפקיד משתמש מהטוקן:", decodedToken.role)
 
-            // קביעת המגדר לפי התפקיד
+            // 🔧 תיקון קריטי: קביעת המגדר לפני טעינת הנתונים
             if (decodedToken.role === "Male") {
               setGender("Male")
+              console.log("🚹 הוגדר מגדר: בחור")
             } else if (decodedToken.role === "Women") {
               setGender("Women")
+              console.log("🚺 הוגדר מגדר: בחורה")
             }
           }
 
@@ -576,13 +589,6 @@ const UserRegistrationForm = () => {
       console.log("נשמר בסטייט - מזהה משתמש:", userData.id)
       console.log("נשמר בסטייט - טוקן:", userData.token.substring(0, 15) + "...")
 
-      // 🔧 שמירת הסיסמה הקיימת
-      if (userData.password) {
-        setUserPassword(userData.password)
-        personalForm.setValue("Password", userData.password)
-        console.log("שמירת סיסמה קיימת")
-      }
-
       // מילוי הפרטים הבסיסיים מהלוקל סטורג'
       if (userData.firstName) {
         personalForm.setValue("firstName", userData.firstName)
@@ -605,6 +611,12 @@ const UserRegistrationForm = () => {
       if (userData.tz) {
         personalForm.setValue("tz", userData.tz)
         console.log("הוגדר שדה tz:", userData.tz)
+      }
+
+      // 🔧 תיקון קריטי: הגדרת הסיסמה בטופס לאחר מילוי הפרטים הבסיסיים
+      if (userData.password) {
+        personalForm.setValue("Password", userData.password)
+        console.log("🔐 הוגדרה סיסמה בטופס:", userData.password)
       }
 
       // טעינת נתוני המשתמש מהשרת
@@ -632,6 +644,7 @@ const UserRegistrationForm = () => {
     try {
       console.log("מנסה לטעון נתוני משתמש עם ID:", id)
       console.log("משתמש בטוקן:", token.substring(0, 15) + "...")
+      console.log("מגדר משתמש:", userGender)
 
       if (!token.startsWith("ey")) {
         console.error("הטוקן אינו בפורמט JWT תקין")
@@ -643,6 +656,10 @@ const UserRegistrationForm = () => {
         setLoading(false)
         return
       }
+
+      // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת לפני טעינת נתונים מהשרת
+      const existingPassword = userPassword || personalForm.getValues("Password")
+      console.log("🔐 שמירת סיסמה קיימת לפני טעינת נתונים:", existingPassword)
 
       // טעינת פרטים אישיים
       const userApiUrl =
@@ -665,17 +682,23 @@ const UserRegistrationForm = () => {
         if (response.data) {
           const serverData = response.data
 
-          // 🔧 שמירת הסיסמה הקיימת לפני עדכון השדות
-          const existingPassword = personalForm.getValues("Password") || userPassword
-
+          // 🔧 תיקון קריטי: מילוי כל השדות מהשרת למעט הסיסמה
           Object.keys(serverData).forEach((key) => {
             if (serverData[key] !== null && serverData[key] !== undefined) {
               try {
                 console.log(`מגדיר שדה ${key} לערך:`, serverData[key])
-                if (key in personalForm.getValues()) {
-                  personalForm.setValue(key as any, serverData[key])
+
+                // 🔧 תיקון: לא לעדכן סיסמה מהשרת - לשמור על הקיימת
+            
+                if ( key === "password") {//key !== "Password" &&
+                  // בדיקה אם השדה קיים בטופס
+                  const formFields = personalForm.getValues()
+                  if (key in formFields) {
+                    personalForm.setValue(key as any, serverData[key])
+                  }
                 }
 
+                // עדכון state נוספים
                 if (key === "firstName") {
                   setFirstName(serverData[key])
                 }
@@ -692,11 +715,11 @@ const UserRegistrationForm = () => {
             }
           })
 
-          // 🔧 החזרת הסיסמה הקיימת
+          // 🔧 תיקון קריטי: החזרת הסיסמה הקיימת לאחר טעינת כל הנתונים
           if (existingPassword) {
             personalForm.setValue("Password", existingPassword)
             setUserPassword(existingPassword)
-            console.log("החזרת סיסמה קיימת לאחר טעינת נתונים")
+            console.log("🔐 החזרת סיסמה קיימת לאחר טעינת נתונים:", existingPassword)
           }
 
           setInitialDataLoaded(true)
@@ -721,7 +744,7 @@ const UserRegistrationForm = () => {
         }
       }
 
-      // 🔧 טעינת פרטי משפחה עם שמירת ID קיים
+      // 🔧 תיקון קריטי: טעינת פרטי משפחה עם מילוי נכון של השדות
       try {
         const familyResponse = await axios.get(`https://localhost:7012/api/FamilyDetails`, {
           headers: {
@@ -741,9 +764,31 @@ const UserRegistrationForm = () => {
             // 🔧 שמירת ID הקיים לעדכון עתידי
             setExistingFamilyId(familyDetails.id)
 
+            // 🔧 תיקון קריטי: מילוי נכון של שדות המשפחה
             Object.keys(familyDetails).forEach((key) => {
-              if (familyDetails[key] !== null && familyDetails[key] !== undefined && key in familyForm.getValues()) {
-                familyForm.setValue(key as any, familyDetails[key])
+              if (familyDetails[key] !== null && familyDetails[key] !== undefined) {
+                try {
+                  const formFields = familyForm.getValues()
+                  if (key in formFields) {
+                    // 🔧 תיקון מיוחד לשדות בוליאניים
+                    if (key === "parentsStatus") {
+                      // המרה מבוליאני לטקסט
+                      const statusText = familyDetails[key] === true ? "נשואים" : "גרושים"
+                      familyForm.setValue(key as any, statusText)
+                      console.log(`מגדיר שדה משפחה ${key} לערך:`, statusText)
+                    } else if (key === "healthStatus") {
+                      // המרה מבוליאני לטקסט
+                      const healthText = familyDetails[key] === true ? "תקין" : "יש בעיות בריאותיות במשפחה"
+                      familyForm.setValue(key as any, healthText)
+                      console.log(`מגדיר שדה משפחה ${key} לערך:`, healthText)
+                    } else {
+                      familyForm.setValue(key as any, familyDetails[key])
+                      console.log(`מגדיר שדה משפחה ${key} לערך:`, familyDetails[key])
+                    }
+                  }
+                } catch (setValueError) {
+                  console.error(`שגיאה בהגדרת שדה משפחה ${key}:`, setValueError)
+                }
               }
             })
           }
@@ -803,17 +848,8 @@ const UserRegistrationForm = () => {
 
   const handleGenderChange = (newGender: "Male" | "Women") => {
     setGender(newGender)
+    console.log("🔄 שינוי מגדר ל:", newGender)
   }
-
-  // const handleNext = () => {
-  //   if (activeStep === 0) {
-  //     personalForm.handleSubmit(onSubmitPersonalInfo)()
-  //   } else if (activeStep === 1) {
-  //     familyForm.handleSubmit(onSubmitFamilyInfo)()
-  //   } else {
-  //     contactForm.handleSubmit(onSubmitContactInfo)()
-  //   }
-  // }
 
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1)
@@ -838,6 +874,10 @@ const UserRegistrationForm = () => {
     try {
       const userApiUrl =
         gender === "Male" ? `https://localhost:7012/api/Male/${userId}` : `https://localhost:7012/api/Women/${userId}`
+
+      // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת ולא שליחת ערך ריק
+      const passwordToSend = userPassword || data.Password || ""
+      console.log("🔐 סיסמה לשליחה:", passwordToSend ? "קיימת" : "ריקה")
 
       // 🔧 הכנת הנתונים לשליחה עם כל השדות הנדרשים בפורמט הנכון
       const baseData = {
@@ -873,7 +913,7 @@ const UserRegistrationForm = () => {
         FirstName: data.firstName || firstName || "",
         LastName: data.lastName || lastName || "",
         Username: data.email || userEmail || "",
-        Password: userPassword || data.Password || "", // 🔧 תיקון: שמירת הסיסמה הקיימת
+        Password: passwordToSend, // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת
         photoUrl: data.photoUrl || "",
         TZFormUrl: data.TZFormUrl || "",
         // 🔧 הוספת השדות החסרים עם ערכי string (לא boolean)
@@ -882,8 +922,6 @@ const UserRegistrationForm = () => {
         appearance: data.appearance || "ממוצע",
         generalAppearance: data.generalAppearance || "מטופח",
         preferredSeminarStyle: data.preferredSeminarStyle || "חרדי",
-        // 🔧 הוספת השדה החסר 'm'
-        m: true, // או כל ערך שהשרת מצפה לו
         expectationsFromPartner: data.expectationsFromPartner || "לא משנה",
         preferredProfessionalPath: data.preferredProfessionalPath || "לא משנה",
       }
@@ -898,16 +936,14 @@ const UserRegistrationForm = () => {
           hat: data.hat || "ללא כובע",
           suit: data.suit || "ארוכה",
           headCovering: data.headCovering || "כיפה סרוגה",
-          smallYeshiva: data.smallYeshiva || "",
-          bigYeshiva: data.bigYeshiva || "",
+          smallYeshiva: data.smallYeshiva || "", // 🔧 תיקון: הוספת השדה החסר
+          bigYeshiva: data.bigYeshiva || "", // 🔧 תיקון: הוספת השדה החסר
           yeshivaType: data.yeshivaType || "ליטאית",
-          kibbutz: data.kibbutz || "",
+          kibbutz: data.kibbutz || "", // 🔧 תיקון: הוספת השדה החסר
           occupation: data.occupation || "אברך",
-          // שדות נוספים לבחורים
-          preferredOccupation: "אברך",
+          preferredOccupation: data.preferredOccupation || "אברך",
           studyPath: "",
           currentOccupation: data.occupation || "אברך",
-          // 🔧 שדות נוספים שעלולים להיות נדרשים לבחורים
           religiousLevel: "חרדי",
           learningStyle: "ליטאי",
           futureGoals: "להמשיך ללמוד",
@@ -921,17 +957,15 @@ const UserRegistrationForm = () => {
           seminarType: data.seminarType || "בית יעקב",
           studyPath: data.studyPath || "הוראה",
           currentOccupation: data.currentOccupation || "עקרת בית",
-          // שדות נוספים לבחורות
           preferredOccupation: "עקרת בית",
           occupation: data.currentOccupation || "עקרת בית",
-          // 🔧 שדות נוספים שעלולים להיות נדרשים לבחורות
           religiousLevel: "חרדית",
           careerGoals: "אמא ועקרת בית",
           educationLevel: "סמינר",
         }),
       }
 
-      console.log("שולח נתוני משתמש:", dataToSend)
+      console.log("שולח נתוני משתמש:", { ...dataToSend, Password: "***" }) // הסתרת סיסמה בלוג
       console.log("כתובת API:", userApiUrl)
 
       try {
@@ -959,11 +993,12 @@ const UserRegistrationForm = () => {
               firstName: dataToSend.firstName,
               lastName: dataToSend.lastName,
               email: dataToSend.email,
+              role: gender, // 🔧 תיקון: עדכון המגדר בלוקל סטורג'
               // 🔧 שמירה מפורשת על הסיסמה הקיימת
-              password: userPassword || userData.password,
+              password: passwordToSend,
             }
             localStorage.setItem("user", JSON.stringify(updatedUserData))
-            console.log("עדכון הלוקל סטורג' הושלם עם שמירת סיסמה")
+            console.log("עדכון הלוקל סטורג' הושלם עם שמירת סיסמה ומגדר")
           }
         } catch (storageError) {
           console.error("שגיאה בעדכון הלוקל סטורג':", storageError)
@@ -974,7 +1009,7 @@ const UserRegistrationForm = () => {
         setLastName(dataToSend.lastName)
         setUserEmail(dataToSend.email)
         // 🔧 שמירה מפורשת של הסיסמה
-        setUserPassword(userPassword || dataToSend.Password)
+        setUserPassword(passwordToSend)
 
         setNotification({
           open: true,
@@ -1342,7 +1377,7 @@ const UserRegistrationForm = () => {
   )
 
   return (
-    <Container maxWidth="lg" sx={{ direction: "rtl", py: 4 }}>
+    <Container maxWidth="lg" sx={{ direction: "rtl", py: 4 }} >
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <StyledPaper elevation={3}>
           <Box sx={{ p: 4 }}>
@@ -1756,8 +1791,8 @@ const UserRegistrationForm = () => {
                               <Grid container spacing={3}>
                                 {renderTextField("smallYeshiva", "ישיבה קטנה", personalForm)}
                                 {renderTextField("bigYeshiva", "ישיבה גדולה", personalForm)}
-                                {renderSelect("yeshivaType", "סוג ישיבה", OPTIONS.yeshivaType, personalForm)}
                                 {renderTextField("kibbutz", "קיבוץ", personalForm)}
+                                {renderSelect("yeshivaType", "סוג ישיבה", OPTIONS.yeshivaType, personalForm)}
                                 {renderTextField("occupation", "עיסוק נוכחי", personalForm)}
                               </Grid>
                             </StyledPaper>

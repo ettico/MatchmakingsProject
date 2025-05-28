@@ -110,9 +110,9 @@ export default function SignIn() {
       // הפניה לדף המתאים לאחר 2 שניות
       setTimeout(() => {
         if (data.role === "MatchMaker") {
-          navigate("/matchmaker-auth")
+          navigate("/matchmaker-auth/post-details-matchmaker")
         } else {
-          navigate("/candidate-auth")
+          navigate("/candidate-auth/Post-Details-Auth")
         }
       }, 2000)
     } catch (err) {
@@ -142,15 +142,15 @@ export default function SignIn() {
     >
       {/* Background Animation */}
       <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          overflow: "hidden",
-          zIndex: 0,
-        }}
+        // sx={{
+        //   position: "absolute",
+        //   top: 0,
+        //   left: 0,
+        //   right: 0,
+        //   bottom: 0,
+        //   overflow: "hidden",
+        //   zIndex: 0,
+        // }}
       >
         {Array.from({ length: 30 }).map((_, index) => (
           <Box

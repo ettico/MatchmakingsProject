@@ -16,6 +16,6 @@ export const routes: Routes = [
     path: 'matchmakers', 
     loadComponent: () => import('../component/matchmakers/matchmakers.component').then(m => m.MatchmakersComponent),
     canActivate: [authGuard]
-  },
+  }, 
   { path: '**', redirectTo: '/login' }
 ];

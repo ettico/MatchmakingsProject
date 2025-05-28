@@ -11,14 +11,14 @@ namespace MatchMakings.Core.Models
         {
             public int Id { get; set; }
             public int MatchMakerId { get; set; }
-            public int? MaleId { get; set; }
-            public int? WomenId { get; set; }
+            public int? UserId { get; set; }
+            //public int? WomenId { get; set; }
             public string Content { get; set; }
             public DateTime CreatedAt { get; set; }
 
             public MatchMaker MatchMaker { get; set; }
-            public Male Male { get; set; }
-            public Women Women { get; set; }
+            //public Male Male { get; set; }
+            public BaseUser User { get; set; }
         }
 
     

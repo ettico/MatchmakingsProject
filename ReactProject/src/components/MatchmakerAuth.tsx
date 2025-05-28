@@ -17,6 +17,7 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  Tooltip,
 } from "@mui/material"
 import { useContext, useEffect, useState } from "react"
 import { Outlet, useNavigate } from "react-router-dom"
@@ -33,6 +34,7 @@ import VerifiedIcon from "@mui/icons-material/Verified"
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents"
 import FavoriteIcon from "@mui/icons-material/Favorite"
 import SettingsIcon from "@mui/icons-material/Settings"
+import { Logout } from "@mui/icons-material"
 
 // צבעים חדשים
 const colors = {
@@ -48,7 +50,7 @@ const MatchmakerAuth = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const navigate = useNavigate()
-  const { user } = useContext(userContext)
+  const { user,logout } = useContext(userContext)
   const [userName, setUserName] = useState("")
   const [stats, setStats] = useState({
     totalMatches: 0,
@@ -62,6 +64,7 @@ const MatchmakerAuth = () => {
     } else if (user?.firstName) {
       setUserName(user.firstName)
     }
+
 
     // Simulate loading stats
     if (user?.id) {
@@ -79,6 +82,10 @@ const MatchmakerAuth = () => {
     { name: "יעקב לוי", matches: 38, avatar: "י" },
     { name: "שרה גולדברג", matches: 35, avatar: "ש" },
   ]
+
+    function handleLogout(): void {
+       logout();
+    }
 
   return (
     <Container
@@ -155,8 +162,13 @@ const MatchmakerAuth = () => {
             >
               בשורה טובה
             </Typography>
+            <br />
+           <Tooltip title="ליציאה מהאתר" arrow>
+      <Button onClick={() => handleLogout()} startIcon={<Logout />} sx={{ color: colors.primary }}>
+        {/* אפשר להוסיף טקסט נוסף כאן אם רוצים */}
+      </Button>
+    </Tooltip>
           </Box>
-
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {user?.role != "MatchMaker" && (
               <>

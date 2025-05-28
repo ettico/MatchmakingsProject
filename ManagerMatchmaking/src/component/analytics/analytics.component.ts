@@ -8,11 +8,11 @@ import { Chart, registerables } from "chart.js"
 Chart.register(...registerables)
 
 @Component({
-  selector: "app-analytics",
-  standalone: true,
-  imports: [CommonModule, HttpClientModule],
-  templateUrl: "./analytics.component.html",
-  styleUrls: ["./analytics.component.scss"],
+    selector: "app-analytics",
+    standalone:true,
+    imports: [CommonModule, HttpClientModule],
+    templateUrl: "./analytics.component.html",
+    styleUrls: ["./analytics.component.scss"]
 })
 export class AnalyticsComponent implements OnInit, AfterViewInit {
   candidates: Candidate[] = []
