@@ -65,14 +65,14 @@ const Login = ({ userType }: LoginProps) => {
       await login(data.UserName, data.Password)
 
       // בדיקת סוג המשתמש והפניה לדף המתאים
-      const storedUser = localStorage.getItem("user")
+     const storedUser = localStorage.getItem("user")
       if (storedUser) {
-        const userData = JSON.parse(storedUser)
+        const userData = JSON.parse(storedUser).user
 
-        if (userType === "auth" && (userData.role === "Male" || userData.role === "Women")) {
+        if ( userData.role === "Male" || userData.role === "Women") {
           navigate("/candidate-auth")
           console.log("התחברות מוצלחת - מועמד")
-        } else if (userType === "MatchMaker" && userData.role === "MatchMaker") {
+        } else if ( userData.role === "MatchMaker") {
           navigate("/matchmaker-auth")
           console.log("התחברות מוצלחת - שדכנית")
         } else {

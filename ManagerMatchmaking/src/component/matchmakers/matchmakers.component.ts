@@ -4,9 +4,11 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatchmakerService } from '../../services/Matchmaker/match-maker.service';
 import { Matchmaker } from '../../app/models';
+// import { isStandalone } from '@angular/core';
 
 @Component({
     selector: 'app-matchmakers',
+    standalone:true,
     imports: [CommonModule, RouterModule],
     templateUrl: './matchmakers.component.html',
     styleUrls: ['./matchmakers.component.scss']

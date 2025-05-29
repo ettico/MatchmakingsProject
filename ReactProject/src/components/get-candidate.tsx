@@ -70,6 +70,7 @@ import {
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male, Women, Note, FamilyDetails, Contact } from "../Models"
+import { Outlet, useNavigate } from "react-router-dom"
 
 // קומפוננטים מעוצבים
 const StyledCard = styled(Card)(({ }) => ({
@@ -235,7 +236,15 @@ const CandidatesPage = () => {
     const [error, setError] = useState<string | null>(null)
     const [familyDetails, setFamilyDetails] = useState<FamilyDetails | null>(null)
     const [contacts, setContacts] = useState<Contact[]>([])
+    const [, setOpen] = useState(false)
+    const [, setModalType] = useState("")
+    const navigate = useNavigate()
 
+    const handleNavigate = (path: string, type: string) => {
+        navigate(path)
+        setModalType(type)
+        setOpen(true)
+    }
     // פילטרים
     const [filters, setFilters] = useState({
         statusFilter: "all",
@@ -266,8 +275,8 @@ const CandidatesPage = () => {
                 ...female,
                 role: "Women" as const,
             }))
-            console.log("גברים:"+malesResponse.data);
-            console.log("נשים:"+femalesResponse.data);
+            console.log("גברים:", malesResponse.data);
+            console.log("נשים:", femalesResponse.data);
 
 
             // איחוד הנתונים
@@ -639,7 +648,6 @@ const CandidatesPage = () => {
                         </Box>
                     </Grid>
                 </Grid>
-
                 <Collapse in={expandedFilters}>
                     <Box sx={{ mt: 3 }}>
                         <Grid container spacing={3}>
@@ -832,7 +840,7 @@ const CandidatesPage = () => {
                                                 </Avatar>
                                             )}
                                         </Box>
-
+                                      
                                         <CardContent sx={{ pt: 2, pb: 7 }}>
                                             <Typography variant="h5" component="div" align="center" gutterBottom>
                                                 {candidate.firstName} {candidate.lastName}
@@ -1436,8 +1444,10 @@ const CandidatesPage = () => {
                             </Box>
                         </Box>
                     ) : (
+
                         // תצוגה לדסקטופ
                         <>
+
                             <DetailSidebar>
                                 <IconButton sx={{ position: "absolute", top: 8, right: 8 }} onClick={handleCloseDetails}>
                                     <Close />
@@ -1464,7 +1474,48 @@ const CandidatesPage = () => {
                                     color={selectedCandidate.statusVacant ? "success" : "error"}
                                     sx={{ mb: 2 }}
                                 />
+  <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
 
+                                            {/* טקסט מעל הכפתור */}
+                                            <Typography
+                                                variant="h6"
+                                                sx={{
+                                                    color: "#000", // שחור
+                                                    fontWeight: "bold",
+                                                    fontSize: "13px",
+                                                    mb: 0.2,
+                                                }}
+                                            >
+                                                רוצה לקבל את המועמדים שמתאימים עם AI
+                                                ?
+                                            </Typography>
+
+                                            {/* כפתור קטן ומעוצב */}
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                onClick={() => {
+                                                    // event.stopPropagation(); // מונע שהקליק יגיע להורה (הכרטיס)
+                                                    handleNavigate(`match/${selectedCandidate?.role}/${selectedCandidate?.id}`, "match");
+                                                }}
+                                                sx={{
+                                                    backgroundColor: "#b87333",
+                                                    color: "#fff",
+                                                    px: 3,
+                                                    py: 1,
+                                                    borderRadius: "20px",
+                                                    fontWeight: "bold",
+                                                    fontSize: "0.9rem",
+                                                    textTransform: "none",
+                                                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                                                    "&:hover": {
+                                                        backgroundColor: "#a05a2c",
+                                                    },
+                                                }}
+                                            >
+                                                🔍 התחל חיפוש
+                                            </Button>
+                                        </Box>
                                 <Button
                                     variant="contained"
                                     color={selectedCandidate.statusVacant ? "error" : "success"}
@@ -2140,6 +2191,7 @@ const CandidatesPage = () => {
 
                 )}
             </NotesDrawer>
+            <Outlet />
         </Box>
     )
 }

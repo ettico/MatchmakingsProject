@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿using ApiMatchMaker.PostModels;
+using AutoMapper;
 using MatchMakings.Core.DTOs;
+using MatchMakings.Core.IRepositories;
 using MatchMakings.Core.IServices;
 using MatchMakings.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -7,44 +9,84 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ApiMatchMaker.Controllers
 {
-    
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IServiceUser _userService;
         private readonly IMapper _mapper;
-
-        public AuthController(IAuthService authService,IMapper mapper)
+        private readonly IUserRoleService _userRoleService;
+        private readonly IRoleRepository _roleRpository;
+        public AuthController(IAuthService authService, IServiceUser userService, IMapper mapper, IUserRoleService userRoleService, IRoleRepository roleRpository)
         {
-            _mapper = mapper;
             _authService = authService;
+            _userService = userService;
+            _mapper = mapper;
+            _userRoleService = userRoleService;
+            _roleRpository = roleRpository;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
-        {
-            var user = await _authService.AuthenticateUser(loginDto);
-            if (user == null) return Unauthorized("שם משתמש או סיסמה שגויים");
 
-            var token = _authService.GenerateToken(user);
-            return Ok(new { Token = token, Role = user.Role });
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAsync([FromBody] LoginDTO model)
+        {
+            var user = await _userService.GetUserByEmailAsync(model.Username);
+            if (user.Role == "Admin")
+            {
+                var token = _authService.GenerateToken(user);
+                return Ok(new { Token = token, User = user });
+            }
+
+            else if (user.Role == "MatchMaker")
+            {
+                var token = _authService.GenerateToken(user);
+                return Ok(new { Token = token, User = user });
+            }
+
+            else if (user.Role == "Women")
+            {
+                var token = _authService.GenerateToken(user);
+                return Ok(new { Token = token, User = user });
+            }
+            else if (user.Role == "Male")
+            {
+                var token = _authService.GenerateToken(user);
+                return Ok(new { Token = token, User = user });
+            }
+
+            return Unauthorized();
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
+        public async Task<IActionResult> RegisterAsync([FromBody] RegisterDTO model)
         {
-            var user = await _authService.RegisterUser(registerDto);
-            return Ok(new { Message = "נרשמת בהצלחה!", User = user });
+            if (model == null)
+            {
+                return Conflict("User is not valid");
+            }
+
+            var modelD = _mapper.Map<BaseUserDTO>(model);
+            var existingUser = await _userService.AddUserAsync(modelD);
+            if (existingUser == null)
+                return BadRequest("User could not be created.");
+
+            // Check if the role exists
+            int roleId = await _roleRpository.GetIdByRoleAsync(model.Role);
+            if (roleId == -1)
+            {
+                return BadRequest("Role not found.");
+            }
+
+            var userRole = await _userRoleService.AddAsync(model.Role, existingUser.Id);
+            if (userRole == null)
+                return BadRequest("Error assigning role to user.");
+            //existingUser.Role = model.RoleName;
+            var token = _authService.GenerateToken(modelD);
+            return Ok(new { Token = token, User = existingUser });
         }
-        //[HttpGet]
-        //public async Task<ActionResult> Get()
-        //{
-        //    var list = await _authService.GetListOfMaleAsync();
-        //    var maleDTO = _mapper.Map<IEnumerable<MaleDTO>>(list);
-        //    return Ok(maleDTO);
-        //}
-     
+
 
     }
 }

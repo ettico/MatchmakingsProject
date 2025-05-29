@@ -14,7 +14,7 @@ import MatchmakerNotes from "./components/MatchmakerNotes";
 import UserProvider from "./components/UserContext";
 // import { FileUpload } from "@mui/icons-material";
 // import FileUploader from "./components/Files";
-import About from "./components/aboutCard";
+// import About from "./components/aboutCard";
 import UserProfile from "./components/Candidateprofile";
 import MatchCandidates from "./components/matchCandidates";
 // import HowItWorks from "./components/HowItWork";
@@ -33,7 +33,7 @@ const routes = createBrowserRouter([
     { path: "signup/:userType", element: <SignIn /> },
     { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
     { path: "CandidateProfile", element: <UserProfile /> },
-    { path: "match", element: <MatchCandidates /> } // 👈 הוספנו את זה
+    // { path: "match", element: <MatchCandidates /> } // 👈 הוספנו את זה
   ],
 },
 
@@ -43,10 +43,13 @@ const routes = createBrowserRouter([
     children: [
       { path: "login/:userType", element: <Login userType={"MatchMaker"} /> },
       { path: "signup/:userType", element: <SignIn /> },
-      { path: "allMales", element: <GetCandidates1 />, },
+      { path: "allMales", element: <GetCandidates1 />,children:[
+          { path: "match/:role/:id", element: <MatchCandidates/> } // 👈 הוספנו את זה
+      ] },
       // { path: "allMales/details/:role/:id", element: <Details /> },
       { path: "post-details-matchmaker", element: <MatchMakerForm />, },
       { path: "matchmaker-notes", element: <MatchmakerNotes />, },
+
 
 
     ],

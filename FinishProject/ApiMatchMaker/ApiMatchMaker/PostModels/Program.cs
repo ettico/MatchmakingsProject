@@ -15,6 +15,8 @@ using System.Text;
 using ApiMatchMaker.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using DotNetEnv;
+using ApiMatchMaker.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,16 @@ Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 
 Env.Load();
 
+//var builder = WebApplication.CreateBuilder(args);
+
+//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+//builder.Services.AddDbContext<DataContext>(options =>
+//    options.UseMySQL(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+//var app = builder.Build();
+
+// המשך קונפיגורציה
 
 // Services
 builder.Services.AddControllers();
@@ -67,11 +79,18 @@ builder.Services.AddScoped<IWomenRepository, WomenRepository>();
 builder.Services.AddScoped<IWomenService, WomenService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IServiceUser, UserService>();
 builder.Services.AddHttpClient<MatchService>();
 builder.Services.AddDbContext<DataContext>();
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<GptService>();
+builder.Services.AddScoped<IRepositoryUser, RepositoryUsers>();
 
+builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+
+//builder.Services.AddScoped<IServiceUser, UserService>();
+builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 
 // AWS
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
@@ -86,39 +105,86 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
     return new AmazonS3Client(credentials, region);
 });
 
-// 🔐 Authentication + JWT
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.RequireHttpsMetadata = true;
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine($"❌ Auth failed: {context.Exception.Message}");
-                Console.WriteLine($"Token: {context.Request.Headers["Authorization"]}");
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                Console.WriteLine("✅ Token validated");
-                return Task.CompletedTask;
-            }
-        };
-    });
+//// 🔐 Authentication + JWT
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =>
+//    {
+//        options.RequireHttpsMetadata = true;
+//        options.SaveToken = true;
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            ValidateIssuer = true,
+//            ValidateAudience = true,
+//            ValidateLifetime = true,
+//            ValidateIssuerSigningKey = true,
+//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//            ValidAudience = builder.Configuration["Jwt:Audience"],
+//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+//        };
+//        options.Events = new JwtBearerEvents
+//        {
+//            OnAuthenticationFailed = context =>
+//            {
+//                Console.WriteLine($"❌ Auth failed: {context.Exception.Message}");
+//                Console.WriteLine($"Token: {context.Request.Headers["Authorization"]}");
+//                return Task.CompletedTask;
+//            },
+//            OnTokenValidated = context =>
+//            {
+//                Console.WriteLine("✅ Token validated");
+//                return Task.CompletedTask;
+//            }
+//        };
+//    });
 
-builder.Services.AddAuthorization();
+
+//using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+//{
+//    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
+//    var permissions = db.Permissions.Select(p => p.PermissionName).ToList();
+
+//    builder.Services.AddAuthorization(options =>
+//    {
+//        foreach (var permission in permissions)
+//        {
+//            options.AddPolicy(permission, policy =>
+//                policy.Requirements.Add(new PermissionRequirement(permission)));
+//        }
+//    });
+//}
+
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//})
+//.AddJwtBearer(options =>
+//{
+//options.Authority = "https://accounts.google.com";
+//    options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidIssuer = "https://accounts.google.com",
+//        ValidateAudience = true,
+//        ValidAudience = "300837799563-knrc4dqeie5osqif56d6ofpg8tr93bc7.apps.googleusercontent.com", // תיקנתי את הטעות בסוף
+//        ValidateLifetime = true
+//    };
+//});
+
+//// הוספת הרשאות מבוססות-תפקידים
+//builder.Services.AddAuthorization(options =>
+//{
+//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+//    options.AddPolicy("MatchmakerOrAdmin", policy => policy.RequireRole("MatchMaker", "Admin"));
+//    options.AddPolicy("CandidateOrMatchmaker", policy => policy.RequireRole("Women", "Matchmaker","Male"));
+//    options.AddPolicy("WomenOrMatchmaker", policy => policy.RequireRole("Women", "Matchmaker"));
+//});
+//builder.Services.AddAuthorization();
+
+
+builder.AddJwtAuthentication();
+
+builder.AddJwtAuthorization();
 
 // Swagger עם תמיכה ב-JWT
 builder.Services.AddSwaggerGen(options =>
@@ -149,22 +215,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-using (var scope = builder.Services.BuildServiceProvider().CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-    var permissions = db.Permissions.Select(p => p.PermissionName).ToList();
-
-    builder.Services.AddAuthorization(options =>
-    {
-        foreach (var permission in permissions)
-        {
-            options.AddPolicy(permission, policy =>
-                policy.Requirements.Add(new PermissionRequirement(permission)));
-        }
-    });
-}
-
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+
+
 
 var app = builder.Build();
 

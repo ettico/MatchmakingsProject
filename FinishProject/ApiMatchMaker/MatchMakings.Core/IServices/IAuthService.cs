@@ -10,12 +10,14 @@ namespace MatchMakings.Core.IServices
 {
    public interface IAuthService
    {
-        string GenerateToken(BaseUser user);
+        //public string GenerateToken(string username, string[] roles);
+        public string GenerateToken( BaseUserDTO user);
+
         Task<BaseUser> AuthenticateUser(LoginDTO loginDto);
         Task<BaseUser> RegisterUser(RegisterDTO registerDto);
         Task<BaseUser> GetUserById(int id);
         Task DeleteUser(int id);
         public Task<IEnumerable<Male>> GetListOfMaleAsync();
-
+        //object GenerateToken(BaseUserDTO user);
     }
 }

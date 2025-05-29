@@ -16,13 +16,11 @@ using System.Security.Claims;
 namespace ApiProject.Controllers
 {
     //[Authorize]
+
     [Route("api/[controller]")]
     [ApiController]
     public class MaleController : ControllerBase
     {
-
-     
-       
 
         //private DataContext _context;
 
@@ -34,7 +32,7 @@ namespace ApiProject.Controllers
            _mapper = mapper;
         }
         // GET: api/<CustomerController>
-        //[Authorize(Policy = "getMales")]
+        [Authorize(Policy = "MatchmakerOrAdmin")]
         [HttpGet]
         public async Task<ActionResult> Get()
         {

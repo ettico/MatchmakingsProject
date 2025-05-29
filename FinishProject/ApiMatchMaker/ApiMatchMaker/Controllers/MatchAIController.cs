@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ApiMatchMaker.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class MatchAIController : ControllerBase
@@ -23,7 +24,7 @@ namespace ApiMatchMaker.Controllers
             _context = context;
             _gptService = gptService;
         }
-        [AllowAnonymous] // כאן מאפשרים גישה ללא אימות
+        //[AllowAnonymous] // כאן מאפשרים גישה ללא אימות
         [HttpPost("get-gpt-matches")]
         public async Task<ActionResult<List<object>>> GetMatchesFromGpt([FromBody] int userId)
         {

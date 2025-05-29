@@ -1,26 +1,29 @@
 ﻿using MatchMakings.Core.DTOs;
 using MatchMakings.Core.IServices;
 using MatchMakings.Core.Models;
+using MatchMakings.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiMatchMaker.Controllers
 {
-    //[Authorize(Roles = "Admin")] // 👑 רק המנהל יכול לגשת לפה!
+    //[Authorize(Policy = "AdminOnly")] // 👑 רק המנהל יכול לגשת לפה!
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
     {
         private readonly IConfiguration _config;
         private readonly IAuthService _authService;
+        private readonly IServiceUser _userService;
 
-        public AdminController(IConfiguration config, IAuthService authService)
+        public AdminController(IConfiguration config, IAuthService authService, IServiceUser userService)
         {
             _config = config;
             _authService = authService;
+            _userService = userService;
         }
         [HttpPost("login")]
-        public IActionResult AdminLogin([FromBody] LoginDTO loginDto)
+        public async Task<IActionResult> AdminLogin([FromBody] LoginDTO loginDto)
         {
             Console.WriteLine($"🔹 מנסה להתחבר עם: {loginDto.Username}");
             Console.WriteLine($"🔹 סיסמה שהוזנה: {loginDto.Password}");
@@ -28,12 +31,9 @@ namespace ApiMatchMaker.Controllers
 
             if (loginDto.Username == _config["Admin:Username"] && loginDto.Password == _config["Admin:Password"])
             {
-                var token = _authService.GenerateToken(new BaseUser
-                {
-                    //Id = 0,
-                    Username = loginDto.Username,
-                    Role = "Admin"
-                });
+                var user = await _userService.GetUserByEmailAsync(loginDto.Username);
+
+                var token = _authService.GenerateToken(user);
 
                 Console.WriteLine("✅ התחברות הצליחה! נוצר טוקן.");
                 Console.WriteLine($"Configured Key: {_config["Jwt:Key"]}");

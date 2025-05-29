@@ -108,41 +108,98 @@ namespace MatchMakings.Service.Services
             return user;
         }
 
-        public string GenerateToken(BaseUser user)
+        //public string GenerateToken(BaseUser user)
+        //{
+
+        //    var keyString = _config["Jwt:Key"];
+        //    if (keyString != null)
+        //    {
+        //        Console.WriteLine($"🔑 Key used to generate token: {keyString}");
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("token is null");
+        //    }
+
+
+
+        //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        //    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        //    var claims = new[]
+        //    {
+        //        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        //        new Claim(ClaimTypes.Name, user.Username),
+        //        new Claim(ClaimTypes.Role, user.Role)
+        //    };
+
+        //    var token = new JwtSecurityToken(
+        //        _config["Jwt:Issuer"],
+        //        _config["Jwt:Audience"],
+        //        claims,
+        //        expires: DateTime.Now.AddHours(3),
+        //        signingCredentials: credentials
+        //    );
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
+
+        //public string GenerateToken(string username, string[] roles)
+        //{
+        //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        //    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        //    var claims = new List<Claim>
+        //{
+        //    new Claim(ClaimTypes.Name, username)
+        //};
+
+        //    // הוספת תפקידים כ-Claims
+        //    foreach (var role in roles)
+        //    {
+        //        claims.Add(new Claim(ClaimTypes.Role, role));
+        //    }
+
+        //    var token = new JwtSecurityToken(
+        //        issuer: _config["Jwt:Issuer"],
+        //        audience: _config["Jwt:Audience"],
+        //        claims: claims,
+        //        expires: DateTime.Now.AddMinutes(30),
+        //        signingCredentials: credentials
+        //    );
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
+
+        public string GenerateToken(BaseUserDTO user)
         {
-
-            var keyString = _config["Jwt:Key"];
-            if (keyString != null)
-            {
-                Console.WriteLine($"🔑 Key used to generate token: {keyString}");
-            }
-            else
-            {
-                Console.WriteLine("token is null");
-            }
-
-           
-
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Role, user.Role)
             };
+
+            // Add roles as claims
+            //foreach (var role in user.Role.Select(r => r.RoleName))
+            //{
+                //claims.Add(new Claim(ClaimTypes.Role, user.Role));
+            //}
 
             var token = new JwtSecurityToken(
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 claims,
-                expires: DateTime.Now.AddHours(3),
+                expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: credentials
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
         public async Task<BaseUser> GetUserById(int id)
         {
             return await _context.Users.FindAsync(id);

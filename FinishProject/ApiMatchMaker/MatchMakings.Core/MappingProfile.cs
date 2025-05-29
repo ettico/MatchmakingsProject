@@ -21,7 +21,11 @@ namespace MatchMakings.Core
             CreateMap<MatchMaker, MatchMakerDTO>().ReverseMap();
             CreateMap<Women, WomenDTO>().ReverseMap();
             CreateMap<Note, NoteDTO>().ReverseMap();
-
+            CreateMap<BaseUser, BaseUserDTO>().ReverseMap();
+            //CreateMap<Women, BaseUserDTO>();
+            //CreateMap<Male, BaseUserDTO>();
+            CreateMap<RegisterDTO, BaseUserDTO>();
+            CreateMap<LoginDTO, BaseUserDTO>();
             CreateMap<MalePostModels, Male>()
      .ForMember(dest => dest.Id, opt => opt.Ignore())
      .ForMember(dest => dest.Acquaintances, opt => opt.Ignore())
