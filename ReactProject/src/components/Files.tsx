@@ -24,9 +24,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
     setUploading(true);
 
     try {
-      const response = await axios.get('https://localhost:7012/api/upload/presigned-url', {
+      const response = await axios.get('https://localhost:7012/api/files/presigned-url', {
         params: {
-          fileName: encodeURIComponent(file.name),
+          fileName: file.name,
           contentType: file.type,
         },
       });

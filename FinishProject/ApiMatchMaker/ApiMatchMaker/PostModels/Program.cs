@@ -98,10 +98,10 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
 {
     var options = sp.GetRequiredService<IOptions<AWSOptions>>().Value;
     var credentials = new Amazon.Runtime.BasicAWSCredentials(
-        builder.Configuration["AWS:AccessKey"],
-        builder.Configuration["AWS:SecretKey"]
+        Environment.GetEnvironmentVariable("AWS_AccessKey"),
+        Environment.GetEnvironmentVariable("AWS_SecretKey")
     );
-    var region = Amazon.RegionEndpoint.GetBySystemName(builder.Configuration["AWS:Region"]);
+    var region = Amazon.RegionEndpoint.GetBySystemName(Environment.GetEnvironmentVariable("AWS_Region"));
     return new AmazonS3Client(credentials, region);
 });
 

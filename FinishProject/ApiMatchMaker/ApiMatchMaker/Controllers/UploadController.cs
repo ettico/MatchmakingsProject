@@ -5,16 +5,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace ApiProject.Controllers
 {
     [ApiController]
-    [Route("api/upload")]
-    public class UploadController : ControllerBase
+    [Route("api/files")]
+    public class FilesController : ControllerBase
     {
         private readonly IAmazonS3 _s3Client;
 
-        public UploadController(IAmazonS3 s3Client)
+        public FilesController(IAmazonS3 s3Client)
         {
             _s3Client = s3Client;
         }
 
+        // יצירת URL להעלאת קובץ ל-S3
         [HttpGet("presigned-url")]
         public IActionResult GetPresignedUrl([FromQuery] string fileName, [FromQuery] string contentType)
         {
@@ -33,10 +34,12 @@ namespace ApiProject.Controllers
             string url = _s3Client.GetPreSignedURL(request);
             return Ok(new { url });
         }
+
+        // הורדת קובץ לפי שם קובץ
         [HttpGet("download/{fileName}")]
         public async Task<IActionResult> DownloadFile(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrWhiteSpace(fileName))
                 return BadRequest("Missing fileName");
 
             var request = new GetObjectRequest
@@ -45,18 +48,28 @@ namespace ApiProject.Controllers
                 Key = fileName
             };
 
-            using (var response = await _s3Client.GetObjectAsync(request))
+            try
             {
+                using var response = await _s3Client.GetObjectAsync(request);
                 if (response.ResponseStream == null)
-                    return NotFound();
+                    return NotFound("File stream not found");
 
-                var stream = new MemoryStream();
-                await response.ResponseStream.CopyToAsync(stream);
-                stream.Position = 0; // Reset stream position
+                var memoryStream = new MemoryStream();
+                await response.ResponseStream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
 
-                return File(stream, response.Headers["Content-Type"], fileName);
+                var contentType = response.Headers["Content-Type"] ?? "application/octet-stream";
+
+                return File(memoryStream, contentType, fileName);
+            }
+            catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return NotFound("File not found in S3");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-
     }
 }

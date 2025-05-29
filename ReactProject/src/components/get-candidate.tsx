@@ -358,35 +358,95 @@ const CandidatesPage = () => {
         setContacts([])
     }
 
-    // עדכון סטטוס מועמד
-    const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
-        if (!selectedCandidate) return
+// עדכון סטטוס מועמד
+const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
+    if (!selectedCandidate) return;
 
-        try {
-            // כאן יש לבצע קריאת API לעדכון הסטטוס
-            const endpoint = role === "male" ? "Male" : "Women"
+    try {
+        const endpoint = role === "Male" ? "Male" : "Women";
 
-            // שימוש ב-PUT במקום PATCH כדי לפתור את שגיאת 405
-            await axios.put(`https://localhost:7012/api/${endpoint}/${id}`, {
-                ...selectedCandidate,
-                statusVacant: isAvailable,
-            })
+        // שלב 1: קבלת הנתונים הקיימים של המועמד
+        const response = await axios.get(`https://localhost:7012/api/${endpoint}/${id}`);
+        const data = response.data;
 
-            // עדכון המצב המקומי
-            setCandidates((prev) =>
-                prev.map((candidate) =>
-                    candidate.id === id && candidate.role === role ? { ...candidate, statusVacant: isAvailable } : candidate,
-                ),
+        // שלב 2: יצירת גוף מעודכן כולל כל השדות הנדרשים לפי Swagger
+        const updatedCandidate = {
+            firstName: data.firstName ?? "",
+            lastName: data.lastName ?? "",
+            username: data.username ?? "",
+            password: data.password ?? "", // חובה לפי Swagger
+            role: data.role ?? role,
+            country: data.country ?? "",
+            city: data.city ?? "",
+            address: data.address ?? "",
+            tz: data.tz ?? "",
+            class: data.class ?? "",
+            anOutsider: data.anOutsider ?? false,
+            backGround: data.backGround ?? "",
+            openness: data.openness ?? "",
+            burnDate: data.burnDate ?? new Date().toISOString(),
+            age: data.age ?? 0,
+            healthCondition: data.healthCondition ?? false,
+            status: data.status ?? "",
+            statusVacant: isAvailable,
+            pairingType: data.pairingType ?? "",
+            height: data.height ?? 0,
+            generalAppearance: data.generalAppearance ?? "",
+            facePaint: data.facePaint ?? "",
+            appearance: data.appearance ?? "",
+            phone: data.phone ?? "",
+            email: data.email ?? "",
+            fatherPhone: data.fatherPhone ?? "",
+            motherPhone: data.motherPhone ?? "",
+            moreInformation: data.moreInformation ?? "",
+            driversLicense: data.driversLicense ?? false,
+            smoker: data.smoker ?? false,
+            beard: data.beard ?? "",
+            hot: data.hot ?? "",
+            suit: data.suit ?? "",
+            smallYeshiva: data.smallYeshiva ?? "",
+            bigYeshiva: data.bigYeshiva ?? "",
+            kibbutz: data.kibbutz ?? "",
+            occupation: data.occupation ?? "",
+            expectationsFromPartner: data.expectationsFromPartner ?? "",
+            club: data.club ?? "",
+            ageFrom: data.ageFrom ?? 0,
+            ageTo: data.ageTo ?? 0,
+            importantTraitsInMe: data.importantTraitsInMe ?? "",
+            importantTraitsIAmLookingFor: data.importantTraitsIAmLookingFor ?? "",
+            preferredSeminarStyle: data.preferredSeminarStyle ?? "",
+            preferredProfessionalPath: data.preferredProfessionalPath ?? "",
+            headCovering: data.headCovering ?? ""
+        };
+
+        console.log("נשלח לשרת:", updatedCandidate);
+
+        // שלב 3: שליחת הבקשה לעדכון
+        await axios.put(`https://localhost:7012/api/${endpoint}/${id}`, updatedCandidate);
+
+        // שלב 4: עדכון ברשימה המקומית
+        setCandidates((prev) =>
+            prev.map((candidate) =>
+                candidate.id === id && candidate.role === role
+                    ? { ...candidate, statusVacant: isAvailable }
+                    : candidate
             )
+        );
 
-            // אם המועמד הנוכחי נבחר, עדכן גם אותו
-            if (selectedCandidate && selectedCandidate.id === id && selectedCandidate.role === role) {
-                setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable })
-            }
-        } catch (error) {
-            console.error("שגיאה בעדכון סטטוס:", error)
+        // שלב 5: עדכון המועמד הנבחר אם זה הוא
+        if (selectedCandidate.id === id && selectedCandidate.role === role) {
+            setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable });
+        }
+
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error("שגיאה בעדכון סטטוס:", error.response?.data || error.message);
+        } else {
+            console.error("שגיאה בעדכון סטטוס:", error);
         }
     }
+};
+
 
     // החלפת לשוניות בדיאלוג פרטים
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {

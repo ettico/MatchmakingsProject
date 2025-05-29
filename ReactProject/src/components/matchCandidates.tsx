@@ -5,15 +5,18 @@ import { Match, Male, Women } from "../Models";
 import { userContext } from "./UserContext";
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
+//   DialogTitle,
+//   DialogContent,
   Typography,
   IconButton,
   CircularProgress,
   Box,
   Button,
   AppBar,
-  Toolbar
+  Toolbar,
+  Card,
+  CardContent,
+  CardActions
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -23,10 +26,14 @@ function MatchCandidates() {
   const { user } = useContext(userContext);
 
   const [matches, setMatches] = useState<Match[]>([]);
-  const [selectedProfile, setSelectedProfile] = useState<Male | Women | null>(null);
+  const [viewingProfile, setViewingProfile] = useState<Male | Women | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchMatches();
+  }, []);
 
   async function fetchMatches() {
     const numericId = parseInt(id ?? "");
@@ -49,7 +56,6 @@ function MatchCandidates() {
           }
         }
       );
-
       const filteredMatches = response.data.filter((item: { score: number }) => item.score > 60);
       setMatches(filteredMatches);
     } catch (err: any) {
@@ -66,7 +72,7 @@ function MatchCandidates() {
     }
 
     setProfileLoading(true);
-    setSelectedProfile(null);
+    setViewingProfile(null);
 
     const url = role === "Women"
       ? `https://localhost:7012/api/Male/${userId}`
@@ -78,8 +84,7 @@ function MatchCandidates() {
           Authorization: user?.token ? `Bearer ${user.token}` : ""
         }
       });
-
-      setSelectedProfile(response.data);
+      setViewingProfile(response.data);
     } catch (err) {
       console.error("שגיאה בעת שליפת פרופיל:", err);
     } finally {
@@ -87,12 +92,8 @@ function MatchCandidates() {
     }
   }
 
-  useEffect(() => {
-    fetchMatches();
-  }, []);
-
   return (
-    <Dialog open={true} fullScreen onClose={() => navigate(-1)}>
+    <Dialog open fullScreen onClose={() => navigate(-1)}>
       <AppBar sx={{ position: "relative", backgroundColor: "#6B3E26" }}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={() => navigate(-1)} aria-label="close">
@@ -104,40 +105,45 @@ function MatchCandidates() {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ maxWidth: 800, margin: "auto", p: 2 }}>
+      <Box sx={{ maxWidth: 1000, margin: "auto", p: 2 }}>
         <Typography variant="h4" gutterBottom align="center" sx={{ color: "#6B3E26" }}>
-          המועמדים המתאימים עבורך
+          המועמדים שיכולים להתאים  
         </Typography>
+
+        {/* פרופיל מועמד מוצג מעל הטבלה */}
+        {viewingProfile && (
+          <Card sx={{ mb: 3, backgroundColor: "#fff6f0", boxShadow: 3, position: "relative" }}>
+            <CardContent>
+              <Typography variant="h6">
+                {viewingProfile.firstName} {viewingProfile.lastName}
+              </Typography>
+              <Typography>עיר: {viewingProfile.city}</Typography>
+              <Typography>גיל: {viewingProfile.age}</Typography>
+              <Typography>רקע: {viewingProfile.backGround}</Typography>
+              <Typography>גובה: {viewingProfile.height} ס"מ</Typography>
+              <Typography>טלפון: {viewingProfile.phone}</Typography>
+              <Typography>עוד מידע: {viewingProfile.moreInformation}</Typography>
+              {profileLoading && (
+                <Box mt={2} display="flex" justifyContent="center">
+                  <CircularProgress />
+                </Box>
+              )}
+            </CardContent>
+            <CardActions sx={{ justifyContent: "flex-end" }}>
+              <Button
+                onClick={() => setViewingProfile(null)}
+                variant="contained"
+                color="secondary"
+                sx={{ backgroundColor: "#6B3E26" }}
+              >
+                סגור פרופיל
+              </Button>
+            </CardActions>
+          </Card>
+        )}
 
         {loading && <CircularProgress />}
         {error && <Typography color="error">{error}</Typography>}
-
-        <Dialog open={!!selectedProfile} onClose={() => setSelectedProfile(null)} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ backgroundColor: "#6B3E26", color: "#fff" }}>
-            פרופיל של: {selectedProfile?.firstName} {selectedProfile?.lastName}
-            <IconButton
-              aria-label="close"
-              onClick={() => setSelectedProfile(null)}
-              sx={{ position: "absolute", right: 8, top: 8, color: "#fff" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent dividers sx={{ backgroundColor: "#fef9f4" }}>
-            {profileLoading ? (
-              <Box display="flex" justifyContent="center"><CircularProgress /></Box>
-            ) : (
-              <>
-                <Typography>עיר: {selectedProfile?.city}</Typography>
-                <Typography>גיל: {selectedProfile?.age}</Typography>
-                <Typography>רקע: {selectedProfile?.backGround}</Typography>
-                <Typography>גובה: {selectedProfile?.height} ס"מ</Typography>
-                <Typography>טלפון: {selectedProfile?.phone}</Typography>
-                <Typography>עוד מידע: {selectedProfile?.moreInformation}</Typography>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
 
         {matches.length > 0 && (
           <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", backgroundColor: "#fff" }}>
