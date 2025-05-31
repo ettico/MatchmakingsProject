@@ -230,11 +230,11 @@ builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 var app = builder.Build();
 
 // 🌐 Middleware
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 app.UseHttpsRedirection();
 
@@ -254,4 +254,5 @@ app.Use(async (context, next) =>
 });
 
 app.MapControllers();
+app.MapGet("/", () => "Server API is running!");
 app.Run();
