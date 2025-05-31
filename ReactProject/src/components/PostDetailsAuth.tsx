@@ -118,7 +118,7 @@ const OPTIONS = {
 
 // סטיילינג מותאם אישית מעודכן
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
+  padding: theme.spacing(2),
   marginBottom: theme.spacing(3),
   borderRadius: theme.spacing(3),
   background: "linear-gradient(145deg, #ffffff 0%, #f8f9fa 50%, #fff8f0 100%)",
@@ -127,6 +127,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   position: "relative",
   overflow: "hidden",
   transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+   width: "100%", // הוסף שורה זו
   "&:hover": {
     transform: "translateY(-8px)",
     boxShadow: "0 32px 64px rgba(184, 115, 51, 0.15), 0 16px 32px rgba(0, 0, 0, 0.1)",
@@ -316,7 +317,9 @@ const personalInfoSchema = yup.object().shape({
   importantTraitsInMe: yup.string(),
   importantTraitsIAmLookingFor: yup.string(),
   photoUrl: yup.string(),
+  photoName: yup.string(),
   TZFormUrl: yup.string(),
+  TZFormName: yup.string(),
   Password: yup.string(),
   hot: yup.string(),
   facePaint: yup.string(),
@@ -915,7 +918,9 @@ const UserRegistrationForm = () => {
         Username: data.email || userEmail || "",
         Password: passwordToSend, // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת
         photoUrl: data.photoUrl || "",
+        photoName: data.photoName || "",
         TZFormUrl: data.TZFormUrl || "",
+        TZFormName: data.TZFormName || "",
         // 🔧 הוספת השדות החסרים עם ערכי string (לא boolean)
         hot: data.hot || "לא משנה",
         facePaint: data.facePaint || "לא",
@@ -1609,8 +1614,9 @@ const UserRegistrationForm = () => {
                                   העלאת תעודת זהות + ספח
                                 </Typography>
                                 <FileUploader
-                                  onUploadSuccess={(url) => {
+                                  onUploadSuccess={({url,name}:any) => {
                                     personalForm.setValue("TZFormUrl", url)
+                                    personalForm.setValue("TZFormName", name)
                                   }}
                                 />
                               </Box>
@@ -1641,8 +1647,9 @@ const UserRegistrationForm = () => {
                             }}
                           >
                             <FileUploader
-                              onUploadSuccess={(url) => {
+                              onUploadSuccess={({url,name}:any) => {
                                 personalForm.setValue("photoUrl", url)
+                                personalForm.setValue("photoName", name)
                               }}
                             />
 

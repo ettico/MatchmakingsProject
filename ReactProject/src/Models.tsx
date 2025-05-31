@@ -47,7 +47,11 @@ export type Male = {
   lastName: string
   username: string
   password: string
-  role: string
+  role: string,
+  photoUrl?: string,
+    tzFormUrl?: string,
+    photoName?: string,
+    tzFormName?: string,
 }
 
 export type Women = {
@@ -100,6 +104,10 @@ export type Women = {
   username: string
   password: string
   role: string
+  photoUrl?: string,
+    tzFormUrl?: string,
+    photoName?: string,
+    tzFormName?: string,
 }
 
 export type FamilyDetails = {

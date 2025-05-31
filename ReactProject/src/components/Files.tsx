@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Box, Button, LinearProgress, Typography } from '@mui/material';
 
 interface FileUploaderProps {
-  onUploadSuccess: (fileUrl: string) => void;
+  onUploadSuccess: (data: { fileUrl: string; fileName: string }) => void;
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
@@ -30,9 +30,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
           contentType: file.type,
         },
       });
-console.log(file.name);
-console.log(file.type);
-
 
       const presignedUrl = response.data.url;
       const fileUrl = presignedUrl.split('?')[0];
@@ -40,7 +37,7 @@ console.log(file.type);
       await axios.put(presignedUrl, file, {
         headers: {
           'Content-Type': file.type,
-          'Authorization': undefined, // מסיר כותרת זו מהבקשה
+          'Authorization': undefined, // לא נשלח ב-S3
         },
         onUploadProgress: (progressEvent) => {
           const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
@@ -48,7 +45,12 @@ console.log(file.type);
         },
       });
 
-      onUploadSuccess(fileUrl);
+      // מעביר גם את הקישור וגם את שם הקובץ
+      onUploadSuccess({
+        fileUrl,
+        fileName: file.name,
+      });
+
       alert('הקובץ הועלה בהצלחה!');
     } catch (error: any) {
       console.error('שגיאה בהעלאה:', error);
@@ -64,8 +66,8 @@ console.log(file.type);
         variant="outlined" 
         component="label"
         sx={{ 
-          color: '#B87333',       // נחושת
-          borderColor: '#B87333', // קו גבול נחושת
+          color: '#B87333',
+          borderColor: '#B87333',
           '&:hover': {
             backgroundColor: '#B87333',
             color: '#ffffff',

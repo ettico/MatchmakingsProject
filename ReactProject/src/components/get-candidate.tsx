@@ -358,94 +358,94 @@ const CandidatesPage = () => {
         setContacts([])
     }
 
-// עדכון סטטוס מועמד
-const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
-    if (!selectedCandidate) return;
+    // עדכון סטטוס מועמד
+    const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
+        if (!selectedCandidate) return;
 
-    try {
-        const endpoint = role === "Male" ? "Male" : "Women";
+        try {
+            const endpoint = role === "Male" ? "Male" : "Women";
 
-        // שלב 1: קבלת הנתונים הקיימים של המועמד
-        const response = await axios.get(`https://localhost:7012/api/${endpoint}/${id}`);
-        const data = response.data;
+            // שלב 1: קבלת הנתונים הקיימים של המועמד
+            const response = await axios.get(`https://localhost:7012/api/${endpoint}/${id}`);
+            const data = response.data;
 
-        // שלב 2: יצירת גוף מעודכן כולל כל השדות הנדרשים לפי Swagger
-        const updatedCandidate = {
-            firstName: data.firstName ?? "",
-            lastName: data.lastName ?? "",
-            username: data.username ?? "",
-            password: data.password ?? "", // חובה לפי Swagger
-            role: data.role ?? role,
-            country: data.country ?? "",
-            city: data.city ?? "",
-            address: data.address ?? "",
-            tz: data.tz ?? "",
-            class: data.class ?? "",
-            anOutsider: data.anOutsider ?? false,
-            backGround: data.backGround ?? "",
-            openness: data.openness ?? "",
-            burnDate: data.burnDate ?? new Date().toISOString(),
-            age: data.age ?? 0,
-            healthCondition: data.healthCondition ?? false,
-            status: data.status ?? "",
-            statusVacant: isAvailable,
-            pairingType: data.pairingType ?? "",
-            height: data.height ?? 0,
-            generalAppearance: data.generalAppearance ?? "",
-            facePaint: data.facePaint ?? "",
-            appearance: data.appearance ?? "",
-            phone: data.phone ?? "",
-            email: data.email ?? "",
-            fatherPhone: data.fatherPhone ?? "",
-            motherPhone: data.motherPhone ?? "",
-            moreInformation: data.moreInformation ?? "",
-            driversLicense: data.driversLicense ?? false,
-            smoker: data.smoker ?? false,
-            beard: data.beard ?? "",
-            hot: data.hot ?? "",
-            suit: data.suit ?? "",
-            smallYeshiva: data.smallYeshiva ?? "",
-            bigYeshiva: data.bigYeshiva ?? "",
-            kibbutz: data.kibbutz ?? "",
-            occupation: data.occupation ?? "",
-            expectationsFromPartner: data.expectationsFromPartner ?? "",
-            club: data.club ?? "",
-            ageFrom: data.ageFrom ?? 0,
-            ageTo: data.ageTo ?? 0,
-            importantTraitsInMe: data.importantTraitsInMe ?? "",
-            importantTraitsIAmLookingFor: data.importantTraitsIAmLookingFor ?? "",
-            preferredSeminarStyle: data.preferredSeminarStyle ?? "",
-            preferredProfessionalPath: data.preferredProfessionalPath ?? "",
-            headCovering: data.headCovering ?? ""
-        };
+            // שלב 2: יצירת גוף מעודכן כולל כל השדות הנדרשים לפי Swagger
+            const updatedCandidate = {
+                firstName: data.firstName ?? "",
+                lastName: data.lastName ?? "",
+                username: data.username ?? "",
+                password: data.password ?? "", // חובה לפי Swagger
+                role: data.role ?? role,
+                country: data.country ?? "",
+                city: data.city ?? "",
+                address: data.address ?? "",
+                tz: data.tz ?? "",
+                class: data.class ?? "",
+                anOutsider: data.anOutsider ?? false,
+                backGround: data.backGround ?? "",
+                openness: data.openness ?? "",
+                burnDate: data.burnDate ?? new Date().toISOString(),
+                age: data.age ?? 0,
+                healthCondition: data.healthCondition ?? false,
+                status: data.status ?? "",
+                statusVacant: isAvailable,
+                pairingType: data.pairingType ?? "",
+                height: data.height ?? 0,
+                generalAppearance: data.generalAppearance ?? "",
+                facePaint: data.facePaint ?? "",
+                appearance: data.appearance ?? "",
+                phone: data.phone ?? "",
+                email: data.email ?? "",
+                fatherPhone: data.fatherPhone ?? "",
+                motherPhone: data.motherPhone ?? "",
+                moreInformation: data.moreInformation ?? "",
+                driversLicense: data.driversLicense ?? false,
+                smoker: data.smoker ?? false,
+                beard: data.beard ?? "",
+                hot: data.hot ?? "",
+                suit: data.suit ?? "",
+                smallYeshiva: data.smallYeshiva ?? "",
+                bigYeshiva: data.bigYeshiva ?? "",
+                kibbutz: data.kibbutz ?? "",
+                occupation: data.occupation ?? "",
+                expectationsFromPartner: data.expectationsFromPartner ?? "",
+                club: data.club ?? "",
+                ageFrom: data.ageFrom ?? 0,
+                ageTo: data.ageTo ?? 0,
+                importantTraitsInMe: data.importantTraitsInMe ?? "",
+                importantTraitsIAmLookingFor: data.importantTraitsIAmLookingFor ?? "",
+                preferredSeminarStyle: data.preferredSeminarStyle ?? "",
+                preferredProfessionalPath: data.preferredProfessionalPath ?? "",
+                headCovering: data.headCovering ?? ""
+            };
 
-        console.log("נשלח לשרת:", updatedCandidate);
+            console.log("נשלח לשרת:", updatedCandidate);
 
-        // שלב 3: שליחת הבקשה לעדכון
-        await axios.put(`https://localhost:7012/api/${endpoint}/${id}`, updatedCandidate);
+            // שלב 3: שליחת הבקשה לעדכון
+            await axios.put(`https://localhost:7012/api/${endpoint}/${id}`, updatedCandidate);
 
-        // שלב 4: עדכון ברשימה המקומית
-        setCandidates((prev) =>
-            prev.map((candidate) =>
-                candidate.id === id && candidate.role === role
-                    ? { ...candidate, statusVacant: isAvailable }
-                    : candidate
-            )
-        );
+            // שלב 4: עדכון ברשימה המקומית
+            setCandidates((prev) =>
+                prev.map((candidate) =>
+                    candidate.id === id && candidate.role === role
+                        ? { ...candidate, statusVacant: isAvailable }
+                        : candidate
+                )
+            );
 
-        // שלב 5: עדכון המועמד הנבחר אם זה הוא
-        if (selectedCandidate.id === id && selectedCandidate.role === role) {
-            setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable });
+            // שלב 5: עדכון המועמד הנבחר אם זה הוא
+            if (selectedCandidate.id === id && selectedCandidate.role === role) {
+                setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable });
+            }
+
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("שגיאה בעדכון סטטוס:", error.response?.data || error.message);
+            } else {
+                console.error("שגיאה בעדכון סטטוס:", error);
+            }
         }
-
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error("שגיאה בעדכון סטטוס:", error.response?.data || error.message);
-        } else {
-            console.error("שגיאה בעדכון סטטוס:", error);
-        }
-    }
-};
+    };
 
 
     // החלפת לשוניות בדיאלוג פרטים
@@ -876,7 +876,18 @@ const updateCandidateStatus = async (id: number, role: string, isAvailable: bool
                                                 position: "relative",
                                             }}
                                         >
-                                            {candidate.role === "Male" ? (
+                                            {candidate.photoName ? (
+                                                <img
+                                                    src={candidate.photoUrl}
+                                                    alt={`${candidate.firstName}'s profile`}
+                                                    style={{
+                                                        width: 120,
+                                                        height: 120,
+                                                        borderRadius: '50%', // כדי להפוך את התמונה לעגלית
+                                                        objectFit: 'cover', // לשמור על יחס התמונה
+                                                    }}
+                                                />
+                                            ) : candidate.role === "Male" ? (
                                                 <Avatar
                                                     sx={{
                                                         width: 120,
@@ -900,7 +911,8 @@ const updateCandidateStatus = async (id: number, role: string, isAvailable: bool
                                                 </Avatar>
                                             )}
                                         </Box>
-                                      
+
+
                                         <CardContent sx={{ pt: 2, pb: 7 }}>
                                             <Typography variant="h5" component="div" align="center" gutterBottom>
                                                 {candidate.firstName} {candidate.lastName}
@@ -1534,48 +1546,48 @@ const updateCandidateStatus = async (id: number, role: string, isAvailable: bool
                                     color={selectedCandidate.statusVacant ? "success" : "error"}
                                     sx={{ mb: 2 }}
                                 />
-  <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
+                                <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
 
-                                            {/* טקסט מעל הכפתור */}
-                                            <Typography
-                                                variant="h6"
-                                                sx={{
-                                                    color: "#000", // שחור
-                                                    fontWeight: "bold",
-                                                    fontSize: "13px",
-                                                    mb: 0.2,
-                                                }}
-                                            >
-                                                רוצה לקבל את המועמדים שמתאימים עם AI
-                                                ?
-                                            </Typography>
+                                    {/* טקסט מעל הכפתור */}
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            color: "#000", // שחור
+                                            fontWeight: "bold",
+                                            fontSize: "13px",
+                                            mb: 0.2,
+                                        }}
+                                    >
+                                        רוצה לקבל את המועמדים שמתאימים עם AI
+                                        ?
+                                    </Typography>
 
-                                            {/* כפתור קטן ומעוצב */}
-                                            <Button
-                                                size="small"
-                                                variant="contained"
-                                                onClick={() => {
-                                                    // event.stopPropagation(); // מונע שהקליק יגיע להורה (הכרטיס)
-                                                    handleNavigate(`match/${selectedCandidate?.role}/${selectedCandidate?.id}`, "match");
-                                                }}
-                                                sx={{
-                                                    backgroundColor: "#b87333",
-                                                    color: "#fff",
-                                                    px: 3,
-                                                    py: 1,
-                                                    borderRadius: "20px",
-                                                    fontWeight: "bold",
-                                                    fontSize: "0.9rem",
-                                                    textTransform: "none",
-                                                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                                                    "&:hover": {
-                                                        backgroundColor: "#a05a2c",
-                                                    },
-                                                }}
-                                            >
-                                                🔍 התחל חיפוש
-                                            </Button>
-                                        </Box>
+                                    {/* כפתור קטן ומעוצב */}
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        onClick={() => {
+                                            // event.stopPropagation(); // מונע שהקליק יגיע להורה (הכרטיס)
+                                            handleNavigate(`match/${selectedCandidate?.role}/${selectedCandidate?.id}`, "match");
+                                        }}
+                                        sx={{
+                                            backgroundColor: "#b87333",
+                                            color: "#fff",
+                                            px: 3,
+                                            py: 1,
+                                            borderRadius: "20px",
+                                            fontWeight: "bold",
+                                            fontSize: "0.9rem",
+                                            textTransform: "none",
+                                            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                                            "&:hover": {
+                                                backgroundColor: "#a05a2c",
+                                            },
+                                        }}
+                                    >
+                                        🔍 התחל חיפוש
+                                    </Button>
+                                </Box>
                                 <Button
                                     variant="contained"
                                     color={selectedCandidate.statusVacant ? "error" : "success"}

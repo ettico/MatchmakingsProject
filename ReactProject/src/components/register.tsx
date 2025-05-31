@@ -112,7 +112,7 @@ export default function SignIn() {
         if (data.role === "MatchMaker") {
           navigate("/matchmaker-auth/post-details-matchmaker")
         } else {
-          navigate("/candidate-auth/Post-Details-Auth")
+          navigate("/candidate-auth/post-details-auth")
         }
       }, 2000)
     } catch (err) {
@@ -447,7 +447,7 @@ export default function SignIn() {
                     {...register("role", { required: "תפקיד הוא שדה חובה" })}
                     labelId="role-label"
                     label="תפקיד"
-                    defaultValue=""
+                    defaultValue="Male"
                     sx={{
                       borderRadius: 2,
                       color: colors.text,

@@ -17,8 +17,9 @@ import {
   CardContent,
   Divider,
   Tooltip,
+  useMediaQuery,
   // useMediaQuery,
-  // useTheme,
+  useTheme,
 } from "@mui/material"
 import { useContext, useState, useEffect } from "react"
 import { Outlet, useNavigate } from "react-router-dom"
@@ -60,11 +61,15 @@ const CandidateAuth = () => {
     }
   }, [user])
 
-  const handleNavigate = (path: string, type: string) => {
-    navigate(path)
+ const handleNavigate = (path: string, type?: string) => {
+  navigate(path)
+  if (type) {
     setModalType(type)
     setOpen(true)
+  } else {
+    setOpen(true)
   }
+}
  const handleLogout = () => {
     logout(); // קריאה לפונקציית ה-logout
   };
@@ -159,7 +164,7 @@ const CandidateAuth = () => {
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: "flex",flexDirection: { xs: "column", md: "row" }, alignItems: "center" }}>
             <WineBarIcon sx={{ color: colors.primary, mr: 1, fontSize: 28 }} />
             <Typography
               variant="h6"
@@ -177,7 +182,7 @@ const CandidateAuth = () => {
       </Button>
     </Tooltip>
           </Box>
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: "flex",flexDirection: { xs: "column", md: "row" }, gap: 2}}>
             {user?.role !== "Women" && user?.role !== "Male" && (
               <>
                 <StyledButton onClick={() => handleNavigate("login/candidate", "login")} startIcon={<LoginIcon />}>
@@ -193,16 +198,16 @@ const CandidateAuth = () => {
             )}
             {(user?.role == "Male" || user?.role == "Women") && (
               <>
-                <StyledButton
-                  onClick={() => handleNavigate("Post-Details-Auth", "post-details")}
+                <StyledButton 
+                  onClick={() => handleNavigate("Post-Details-Auth")}
                   startIcon={<EditNoteIcon />}
                 >
                   המשך למילוי פרטים
                 </StyledButton>
                 <StyledButton
-                  onClick={() => handleNavigate("CandidateProfile","CandidateProfile")}
+                  onClick={() => handleNavigate("CandidateProfile")}
                   startIcon={<PersonIcon />}
-                  // sx={{ display: { xs: "none", md: "flex" } }}
+                  sx={{ display: { xs: "none", md: "flex" } }}
                 >
                   הפרופיל שלי
                 </StyledButton>
@@ -478,7 +483,7 @@ const CandidateAuth = () => {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              width: isPostDetails ? "80%" : 400,
+              width: isPostDetails ? "80%" : "80%",
               maxHeight: "90vh",
               overflowY: "auto",
               padding: 4,
