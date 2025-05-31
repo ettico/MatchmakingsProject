@@ -17,9 +17,9 @@ import {
   CardContent,
   Divider,
   Tooltip,
-  useMediaQuery,
   // useMediaQuery,
-  useTheme,
+  // useMediaQuery,
+  // useTheme,
 } from "@mui/material"
 import { useContext, useState, useEffect } from "react"
 import { Outlet, useNavigate } from "react-router-dom"
@@ -54,6 +54,7 @@ const CandidateAuth = () => {
   const [modalType, setModalType] = useState("")
   const [userName, setUserName] = useState("")
   const [showSuccessStories, setShowSuccessStories] = useState(false)
+
 
   useEffect(() => {
     if (user?.firstName) {

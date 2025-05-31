@@ -82,6 +82,8 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [activeStep] = useState(0)
 
+    const ApiUrl=process.env.REACT_APP_API_URL
+
 //   const selectedRole = watch("role")
   const steps = ["פרטים אישיים", "אימות", "סיום"]
 
@@ -96,7 +98,7 @@ export default function SignIn() {
     setError("")
 
     try {
-      const response = await axios.post("https://localhost:7012/api/Auth/register", data)
+      const response = await axios.post(`${ApiUrl}/Auth/register`, data)
       console.log("תגובת הרשמה:", response.data)
 
       // שמירת נתוני המשתמש בלוקל סטורג'

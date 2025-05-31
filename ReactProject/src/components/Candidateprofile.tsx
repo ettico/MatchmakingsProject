@@ -73,6 +73,7 @@ const glow = keyframes`
     box-shadow: 0 0 40px rgba(184, 115, 51, 0.6);
   }
 `
+  const ApiUrl=process.env.REACT_APP_API_URL
 
 // סטיילינג מותאם אישית
 const ProfileContainer = styled(Container)(({ theme }) => ({
@@ -381,7 +382,7 @@ const UserProfile = () => {
 
         // קביעת כתובת ה-API לפי המגדר
         const apiUrl =
-          role === "Male" ? `https://localhost:7012/api/Male/${userId}` : `https://localhost:7012/api/Women/${userId}`
+          role === "Male" ? `${ApiUrl}/Male/${userId}` : `${ApiUrl}/Women/${userId}`
 
         // טעינת נתוני המשתמש
         const userResponse = await axios.get(apiUrl, {
@@ -394,7 +395,7 @@ const UserProfile = () => {
 
         // טעינת נתוני משפחה
         try {
-          const familyResponse = await axios.get("https://localhost:7012/api/FamilyDetails", {
+          const familyResponse = await axios.get(`${ApiUrl}/FamilyDetails`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -414,7 +415,7 @@ const UserProfile = () => {
 
         // טעינת אנשי קשר
         try {
-          const contactsResponse = await axios.get("https://localhost:7012/api/Contact", {
+          const contactsResponse = await axios.get(`${ApiUrl}/Contact`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },

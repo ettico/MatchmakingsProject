@@ -240,6 +240,9 @@ const CandidatesPage = () => {
     const [, setModalType] = useState("")
     const navigate = useNavigate()
 
+  const ApiUrl=process.env.REACT_APP_API_URL
+
+    
     const handleNavigate = (path: string, type: string) => {
         navigate(path)
         setModalType(type)
@@ -263,14 +266,14 @@ const CandidatesPage = () => {
         setError(null)
         try {
             // טעינת גברים
-            const malesResponse = await axios.get<Male[]>("https://localhost:7012/api/Male")
+            const malesResponse = await axios.get<Male[]>(`${ApiUrl}/Male`)
             const males = malesResponse.data.map((male) => ({
                 ...male,
                 role: "Male" as const,
             }))
 
             // טעינת נשים
-            const femalesResponse = await axios.get<Women[]>("https://localhost:7012/api/Women")
+            const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`)
             const females = femalesResponse.data.map((female) => ({
                 ...female,
                 role: "Women" as const,
@@ -301,7 +304,7 @@ const CandidatesPage = () => {
     // פונקציה לטעינת פרטי משפחה
     const fetchFamilyDetails = async (candidateId: number, role: string) => {
         try {
-            const response = await axios.get<FamilyDetails[]>("https://localhost:7012/api/FamilyDetails")
+            const response = await axios.get<FamilyDetails[]>(`${ApiUrl}/FamilyDetails`)
 
             // סינון לפי מזהה המועמד
             const details = response.data.find(
@@ -319,7 +322,7 @@ const CandidatesPage = () => {
     // פונקציה לטעינת פרטי התקשרות
     const fetchContacts = async (candidateId: number, role: string) => {
         try {
-            const response = await axios.get<Contact[]>("https://localhost:7012/api/Contact")
+            const response = await axios.get<Contact[]>(`${ApiUrl}/Contact`)
 
             // סינון לפי מזהה המועמד
             const candidateContacts = response.data.filter(
@@ -366,7 +369,7 @@ const CandidatesPage = () => {
             const endpoint = role === "Male" ? "Male" : "Women";
 
             // שלב 1: קבלת הנתונים הקיימים של המועמד
-            const response = await axios.get(`https://localhost:7012/api/${endpoint}/${id}`);
+            const response = await axios.get(`${ApiUrl}/${endpoint}/${id}`);
             const data = response.data;
 
             // שלב 2: יצירת גוף מעודכן כולל כל השדות הנדרשים לפי Swagger
@@ -422,7 +425,7 @@ const CandidatesPage = () => {
             console.log("נשלח לשרת:", updatedCandidate);
 
             // שלב 3: שליחת הבקשה לעדכון
-            await axios.put(`https://localhost:7012/api/${endpoint}/${id}`, updatedCandidate);
+            await axios.put(`${ApiUrl}/${endpoint}/${id}`, updatedCandidate);
 
             // שלב 4: עדכון ברשימה המקומית
             setCandidates((prev) =>
@@ -480,7 +483,7 @@ const CandidatesPage = () => {
     // הוספת הערות מהשרת
     const fetchNotes = async () => {
         try {
-            const response = await axios.get("https://localhost:7012/api/Note");
+            const response = await axios.get(`${ApiUrl}/Note`);
             setNotes(response.data); // הנחה שיש לך setNotes להגדיר את ההערות
         } catch (error) {
             console.error("שגיאה בהבאת הערות:", error);
@@ -503,7 +506,7 @@ const CandidatesPage = () => {
                 createdAt: new Date().toISOString(),
             }
 
-            const response = await axios.post("https://localhost:7012/api/Note", newNote)
+            const response = await axios.post(`${ApiUrl}/Note`, newNote)
             setNotes((prev) => [...prev, response.data])
             setNewNoteText("")
         } catch (error) {
@@ -516,7 +519,7 @@ const CandidatesPage = () => {
         if (!editingNote) return
 
         try {
-            await axios.put(`https://localhost:7012/api/Note/${editingNote.id}`, {
+            await axios.put(`${ApiUrl}/Note/${editingNote.id}`, {
                 ...editingNote,
                 content: editingNote.content, // שדה חדש
             })
@@ -530,7 +533,7 @@ const CandidatesPage = () => {
     // מחיקת הערה
     const deleteNote = async (noteId: number) => {
         try {
-            await axios.delete(`https://localhost:7012/api/Note/${noteId}`)
+            await axios.delete(`${ApiUrl}/Note/${noteId}`)
             setNotes((prev) => prev.filter((note) => note.id !== noteId))
         } catch (error) {
             console.error("שגיאה במחיקת הערה:", error)

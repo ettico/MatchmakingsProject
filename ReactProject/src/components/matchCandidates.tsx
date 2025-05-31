@@ -31,6 +31,8 @@ function MatchCandidates() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+    const ApiUrl=process.env.REACT_APP_API_URL
+
   useEffect(() => {
     fetchMatches();
   }, []);
@@ -47,7 +49,7 @@ function MatchCandidates() {
 
     try {
       const response = await axios.post(
-        "https://localhost:7012/api/MatchAI/get-gpt-matches",
+        `${ApiUrl}/MatchAI/get-gpt-matches`,
         numericId,
         {
           headers: {
@@ -75,8 +77,8 @@ function MatchCandidates() {
     setViewingProfile(null);
 
     const url = role === "Women"
-      ? `https://localhost:7012/api/Male/${userId}`
-      : `https://localhost:7012/api/Women/${userId}`;
+      ? `${ApiUrl}/Male/${userId}`
+      : `${ApiUrl}/Women/${userId}`;
 
     try {
       const response = await axios.get(url, {

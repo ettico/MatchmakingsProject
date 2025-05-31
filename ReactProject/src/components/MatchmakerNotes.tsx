@@ -69,6 +69,8 @@ const MatchmakerNotes = () => {
   const [filterByGender, setFilterByGender] = useState("all");
   const [importantNotes, setImportantNotes] = useState<number[]>([]);
 
+    const ApiUrl=process.env.REACT_APP_API_URL
+
   const fetchNotes = async () => {
     if (!user?.id) {
       console.log("user id is null");
@@ -77,7 +79,7 @@ const MatchmakerNotes = () => {
 
     setLoading(true);
     try {
-      const response = await axios.get<Note[]>("https://localhost:7012/api/Note");
+      const response = await axios.get<Note[]>(`${ApiUrl}/Note`);
       const matchmakerNotes = response.data.filter((note) => note.matchMakerId === user.id);
       setNotes(matchmakerNotes);
     } catch (error) {
@@ -89,13 +91,13 @@ const MatchmakerNotes = () => {
 
   const fetchCandidates = async () => {
     try {
-      const malesResponse = await axios.get<Male[]>("https://localhost:7012/api/Male");
+      const malesResponse = await axios.get<Male[]>(`${ApiUrl}/Male`);
       const males = malesResponse.data.map((male) => ({
         ...male,
         role: "Male" as const,
       }));
 
-      const femalesResponse = await axios.get<Women[]>("https://localhost:7012/api/Women");
+      const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`);
       const females = femalesResponse.data.map((female) => ({
         ...female,
         role: "Women" as const,
@@ -132,7 +134,7 @@ console.log(user?.token);
         id: 0 // אם ה-id לא נדרש במשלוח, תוכל להשאיר את זה
       };
 
-      const response = await axios.post("https://localhost:7012/api/Note", noteData);
+      const response = await axios.post(`${ApiUrl}/Note`, noteData);
       setNotes((prev) => [...prev, response.data]);
       setNewNote({
         candidateId: 0,
@@ -149,7 +151,7 @@ console.log(user?.token);
     if (!editingNote) return;
 
     try {
-      await axios.put(`https://localhost:7012/api/Note/${editingNote.id}`, editingNote);
+      await axios.put(`${ApiUrl}/Note/${editingNote.id}`, editingNote);
       setNotes((prev) => prev.map((note) => (note.id === editingNote.id ? editingNote : note)));
       setEditingNote(null);
     } catch (error) {
@@ -161,7 +163,7 @@ console.log(user?.token);
     if (!noteToDelete) return;
 
     try {
-      await axios.delete(`https://localhost:7012/api/Note/${noteToDelete}`);
+      await axios.delete(`${ApiUrl}/Note/${noteToDelete}`);
       setNotes((prev) => prev.filter((note) => note.id !== noteToDelete));
       setDeleteDialogOpen(false);
       setNoteToDelete(null);

@@ -82,6 +82,8 @@ interface UserProviderProps {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+    const ApiUrl=process.env.REACT_APP_API_URL
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
@@ -130,7 +132,7 @@ interface UserProviderProps {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post("https://localhost:7012/api/Auth/login", {
+      const response = await axios.post(`${ApiUrl}/Auth/login`, {
         UserName: username,
         Password: password,
       })

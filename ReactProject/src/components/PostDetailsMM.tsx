@@ -130,6 +130,7 @@ const MatchMakerForm = () => {
     },
   })
 
+    const ApiUrl=process.env.REACT_APP_API_URL
   // שינוי פונקציית decodeAndVerifyToken כדי לטפל בclaim המותאם אישית
   const decodeAndVerifyToken = (token: string) => {
     try {
@@ -318,7 +319,7 @@ const MatchMakerForm = () => {
       try {
         const response = await axios({
           method: "get",
-          url: `https://localhost:7012/api/MatchMaker/${id}`,
+          url: `${ApiUrl}/MatchMaker/${id}`,
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -441,12 +442,12 @@ const MatchMakerForm = () => {
       }
 
       console.log("שולח נתוני שדכנית:", dataToSend)
-      console.log("כתובת API:", `https://localhost:7012/api/MatchMaker/${userId}`)
+      console.log("כתובת API:", `${ApiUrl}/MatchMaker/${userId}`)
 
       try {
         const response = await axios({
           method: "put",
-          url: `https://localhost:7012/api/MatchMaker/${userId}`,
+          url: `${ApiUrl}/MatchMaker/${userId}`,
           data: dataToSend,
           headers: {
             "Content-Type": "application/json",

@@ -388,6 +388,8 @@ const UserRegistrationForm = () => {
   const [existingFamilyId, setExistingFamilyId] = useState<number | null>(null)
   const [existingContactIds, setExistingContactIds] = useState<number[]>([])
 
+    const ApiUrl=process.env.REACT_APP_API_URL
+
   // טפסים נפרדים לכל שלב
   const personalForm = useForm({
     resolver: yupResolver(personalInfoSchema),
@@ -666,7 +668,7 @@ const UserRegistrationForm = () => {
 
       // טעינת פרטים אישיים
       const userApiUrl =
-        userGender === "Male" ? `https://localhost:7012/api/Male/${id}` : `https://localhost:7012/api/Women/${id}`
+        userGender === "Male" ? `${ApiUrl}/Male/${id}` : `${ApiUrl}/Women/${id}`
 
       try {
         const response = await axios({
@@ -749,7 +751,7 @@ const UserRegistrationForm = () => {
 
       // 🔧 תיקון קריטי: טעינת פרטי משפחה עם מילוי נכון של השדות
       try {
-        const familyResponse = await axios.get(`https://localhost:7012/api/FamilyDetails`, {
+        const familyResponse = await axios.get(`${ApiUrl}/FamilyDetails`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -802,7 +804,7 @@ const UserRegistrationForm = () => {
 
       // 🔧 טעינת אנשי קשר עם שמירת IDs קיימים
       try {
-        const contactsResponse = await axios.get(`https://localhost:7012/api/Contact`, {
+        const contactsResponse = await axios.get(`${ApiUrl}/Contact`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -876,7 +878,7 @@ const UserRegistrationForm = () => {
     setLoading(true)
     try {
       const userApiUrl =
-        gender === "Male" ? `https://localhost:7012/api/Male/${userId}` : `https://localhost:7012/api/Women/${userId}`
+        gender === "Male" ? `${ApiUrl}/Male/${userId}` : `${ApiUrl}/Women/${userId}`
 
       // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת ולא שליחת ערך ריק
       const passwordToSend = userPassword || data.Password || ""
@@ -1117,8 +1119,8 @@ const UserRegistrationForm = () => {
       // 🔧 בחירה נכונה בין POST ל-PUT
       const method = existingFamilyId ? "put" : "post"
       const url = existingFamilyId
-        ? `https://localhost:7012/api/FamilyDetails/${existingFamilyId}`
-        : "https://localhost:7012/api/FamilyDetails"
+        ? `${ApiUrl}/FamilyDetails/${existingFamilyId}`
+        : `${ApiUrl}/FamilyDetails`
 
       console.log(`משתמש ב-${method.toUpperCase()} לכתובת:`, url)
 
@@ -1191,7 +1193,7 @@ const UserRegistrationForm = () => {
 
         for (const contactId of existingContactIds) {
           try {
-            await axios.delete(`https://localhost:7012/api/Contact/${contactId}`, {
+            await axios.delete(`${ApiUrl}/Contact/${contactId}`, {
               headers: {
                 Authorization: `Bearer ${userToken}`,
               },
@@ -1215,7 +1217,7 @@ const UserRegistrationForm = () => {
 
       const newContactIds = []
       for (const contact of contactsToSave) {
-        const response = await axios.post("https://localhost:7012/api/Contact", contact, {
+        const response = await axios.post(`${ApiUrl}/Contact`, contact, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${userToken}`,
