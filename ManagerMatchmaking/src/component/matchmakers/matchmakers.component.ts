@@ -11,7 +11,7 @@ import { Matchmaker } from '../../app/models';
     standalone:true,
     imports: [CommonModule, RouterModule],
     templateUrl: './matchmakers.component.html',
-    styleUrls: ['./matchmakers.component.scss']
+    styleUrls: ['./matchmakers.component.css']
 })
 export class MatchmakersComponent implements OnInit {
   matchmakers = signal<Matchmaker[]>([]);

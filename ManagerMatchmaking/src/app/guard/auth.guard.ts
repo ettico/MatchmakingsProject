@@ -1,17 +1,31 @@
 // src/app/guards/auth.guard.ts
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { AuthService } from '../../services/auth/auth.service';
 
-export const authGuard = () => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
+@Injectable({
+  providedIn: 'root'
+})
+export class authGuard implements CanActivate {
+  
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
-  if (authService.isLoggedIn()) {
-    return true;
+  canActivate(): Observable<boolean> {
+    return this.authService.isLoggedIn$.pipe(
+      take(1),
+      map(isLoggedIn => {
+        if (isLoggedIn) {
+          return true;
+        } else {
+          this.router.navigate(['/login']);
+          return false;
+        }
+      })
+    );
   }
-
-  // Redirect to the login page
-  router.navigate(['/login']);
-  return false;
-};
+}

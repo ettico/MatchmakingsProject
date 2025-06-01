@@ -22,10 +22,11 @@ padding-bottom: 20px;
     /* background-color: #45a049; שינוי צבע בעת מעבר עכבר */
 }
 body{
-    background-image: url('../תמונה/צבעים.jpg');
+    /* background-image: url('../תמונה/צבעים.jpg'); */
     background-size: cover; /* כדי שהתמונה תכסה את כל הרקע */
     background-repeat: no-repeat; /* כדי שהתמונה לא תחזור על עצמה */
     background-position: center; /* למרכז את התמונה */
+    /* background-color: rgba(108, 216, 252, 0.817); */
     /* overflow: hidden; */
     /* z-index: 999; */
 }

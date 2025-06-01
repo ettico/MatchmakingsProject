@@ -1,0 +1,106 @@
+<!-- src/app/components/header/header.component.html -->
+<header class="main-header">
+  <div class="header-container">
+    <!-- לוגו וכותרת -->
+    <div class="brand-section">
+      <div class="logo">
+        <h1 routerLink="/">CandidateHub</h1>
+      </div>
+    </div>
+
+    <!-- כפתורי ניווט - רק כשהמשתמש מחובר -->
+    @if (isLoggedIn) {
+      <nav class="navigation">
+        <ul class="nav-links">
+          <li>
+            <a routerLink="/candidates" routerLinkActive="active">
+              <i class="icon-users"></i>
+              All Candidates
+            </a>
+          </li>
+          <li>
+            <a routerLink="/male-candidates" routerLinkActive="active">
+              <i class="icon-male"></i>
+              Male Candidates
+            </a>
+          </li>
+          <li>
+            <a routerLink="/female-candidates" routerLinkActive="active">
+              <i class="icon-female"></i>
+              Female Candidates
+            </a>
+          </li>
+          <li>
+            <a routerLink="/analytics" routerLinkActive="active">
+              <i class="icon-chart"></i>
+              Analytics
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- אזור המשתמש המחובר -->
+      <div class="user-section">
+        <div class="user-info">
+          <span class="welcome-text">Welcome, {{ currentUser?.username || 'User' }}</span>
+        </div>
+        <div class="user-actions">
+          <button class="profile-btn" title="Profile">
+            <i class="icon-user"></i>
+          </button>
+          <button class="logout-btn" (click)="onLogout()" title="Logout">
+            <i class="icon-logout"></i>
+            Logout
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- כפתורי התחברות - רק כשהמשתמש לא מחובר -->
+      <div class="auth-section">
+        <button class="login-btn" (click)="navigateToLogin()">
+          <i class="icon-login"></i>
+          Login
+        </button>
+        <button class="register-btn" (click)="navigateToRegister()">
+          <i class="icon-user-plus"></i>
+          Register
+        </button>
+      </div>
+    }
+
+    <!-- כפתור תפריט נייד -->
+    <button class="mobile-menu-btn" [class.open]="isMobileMenuOpen" (click)="toggleMobileMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  <!-- תפריט נייד -->
+  @if (isMobileMenuOpen && isLoggedIn) {
+    <div class="mobile-menu">
+      <nav class="mobile-navigation">
+        <a routerLink="/candidates" routerLinkActive="active" (click)="closeMobileMenu()">
+          <i class="icon-users"></i>
+          All Candidates
+        </a>
+        <a routerLink="/male-candidates" routerLinkActive="active" (click)="closeMobileMenu()">
+          <i class="icon-male"></i>
+          Male Candidates
+        </a>
+        <a routerLink="/female-candidates" routerLinkActive="active" (click)="closeMobileMenu()">
+          <i class="icon-female"></i>
+          Female Candidates
+        </a>
+        <a routerLink="/analytics" routerLinkActive="active" (click)="closeMobileMenu()">
+          <i class="icon-chart"></i>
+          Analytics
+        </a>
+        <button class="mobile-logout-btn" (click)="onLogout()">
+          <i class="icon-logout"></i>
+          Logout
+        </button>
+      </nav>
+    </div>
+  }
+</header>
