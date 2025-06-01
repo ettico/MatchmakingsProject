@@ -19,7 +19,7 @@ import {
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { userContext } from "./UserContext"
 import { motion } from "framer-motion"
 // import { Link as RouterLink } from 'react-router-dom';
@@ -40,13 +40,14 @@ const colors = {
   darkText: "#111111", // שחור
 }
 
-interface LoginProps {
-  userType: string
-}
+// interface LoginProps {
+//   userType: string
+// }
 
-const Login = ({ userType }: LoginProps) => {
+const Login = () => {
 //   const theme = useTheme()
 //   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+const { userType } = useParams(); // יקבל את הערך מה-URL
   const { login,error: contextError } = useContext(userContext)
   const navigate = useNavigate()
   const [error, setError] = useState("")
@@ -62,7 +63,7 @@ const Login = ({ userType }: LoginProps) => {
 
   const onSubmit = async (data: { UserName: string; Password: string }) => {
     try {
-      await login(data.UserName, data.Password)
+      await login(data.UserName, data.Password,userType!)
 
       // בדיקת סוג המשתמש והפניה לדף המתאים
      const storedUser = localStorage.getItem("user")

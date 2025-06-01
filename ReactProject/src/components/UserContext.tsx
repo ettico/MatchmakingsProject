@@ -2,6 +2,7 @@
 
 import { createContext, useState, useEffect, type ReactNode } from "react"
 import axios from "axios"
+// import { useParams } from "react-router-dom"
 // import { jwtDecode } from "jwt-decode";
 
 interface User {
@@ -16,7 +17,7 @@ interface UserContextType {
   user: User | null
   loading: boolean
   error: string | null
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string,userType:string) => Promise<void>
   logout: () => void
 }
 
@@ -127,12 +128,13 @@ interface UserProviderProps {
   //   }
   // };
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string,userType:string) => {
+    // const { userType } = useParams(); // יקבל את הערך מה-URL
     // debugger;
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post(`${ApiUrl}/Auth/login`, {
+      const response = await axios.post(`${ApiUrl}/${userType}/Auth/login`, {
         UserName: username,
         Password: password,
       })

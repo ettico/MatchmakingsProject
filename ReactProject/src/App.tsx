@@ -29,7 +29,7 @@ const routes = createBrowserRouter([
   path: "/candidate-auth",
   element: <CandidateAuth />,
   children: [
-    { path: "login/:userType", element: <Login userType={"auth"} /> },
+    { path: "login/:userType", element: <Login /> },
     { path: "signup/:userType", element: <SignIn /> },
     { path: "Post-Details-Auth", element: <PostDetailsAuth /> },
     { path: "CandidateProfile", element: <UserProfile /> },
@@ -41,7 +41,7 @@ const routes = createBrowserRouter([
     path: "/matchmaker-auth",
     element: <MatchmakerAuth />,
     children: [
-      { path: "login/:userType", element: <Login userType={"MatchMaker"} /> },
+      { path: "login/:userType", element: <Login  /> },
       { path: "signup/:userType", element: <SignIn /> },
       { path: "allMales", element: <GetCandidates1 />,children:[
           { path: "match/:role/:id", element: <MatchCandidates/> } // 👈 הוספנו את זה
