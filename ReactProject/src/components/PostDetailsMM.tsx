@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   TextField,
   Button,
@@ -96,6 +97,7 @@ const AnimatedButton = styled(motion.div)(({ theme }) => ({
 }))
 
 const MatchMakerForm = () => {
+  const navigate = useNavigate() // נוספה ניווט
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -286,6 +288,7 @@ const MatchMakerForm = () => {
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
         Username: user.username || data.email || "",
+        Password: user.password || "", // שמירת הסיסמא המקורית
       }
 
       console.log("שולח נתוני שדכנית:", dataToSend)
@@ -304,10 +307,11 @@ const MatchMakerForm = () => {
       console.log("נתונים נשמרו בהצלחה:", response.data)
       setSuccess(true)
 
-      // הסתרת הודעת ההצלחה אחרי 5 שניות
+      // הסתרת הודעת ההצלחה אחרי 2 שניות ומעבר לעמוד השדכניות
       setTimeout(() => {
         setSuccess(false)
-      }, 5000)
+        navigate("/matchmakers") // מעבר לעמוד השדכניות הכללי
+      }, 2000)
 
     } catch (apiError: any) {
       console.error("שגיאת API בשליחת נתוני שדכנית:", apiError)
@@ -802,9 +806,9 @@ const MatchMakerForm = () => {
         </form>
 
         {/* הודעת הצלחה */}
-        <Snackbar open={success} autoHideDuration={5000} onClose={handleCloseSuccess}>
+        <Snackbar open={success} autoHideDuration={2000} onClose={handleCloseSuccess}>
           <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: "100%" }}>
-            הפרטים נשמרו בהצלחה!
+            הפרטים נשמרו בהצלחה! מעביר לעמוד השדכניות...
           </Alert>
         </Snackbar>
 
