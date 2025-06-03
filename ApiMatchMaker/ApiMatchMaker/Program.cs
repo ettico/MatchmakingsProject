@@ -51,27 +51,17 @@ builder.Services.AddSwaggerGen();
 // 💡 הוספת שירות CORS עם מדיניות בשם
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost", policy =>
+    options.AddPolicy("AllowAllClients", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:5173") // הוספת הדומיינים הרלוונטיים
+        policy.WithOrigins("http://localhost:4200",
+            "http://localhost:5173",
+            "https://matchmakingsproject.onrender.com", 
+            "https://matchmakingsprojectangular.onrender.com/") // הוספת הדומיינים הרלוונטיים
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // אם משתמשים ב-Credentials
     });
 });
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        policy =>
-        {
-            policy.WithOrigins("https://matchmakingsproject.onrender.com")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
-
 
 //builder.Services.AddAuthorization(options =>
 //{
@@ -253,8 +243,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 // ✅ שימוש במדיניות CORS בשם
-app.UseCors("AllowLocalhost");
-app.UseCors("_myAllowSpecificOrigins");
+app.UseCors("AllowAllClients");
 
 app.UseAuthentication();
 app.UseAuthorization();
