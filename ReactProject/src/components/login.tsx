@@ -63,12 +63,12 @@ const { userType } = useParams(); // יקבל את הערך מה-URL
 
   const onSubmit = async (data: { UserName: string; Password: string }) => {
     try {
-      await login(data.UserName, data.Password,userType!)
+      await login(data.UserName, data.Password)
 
       // בדיקת סוג המשתמש והפניה לדף המתאים
      const storedUser = localStorage.getItem("user")
       if (storedUser) {
-        const userData = JSON.parse(storedUser).user
+        const userData = JSON.parse(storedUser).data.user
 
         if ( userData.role === "Male" || userData.role === "Women") {
           navigate("/candidate-auth")

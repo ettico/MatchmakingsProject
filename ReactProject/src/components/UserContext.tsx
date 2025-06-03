@@ -17,7 +17,7 @@ interface UserContextType {
   user: User | null
   loading: boolean
   error: string | null
-  login: (email: string, password: string,userType:string) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
   logout: () => void
 }
 
@@ -128,13 +128,13 @@ interface UserProviderProps {
   //   }
   // };
 
-  const login = async (username: string, password: string,userType:string) => {
+  const login = async (username: string, password: string) => {
     // const { userType } = useParams(); // יקבל את הערך מה-URL
     // debugger;
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post(`${ApiUrl}/${userType}/Auth/login`, {
+      const response = await axios.post(`${ApiUrl}/Auth/login`, {
         UserName: username,
         Password: password,
       })
