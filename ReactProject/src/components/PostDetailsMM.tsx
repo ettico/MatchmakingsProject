@@ -102,6 +102,7 @@ const MatchMakerForm = () => {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [, setInitialDataLoaded] = useState(false)
+  const [serverPassword, setServerPassword] = useState<string | null>(null) // לשמירת הסיסמא מהשרת
   
   // שימוש ב-useContext במקום localStorage
   const { user, token } = useContext(userContext)
@@ -197,6 +198,12 @@ const MatchMakerForm = () => {
       if (response.data) {
         const serverData = response.data
 
+        // שמירת הסיסמא מהשרת
+        if (serverData.password) {
+          setServerPassword(serverData.password)
+          console.log("נשמרה סיסמא מהשרת")
+        }
+
         // איפוס הטופס עם הנתונים החדשים
         const formData = {
           matchmakerName: serverData.matchmakerName || "",
@@ -288,7 +295,7 @@ const MatchMakerForm = () => {
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
         Username: user.username || data.email || "",
-        Password: user.password || "", // שמירת הסיסמא המקורית
+        Password: serverPassword || "", // שימוש בסיסמא מהשרת
       }
 
       console.log("שולח נתוני שדכנית:", dataToSend)
@@ -310,7 +317,7 @@ const MatchMakerForm = () => {
       // הסתרת הודעת ההצלחה אחרי 2 שניות ומעבר לעמוד השדכניות
       setTimeout(() => {
         setSuccess(false)
-        navigate("/matchmaker-auth") // מעבר לעמוד השדכניות הכללי
+        navigate("/matchmakers") // מעבר לעמוד השדכניות הכללי
       }, 2000)
 
     } catch (apiError: any) {
