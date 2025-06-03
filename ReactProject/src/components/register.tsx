@@ -105,7 +105,7 @@ export default function SignIn() {
       localStorage.setItem("user", JSON.stringify(response.data))
 
       // התחברות אוטומטית לאחר הרשמה
-      await login(data.username, data.password,userType!)
+      await login(data.username, data.password)
 
       setSuccessMessage("הנתונים נשמרו בהצלחה✔️")
 
