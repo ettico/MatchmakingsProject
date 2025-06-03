@@ -39,7 +39,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn"
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
 import NoteIcon from "@mui/icons-material/Note"
 
-// הגדרת סכמת ולידציה באמצעות Yup
+// הגדרת סכמת ולידציה באמצעות Yup - עדכון עם שדות לא חובה
 const schema = yup.object().shape({
   matchmakerName: yup.string().required("שם הוא שדה חובה"),
   idNumber: yup.string().required("מספר זהות הוא שדה חובה"),
@@ -59,7 +59,7 @@ const schema = yup.object().shape({
   hasChildrenInShidduchim: yup.boolean(),
   experienceInShidduchim: yup.string(),
   lifeSkills: yup.string(),
-  yearsInShidduchim: yup.number().positive().integer(),
+  yearsInShidduchim: yup.number().min(0).integer(),
   isInternalMatchmaker: yup.boolean(),
   printingNotes: yup.string(),
 })
@@ -108,16 +108,33 @@ const MatchMakerForm = () => {
     handleSubmit,
     control,
     setValue,
-    formState: { errors, isValid },
+    reset,
+    formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
     mode: "onChange",
     defaultValues: {
+      matchmakerName: "",
+      idNumber: "",
+      birthDate: "",
+      email: "",
       gender: "female",
+      city: "",
+      address: "",
+      mobilePhone: "",
+      landlinePhone: "",
+      phoneType: "",
+      personalClub: "",
+      community: "",
+      occupation: "",
+      previousWorkplaces: "",
       isSeminarGraduate: false,
       hasChildrenInShidduchim: false,
-      isInternalMatchmaker: false,
+      experienceInShidduchim: "",
+      lifeSkills: "",
       yearsInShidduchim: 0,
+      isInternalMatchmaker: false,
+      printingNotes: "",
     },
   })
 
@@ -134,7 +151,7 @@ const MatchMakerForm = () => {
     console.log("טוען נתוני משתמש מהcontext:", user)
 
     // מילוי הפרטים הבסיסיים מה-context
-    const fullName = `${user.firstName} ${user.lastName}`.trim()
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim()
     if (fullName) {
       setValue("matchmakerName", fullName)
       console.log("הוגדר שדה matchmakerName:", fullName)
@@ -154,6 +171,7 @@ const MatchMakerForm = () => {
     if (!user?.id || !token) {
       console.error("חסרים פרטי משתמש או טוקן לטעינת נתונים")
       setError("חסרים פרטי משתמש או טוקן. אנא התחבר מחדש.")
+      setInitialDataLoaded(true) // מאפשר לטופס לעבוד גם בלי נתונים מהשרת
       return
     }
 
@@ -168,7 +186,7 @@ const MatchMakerForm = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        // timeout: 10000,
+        timeout: 10000,
       })
 
       console.log("נתוני שדכנית שהתקבלו מהשרת:", response.data)
@@ -177,23 +195,37 @@ const MatchMakerForm = () => {
       if (response.data) {
         const serverData = response.data
 
-        // מעבר על כל השדות ומילוי הטופס
-        Object.keys(serverData).forEach((key) => {
-          if (serverData[key] !== null && serverData[key] !== undefined) {
-            try {
-              console.log(`מגדיר שדה ${key} לערך:`, serverData[key])
-              setValue(key as any, serverData[key])
-            } catch (setValueError) {
-              console.error(`שגיאה בהגדרת שדה ${key}:`, setValueError)
-            }
-          }
-        })
+        // איפוס הטופס עם הנתונים החדשים
+        const formData = {
+          matchmakerName: serverData.matchmakerName || "",
+          idNumber: serverData.idNumber || "",
+          birthDate: serverData.birthDate || "",
+          email: serverData.email || user.username || "",
+          gender: serverData.gender || "female",
+          city: serverData.city || "",
+          address: serverData.address || "",
+          mobilePhone: serverData.mobilePhone || "",
+          landlinePhone: serverData.landlinePhone || "",
+          phoneType: serverData.phoneType || "",
+          personalClub: serverData.personalClub || "",
+          community: serverData.community || "",
+          occupation: serverData.occupation || "",
+          previousWorkplaces: serverData.previousWorkplaces || "",
+          isSeminarGraduate: serverData.isSeminarGraduate || false,
+          hasChildrenInShidduchim: serverData.hasChildrenInShidduchim || false,
+          experienceInShidduchim: serverData.experienceInShidduchim || "",
+          lifeSkills: serverData.lifeSkills || "",
+          yearsInShidduchim: serverData.yearsInShidduchim || 0,
+          isInternalMatchmaker: serverData.isInternalMatchmaker || false,
+          printingNotes: serverData.printingNotes || "",
+        }
 
+        reset(formData)
         setInitialDataLoaded(true)
         console.log("טעינת נתונים הושלמה בהצלחה")
       }
     } catch (apiError: any) {
-      console.error("שגיאת API בטעינת נתוני שדכנית:", apiError.message)
+      console.error("שגיאת API בטעינת נתוני שדכנית:", apiError)
 
       // אם לא נמצאה שדכנית, זה בסדר - זה יכול להיות משתמש חדש
       if (apiError.response?.status === 404) {
@@ -201,8 +233,10 @@ const MatchMakerForm = () => {
         setInitialDataLoaded(true)
       } else if (apiError.response?.status === 401) {
         setError("אין הרשאה לגשת לנתונים. אנא התחבר מחדש.")
+        setInitialDataLoaded(true)
       } else {
         setError("שגיאה בטעינת נתונים. אנא נסה שוב.")
+        setInitialDataLoaded(true)
       }
     } finally {
       setLoading(false)
@@ -211,7 +245,7 @@ const MatchMakerForm = () => {
 
   // שליחת הטופס
   const onSubmit = async (data: any) => {
-    console.log("מתחיל שליחת נתוני שדכנית")
+    console.log("מתחיל שליחת נתוני שדכנית", data)
 
     if (!user?.id || !token) {
       console.error("חסרים פרטי משתמש או טוקן לשליחת נתונים")
@@ -244,7 +278,7 @@ const MatchMakerForm = () => {
         hasChildrenInShidduchim: data.hasChildrenInShidduchim || false,
         experienceInShidduchim: data.experienceInShidduchim || "",
         lifeSkills: data.lifeSkills || "",
-        yearsInShidduchim: data.yearsInShidduchim || 0,
+        yearsInShidduchim: Number(data.yearsInShidduchim) || 0,
         isInternalMatchmaker: data.isInternalMatchmaker || false,
         printingNotes: data.printingNotes || "",
         // שדות נוספים
@@ -310,6 +344,8 @@ const MatchMakerForm = () => {
   useEffect(() => {
     if (user && token) {
       loadInitialUserData()
+    } else {
+      setInitialDataLoaded(true) // מאפשר לטופס לעבוד גם בלי משתמש
     }
   }, [user, token])
 
@@ -746,7 +782,7 @@ const MatchMakerForm = () => {
                 type="submit"
                 variant="contained"
                 size="large"
-                disabled={loading || !isValid}
+                disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
                 sx={{
                   background: "linear-gradient(45deg, #b87333 30%, #d4af37 90%)",

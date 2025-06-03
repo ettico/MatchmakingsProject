@@ -83,10 +83,10 @@ const onSubmit = async (data: { UserName: string; Password: string }) => {
 console.log(userData);
 
     const role = userData?.user?.role
-    if (!role) {
-      setError("לא נמצא תפקיד למשתמש.")
-      return
-    }
+    // if (!role) {
+    //   setError("לא נמצא תפקיד למשתמש.")
+    //   return
+    // }
 
     if (role === "Male" || role === "Women") {
       navigate("/candidate-auth")
