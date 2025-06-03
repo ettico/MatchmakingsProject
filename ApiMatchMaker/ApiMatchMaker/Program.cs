@@ -59,6 +59,18 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); // אם משתמשים ב-Credentials
     });
 });
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy.WithOrigins("https://matchmakingsproject.onrender.com")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 
 //builder.Services.AddAuthorization(options =>
@@ -242,6 +254,7 @@ app.UseRouting();
 
 // ✅ שימוש במדיניות CORS בשם
 app.UseCors("AllowLocalhost");
+app.UseCors("_myAllowSpecificOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();
