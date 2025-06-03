@@ -51,7 +51,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
         const parsedData: AuthenticatedUser = JSON.parse(storedData)
         setUser(parsedData.user)
         setToken(parsedData.token)
-        axios.defaults.headers.common["Authorization"] = `Bearer ${parsedData.token}`
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
       } catch (err) {
         console.error("שגיאה בפענוח נתוני משתמש מהלוקל סטורג':", err)
         localStorage.removeItem("auth")
@@ -74,7 +74,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
       setUser(userData.user)
       setToken(userData.token)
       localStorage.setItem("auth", JSON.stringify(userData))
-      axios.defaults.headers.common["Authorization"] = `Bearer ${userData.token}`
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
     } catch (err) {
       console.error("שגיאה בהתחברות:", err)
       setError("שם משתמש או סיסמה שגויים")
