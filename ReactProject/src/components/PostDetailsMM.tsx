@@ -310,7 +310,7 @@ const MatchMakerForm = () => {
       // הסתרת הודעת ההצלחה אחרי 2 שניות ומעבר לעמוד השדכניות
       setTimeout(() => {
         setSuccess(false)
-        navigate("/matchmakers") // מעבר לעמוד השדכניות הכללי
+        navigate("/matchmaker-auth") // מעבר לעמוד השדכניות הכללי
       }, 2000)
 
     } catch (apiError: any) {
