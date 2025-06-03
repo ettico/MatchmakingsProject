@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import {
   Box,
   Container,
@@ -21,7 +21,7 @@ import {
 import { styled, keyframes } from "@mui/material/styles"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
-// import { userContext } from "./UserContext"
+import { userContext } from "./UserContext"
 
 // אייקונים
 import PersonIcon from "@mui/icons-material/Person"
@@ -214,23 +214,6 @@ const ContactCard = styled(Paper)(({ theme }) => ({
   },
 }))
 
-// const ExpandButton = styled(Button)(({ theme }) => ({
-//   width: "100%",
-//   padding: theme.spacing(2),
-//   borderRadius: theme.spacing(2),
-//   background: "linear-gradient(135deg, #b87333, #d4af37)",
-//   color: "white",
-//   fontWeight: "700",
-//   fontSize: "1.1rem",
-//   marginTop: theme.spacing(2),
-//   transition: "all 0.3s ease",
-//   "&:hover": {
-//     background: "linear-gradient(135deg, #d4af37, #b87333)",
-//     transform: "translateY(-2px)",
-//     boxShadow: "0 8px 16px rgba(184, 115, 51, 0.4)",
-//   },
-// }))
-
 const DetailItem = styled(Box)(({ theme }) => ({
   display: "flex",
   alignItems: "center",
@@ -317,7 +300,7 @@ const UserProfile = () => {
   const [contactsData, setContactsData] = useState<ContactData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
-//   const { user } = useContext(userContext)
+  const { user,token } = useContext(userContext)
 
   // State לניהול הרחבת כרטיסים
   const [expandedSections, setExpandedSections] = useState({
@@ -327,62 +310,23 @@ const UserProfile = () => {
     traits: false,
   })
 
-  // פונקציה לפענוח הטוקן
-  const decodeAndVerifyToken = (token: string) => {
-    try {
-      const base64Url = token.split(".")[1]
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(""),
-      )
-
-      const payload = JSON.parse(jsonPayload)
-      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
-      const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
-
-      return { userId: Number(userId), role }
-    } catch (error) {
-      console.error("שגיאה בפענוח הטוקן:", error)
-      return null
-    }
-  }
-
   // טעינת נתוני המשתמש
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
         setLoading(true)
 
-        // קבלת נתוני המשתמש מהלוקל סטורג'
-        const storedUserString = localStorage.getItem("user")
-        if (!storedUserString) {
+        // בדיקה שיש user מה-context
+        if (!user  || !user.id || !user.role) {
           setError("לא נמצאו נתוני משתמש")
           return
         }
 
-        const storedUser = JSON.parse(storedUserString)
-        const { token } = storedUser
-
-        if (!token) {
-          setError("חסר טוקן הזדהות")
-          return
-        }
-
-        // פענוח הטוקן
-        const tokenData = decodeAndVerifyToken(token)
-        if (!tokenData) {
-          setError("טוקן לא תקין")
-          return
-        }
-
-        const { userId, role } = tokenData
+        const {  id, role } = user
 
         // קביעת כתובת ה-API לפי המגדר
         const apiUrl =
-          role === "Male" ? `${ApiUrl}/Male/${userId}` : `${ApiUrl}/Women/${userId}`
+          role === "Male" ? `${ApiUrl}/Male/${id}` : `${ApiUrl}/Women/${id}`
 
         // טעינת נתוני המשתמש
         const userResponse = await axios.get(apiUrl, {
@@ -403,7 +347,7 @@ const UserProfile = () => {
 
           const familyDetails = familyResponse.data.find(
             (detail: any) =>
-              (role === "Male" && detail.maleId === userId) || (role === "Women" && detail.womenId === userId),
+              (role === "Male" && detail.maleId === id) || (role === "Women" && detail.womenId === id),
           )
 
           if (familyDetails) {
@@ -423,7 +367,7 @@ const UserProfile = () => {
 
           const userContacts = contactsResponse.data.filter(
             (contact: any) =>
-              (role === "Male" && contact.maleId === userId) || (role === "Women" && contact.womenId === userId),
+              (role === "Male" && contact.maleId === id) || (role === "Women" && contact.womenId === id),
           )
 
           setContactsData(userContacts)
@@ -439,13 +383,50 @@ const UserProfile = () => {
     }
 
     loadUserProfile()
-  }, [])
+  }, [user])
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }))
+  }
+
+  if (loading) {
+    return (
+      <ProfileContainer>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "50vh",
+            flexDirection: "column",
+          }}
+        >
+          <CircularProgress
+            size={60}
+            sx={{
+              color: "#b87333",
+              animation: `${pulse} 2s infinite`,
+            }}
+          />
+          <Typography variant="h5" sx={{ mt: 3, color: "#2c1810", fontWeight: "600" }}>
+            🔄 טוען פרופיל...
+          </Typography>
+        </Box>
+      </ProfileContainer>
+    )
+  }
+
+  if (error || !userData) {
+    return (
+      <ProfileContainer>
+        <Alert severity="error" sx={{ mt: 4, borderRadius: 3 }}>
+          {error || "לא נמצאו נתוני משתמש"}
+        </Alert>
+      </ProfileContainer>
+    )
   }
 
   if (loading) {
