@@ -59,7 +59,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
     }
     setLoading(false)
   }, [])
-    const ApiUrl=process.env.REACT_APP_API_URL
+    // const ApiUrl=process.env.REACT_APP_API_URL
   const login = async (username: string, password: string) => {
     setLoading(true)
     setError(null)
