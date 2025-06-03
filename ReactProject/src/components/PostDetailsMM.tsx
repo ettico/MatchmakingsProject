@@ -168,7 +168,7 @@ const MatchMakerForm = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        timeout: 10000,
+        // timeout: 10000,
       })
 
       console.log("נתוני שדכנית שהתקבלו מהשרת:", response.data)
