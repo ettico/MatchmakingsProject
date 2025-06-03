@@ -23,7 +23,7 @@ import CloseIcon from "@mui/icons-material/Close";
 function MatchCandidates() {
   const { id, role } = useParams();
   const navigate = useNavigate();
-  const { user } = useContext(userContext);
+  const { token} = useContext(userContext);
 
   const [matches, setMatches] = useState<Match[]>([]);
   const [viewingProfile, setViewingProfile] = useState<Male | Women | null>(null);
@@ -54,7 +54,7 @@ function MatchCandidates() {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: user?.token ? `Bearer ${user.token}` : ""
+            Authorization:token ? `Bearer ${token}` : ""
           }
         }
       );
@@ -83,7 +83,7 @@ function MatchCandidates() {
     try {
       const response = await axios.get(url, {
         headers: {
-          Authorization: user?.token ? `Bearer ${user.token}` : ""
+          Authorization: token ? `Bearer ${token}` : ""
         }
       });
       setViewingProfile(response.data);

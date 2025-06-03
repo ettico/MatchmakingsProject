@@ -51,7 +51,7 @@ const colors = {
 };
 
 const MatchmakerNotes = () => {
-  const { user } = useContext(userContext);
+  const { user,token } = useContext(userContext);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -119,7 +119,7 @@ console.log(user?.firstName);
 console.log(user?.lastName);
 console.log(user?.id);
 console.log(user?.role);
-console.log(user?.token);
+console.log(token);
 
 
   const addNote = async () => {
