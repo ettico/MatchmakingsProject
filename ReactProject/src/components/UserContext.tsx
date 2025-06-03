@@ -64,7 +64,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post(`${ApiUrl}/Auth/login`, {
+      const response = await axios.post(`https://matchmakingsprojectserver.onrender.com/api/Auth/login`, {
         UserName: username,
         Password: password,
       })
