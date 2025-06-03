@@ -24,6 +24,7 @@ import { userContext } from "./UserContext"
 import { motion } from "framer-motion"
 // import { Link as RouterLink } from 'react-router-dom';
 import { Visibility, VisibilityOff, Email, Lock, WineBar, Login as LoginIcon, PersonAdd } from "@mui/icons-material"
+import { log } from "console"
 
 const schema = yup.object().shape({
   UserName: yup.string().required("שם משתמש הוא שדה חובה"),
@@ -72,12 +73,15 @@ const onSubmit = async (data: { UserName: string; Password: string }) => {
 
     let userData: any
     try {
+      console.log(storedUser);
+      
       userData = JSON.parse(storedUser)
     } catch (e) {
       console.error("שגיאה בפענוח JSON:", e)
       setError("נתוני התחברות לא תקינים. נסה שוב.")
       return
     }
+console.log(userData);
 
     const role = userData?.user?.role
     if (!role) {
