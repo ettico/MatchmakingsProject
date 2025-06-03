@@ -11,12 +11,9 @@ import {
   Checkbox,
   MenuItem,
   Box,
-  // Divider,
   CircularProgress,
   Snackbar,
   Alert,
-  // IconButton,
-  // Tooltip,
   Container,
   FormControl,
   InputLabel,
@@ -34,9 +31,8 @@ import { userContext } from "./UserContext"
 import PersonIcon from "@mui/icons-material/Person"
 import WorkIcon from "@mui/icons-material/Work"
 import SaveIcon from "@mui/icons-material/Save"
-// import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import LocationOnIcon from "@mui/icons-material/LocationOn"
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
+// import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
 import NoteIcon from "@mui/icons-material/Note"
 
 // הגדרת סכמת ולידציה באמצעות Yup
@@ -97,9 +93,10 @@ const AnimatedButton = styled(motion.div)(({ theme }) => ({
 
 const MatchMakerForm = () => {
   const [loading, setLoading] = useState(false)
+  const [submitLoading, setSubmitLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [, setInitialDataLoaded] = useState(false)
+  const [error, setError] = useState("")
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false)
   
   // שימוש ב-useContext במקום localStorage
   const { user, token } = useContext(userContext)
@@ -108,20 +105,64 @@ const MatchMakerForm = () => {
     handleSubmit,
     control,
     setValue,
-    formState: { errors, isValid },
+    watch,
+    formState: { errors, isValid, isDirty },
   } = useForm({
     resolver: yupResolver(schema),
     mode: "onChange",
     defaultValues: {
+      matchmakerName: "",
+      idNumber: "",
+      birthDate: "",
+      email: "",
       gender: "female",
+      city: "",
+      address: "",
+      mobilePhone: "",
+      landlinePhone: "",
+      phoneType: "",
+      personalClub: "",
+      community: "",
+      occupation: "",
+      previousWorkplaces: "",
       isSeminarGraduate: false,
       hasChildrenInShidduchim: false,
-      isInternalMatchmaker: false,
+      experienceInShidduchim: "",
+      lifeSkills: "",
       yearsInShidduchim: 0,
+      isInternalMatchmaker: false,
+      printingNotes: "",
     },
   })
 
   const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
+
+  // מעקב אחר שינויים בטופס
+  const formData = watch()
+
+  // פונקציה לטיפול בשגיאות
+  const handleApiError = (error:any, context:any) => {
+    console.error(`שגיאה ב${context}:`, error)
+    
+    if (error.code === 'ERR_NETWORK') {
+      setError('בעיית רשת. אנא בדוק את החיבור לאינטרנט ונסה שנית.')
+    } else if (error.response?.status === 500) {
+      setError('שגיאת שרת פנימית. אנא נסה מאוחר יותר.')
+    } else if (error.response?.status === 404) {
+      if (context === 'טעינת נתוני שדכנית') {
+        console.log('לא נמצאו נתוני שדכנית - משתמש חדש')
+        setInitialDataLoaded(true)
+      } else {
+        setError('הנתונים לא נמצאו.')
+      }
+    } else if (error.response?.status === 401) {
+      setError('אין הרשאה. אנא התחבר מחדש.')
+    } else if (error.response?.status === 400) {
+      setError('נתונים לא תקינים. אנא בדוק את הפרטים.')
+    } else {
+      setError(`שגיאה ב${context}. אנא נסה שוב.`)
+    }
+  }
 
   // טעינת נתוני המשתמש הבסיסיים מה-context
   const loadInitialUserData = () => {
@@ -135,7 +176,7 @@ const MatchMakerForm = () => {
 
     // מילוי הפרטים הבסיסיים מה-context
     const fullName = `${user.firstName} ${user.lastName}`.trim()
-    if (fullName) {
+    if (fullName && fullName !== " ") {
       setValue("matchmakerName", fullName)
       console.log("הוגדר שדה matchmakerName:", fullName)
     }
@@ -158,6 +199,8 @@ const MatchMakerForm = () => {
     }
 
     setLoading(true)
+    setError("")
+    
     try {
       console.log("מנסה לטעון נתוני שדכנית עם ID:", user.id)
 
@@ -168,21 +211,20 @@ const MatchMakerForm = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        timeout: 10000,
+        timeout: 15000,
       })
 
       console.log("נתוני שדכנית שהתקבלו מהשרת:", response.data)
 
-      // מילוי הטופס עם הנתונים שהתקבלו מהשרת
       if (response.data) {
         const serverData = response.data
-
-        // מעבר על כל השדות ומילוי הטופס
-        Object.keys(serverData).forEach((key) => {
-          if (serverData[key] !== null && serverData[key] !== undefined) {
+        
+        // מילוי הטופס עם הנתונים שהתקבלו מהשרת
+        Object.keys(serverData).forEach((key:any) => {
+          if (serverData[key] !== null && serverData[key] !== undefined && serverData[key] !== "") {
             try {
               console.log(`מגדיר שדה ${key} לערך:`, serverData[key])
-              setValue(key as any, serverData[key])
+              setValue(key, serverData[key])
             } catch (setValueError) {
               console.error(`שגיאה בהגדרת שדה ${key}:`, setValueError)
             }
@@ -192,26 +234,22 @@ const MatchMakerForm = () => {
         setInitialDataLoaded(true)
         console.log("טעינת נתונים הושלמה בהצלחה")
       }
-    } catch (apiError: any) {
-      console.error("שגיאת API בטעינת נתוני שדכנית:", apiError.message)
-
-      // אם לא נמצאה שדכנית, זה בסדר - זה יכול להיות משתמש חדש
+    } catch (apiError:any) {
+      handleApiError(apiError, 'טעינת נתוני שדכנית')
+      
+      // גם אם יש שגיאה, אפשר למשתמש למלא טופס חדש
       if (apiError.response?.status === 404) {
-        console.log("לא נמצאו נתוני שדכנית - ייתכן שזה משתמש חדש")
         setInitialDataLoaded(true)
-      } else if (apiError.response?.status === 401) {
-        setError("אין הרשאה לגשת לנתונים. אנא התחבר מחדש.")
-      } else {
-        setError("שגיאה בטעינת נתונים. אנא נסה שוב.")
       }
     } finally {
       setLoading(false)
     }
   }
 
-  // שליחת הטופס
-  const onSubmit = async (data: any) => {
-    console.log("מתחיל שליחת נתוני שדכנית")
+  // שליחת הטופס - מתוקן ומשופר
+  const onSubmit = async (data:any) => {
+    console.log("=== התחלת שליחת נתוני שדכנית ===")
+    console.log("נתוני הטופס שהתקבלו:", data)
 
     if (!user?.id || !token) {
       console.error("חסרים פרטי משתמש או טוקן לשליחת נתונים")
@@ -219,42 +257,49 @@ const MatchMakerForm = () => {
       return
     }
 
-    setLoading(true)
-    setError(null)
+    setSubmitLoading(true)
+    setError("null")
+    setSuccess(false)
 
     try {
       // הכנת הנתונים לשליחה
       const dataToSend = {
         id: user.id,
-        matchmakerName: data.matchmakerName || "",
-        idNumber: data.idNumber || "",
+        matchmakerName: data.matchmakerName?.trim() || "",
+        idNumber: data.idNumber?.trim() || "",
         birthDate: data.birthDate || "",
-        email: data.email || "",
+        email: data.email?.trim() || "",
         gender: data.gender || "female",
-        city: data.city || "",
-        address: data.address || "",
-        mobilePhone: data.mobilePhone || "",
-        landlinePhone: data.landlinePhone || "",
-        phoneType: data.phoneType || "",
-        personalClub: data.personalClub || "",
-        community: data.community || "",
-        occupation: data.occupation || "",
-        previousWorkplaces: data.previousWorkplaces || "",
-        isSeminarGraduate: data.isSeminarGraduate || false,
-        hasChildrenInShidduchim: data.hasChildrenInShidduchim || false,
-        experienceInShidduchim: data.experienceInShidduchim || "",
-        lifeSkills: data.lifeSkills || "",
-        yearsInShidduchim: data.yearsInShidduchim || 0,
-        isInternalMatchmaker: data.isInternalMatchmaker || false,
-        printingNotes: data.printingNotes || "",
+        city: data.city?.trim() || "",
+        address: data.address?.trim() || "",
+        mobilePhone: data.mobilePhone?.trim() || "",
+        landlinePhone: data.landlinePhone?.trim() || "",
+        phoneType: data.phoneType?.trim() || "",
+        personalClub: data.personalClub?.trim() || "",
+        community: data.community?.trim() || "",
+        occupation: data.occupation?.trim() || "",
+        previousWorkplaces: data.previousWorkplaces?.trim() || "",
+        isSeminarGraduate: Boolean(data.isSeminarGraduate),
+        hasChildrenInShidduchim: Boolean(data.hasChildrenInShidduchim),
+        experienceInShidduchim: data.experienceInShidduchim?.trim() || "",
+        lifeSkills: data.lifeSkills?.trim() || "",
+        yearsInShidduchim: Number(data.yearsInShidduchim) || 0,
+        isInternalMatchmaker: Boolean(data.isInternalMatchmaker),
+        printingNotes: data.printingNotes?.trim() || "",
         // שדות נוספים
         Role: user.role || "MatchMaker",
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
-        Username: user.username || data.email || "",
+        Username: user.username || data.email?.trim() || "",
       }
 
-      console.log("שולח נתוני שדכנית:", dataToSend)
+      console.log("=== נתונים לשליחה ===")
+      console.log("URL:", `${ApiUrl}/MatchMaker/${user.id}`)
+      console.log("Data:", dataToSend)
+      console.log("Headers:", {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token?.substring(0, 20)}...`,
+      })
 
       const response = await axios({
         method: "put",
@@ -264,23 +309,44 @@ const MatchMakerForm = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        timeout: 15000,
+        timeout: 20000,
       })
 
-      console.log("נתונים נשמרו בהצלחה:", response.data)
-      setSuccess(true)
+      console.log("=== תגובת השרת ===")
+      console.log("Status:", response.status)
+      console.log("Data:", response.data)
 
-      // הסתרת הודעת ההצלחה אחרי 5 שניות
-      setTimeout(() => {
-        setSuccess(false)
-      }, 5000)
+      if (response.status === 200 || response.status === 201 || response.status === 204) {
+        console.log("✅ נתונים נשמרו בהצלחה!")
+        setSuccess(true)
 
-    } catch (apiError: any) {
-      console.error("שגיאת API בשליחת נתוני שדכנית:", apiError)
+        // הסתרת הודעת ההצלחה אחרי 5 שניות
+        setTimeout(() => {
+          setSuccess(false)
+        }, 5000)
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`)
+      }
+
+    } catch (apiError:any) {
+      console.error("=== שגיאה בשליחת נתונים ===")
+      console.error("Error:", apiError)
+      console.error("Response:", apiError.response?.data)
+      console.error("Status:", apiError.response?.status)
 
       let errorMessage = "שגיאה בעדכון נתונים. אנא נסה שנית."
 
-      if (apiError.response?.data?.errors) {
+      if (apiError.code === 'ERR_NETWORK') {
+        errorMessage = 'בעיית רשת. אנא בדוק את החיבור לאינטרנט ונסה שנית.'
+      } else if (apiError.response?.status === 500) {
+        errorMessage = 'שגיאת שרת פנימית. אנא נסה מאוחר יותר.'
+      } else if (apiError.response?.status === 400) {
+        errorMessage = 'נתונים לא תקינים. אנא בדוק את הפרטים.'
+      } else if (apiError.response?.status === 401) {
+        errorMessage = 'אין הרשאה. אנא התחבר מחדש.'
+      } else if (apiError.response?.status === 403) {
+        errorMessage = 'אין הרשאה לביצוע פעולה זו.'
+      } else if (apiError.response?.data?.errors) {
         const errorMessages = []
         for (const field in apiError.response.data.errors) {
           errorMessages.push(`${field}: ${apiError.response.data.errors[field].join(", ")}`)
@@ -289,17 +355,18 @@ const MatchMakerForm = () => {
       } else if (apiError.response?.data?.message) {
         errorMessage = apiError.response.data.message
       } else if (apiError.message) {
-        errorMessage = apiError.message
+        errorMessage = `שגיאה: ${apiError.message}`
       }
 
+      console.error("הודעת שגיאה סופית:", errorMessage)
       setError(errorMessage)
     } finally {
-      setLoading(false)
+      setSubmitLoading(false)
     }
   }
 
   const handleCloseError = () => {
-    setError(null)
+    setError("null")
   }
 
   const handleCloseSuccess = () => {
@@ -313,117 +380,124 @@ const MatchMakerForm = () => {
     }
   }, [user, token])
 
-  // אם אין משתמש או טוקן, הצג הודעה
-  if (!user || !token) {
-    return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="warning">
-          אנא התחבר למערכת כדי לגשת לטופס השדכנית
-        </Alert>
-      </Container>
-    )
-  }
+  // Debug - מעקב אחר שינויים בטופס
+  useEffect(() => {
+    console.log("=== מצב הטופס עודכן ===")
+    console.log("isDirty:", isDirty)
+    console.log("isValid:", isValid)
+    console.log("errors:", errors)
+    console.log("formData:", formData)
+  }, [isDirty, isValid, errors, formData])
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: "center", mb: 4, color: "#333" }}>
-          טופס פרטי שדכנית
+        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4, fontWeight: 'bold' }}>
+          פרטי שדכנית
         </Typography>
+
+        {/* הצגת מצב טעינה ראשונית */}
+        {loading && !initialDataLoaded && (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+            <Typography sx={{ ml: 2 }}>טוען נתונים...</Typography>
+          </Box>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* פרטים אישיים */}
           <StyledPaper>
-            <SectionTitle variant="h5">
+            <SectionTitle variant="h6">
               פרטים אישיים
               <PersonIcon />
             </SectionTitle>
+            
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="matchmakerName"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="שם מלא"
                       fullWidth
-                      variant="outlined"
+                      label="שם מלא"
                       error={!!errors.matchmakerName}
                       helperText={errors.matchmakerName?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="idNumber"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="מספר תעודת זהות"
                       fullWidth
-                      variant="outlined"
+                      label="מספר זהות"
                       error={!!errors.idNumber}
                       helperText={errors.idNumber?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="birthDate"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
+                      fullWidth
                       label="תאריך לידה"
                       type="date"
-                      fullWidth
-                      variant="outlined"
                       InputLabelProps={{ shrink: true }}
                       error={!!errors.birthDate}
                       helperText={errors.birthDate?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="email"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="כתובת אימייל"
-                      type="email"
                       fullWidth
-                      variant="outlined"
+                      label="כתובת דוא\ל"
+                      type="email"
                       error={!!errors.email}
                       helperText={errors.email?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="gender"
                   control={control}
                   render={({ field }) => (
-                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                    <FormControl fullWidth error={!!errors.gender}>
                       <InputLabel>מגדר</InputLabel>
-                      <Select {...field} label="מגדר" error={!!errors.gender}>
-                        <MenuItem value="male">זכר</MenuItem>
+                      <Select {...field} label="מגדר" disabled={loading || submitLoading}>
                         <MenuItem value="female">נקבה</MenuItem>
+                        <MenuItem value="male">זכר</MenuItem>
                       </Select>
                     </FormControl>
                   )}
@@ -432,100 +506,75 @@ const MatchMakerForm = () => {
             </Grid>
           </StyledPaper>
 
-          {/* פרטי מגורים */}
+          {/* כתובת ופרטי התקשרות */}
           <StyledPaper>
-            <SectionTitle variant="h5">
-              פרטי מגורים
+            <SectionTitle variant="h6">
+              כתובת ופרטי התקשרות
               <LocationOnIcon />
             </SectionTitle>
+            
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="city"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="עיר"
                       fullWidth
-                      variant="outlined"
+                      label="עיר"
                       error={!!errors.city}
                       helperText={errors.city?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="address"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="כתובת מלאה"
                       fullWidth
-                      variant="outlined"
+                      label="כתובת"
                       error={!!errors.address}
                       helperText={errors.address?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-            </Grid>
-          </StyledPaper>
 
-          {/* פרטי קשר */}
-          <StyledPaper>
-            <SectionTitle variant="h5">
-              פרטי קשר
-              <PersonIcon />
-            </SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="mobilePhone"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="טלפון נייד"
                       fullWidth
-                      variant="outlined"
+                      label="טלפון נייד"
                       error={!!errors.mobilePhone}
                       helperText={errors.mobilePhone?.message}
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="landlinePhone"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="טלפון קווי"
                       fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="phoneType"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="סוג טלפון"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
+                      label="טלפון קווי (אופציונלי)"
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
@@ -533,145 +582,46 @@ const MatchMakerForm = () => {
             </Grid>
           </StyledPaper>
 
-          {/* פרטים נוספים */}
+          {/* פרטים מקצועיים */}
           <StyledPaper>
-            <SectionTitle variant="h5">
-              פרטים נוספים
-              <FamilyRestroomIcon />
-            </SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="personalClub"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="מועדון אישי"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="community"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="קהילה"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  name="isSeminarGraduate"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="בוגרת סמינר"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  name="hasChildrenInShidduchim"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="יש ילדים בשידוכים"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  name="isInternalMatchmaker"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="שדכנית פנימית"
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </StyledPaper>
-
-          {/* פרטי עבודה */}
-          <StyledPaper>
-            <SectionTitle variant="h5">
-              פרטי עבודה
+            <SectionTitle variant="h6">
+              פרטים מקצועיים
               <WorkIcon />
             </SectionTitle>
+            
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="occupation"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
+                      fullWidth
                       label="מקצוע"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="previousWorkplaces"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="מקומות עבודה קודמים"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </StyledPaper>
 
-          {/* ניסיון בשידוכים */}
-          <StyledPaper>
-            <SectionTitle variant="h5">
-              ניסיון בשידוכים
-              <FamilyRestroomIcon />
-            </SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <Controller
                   name="yearsInShidduchim"
                   control={control}
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="שנים בשידוכים"
-                      type="number"
                       fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
+                      label="שנות ניסיון בשידוכים"
+                      type="number"
+                      inputProps={{ min: 0 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
+
               <Grid item xs={12}>
                 <Controller
                   name="experienceInShidduchim"
@@ -679,29 +629,49 @@ const MatchMakerForm = () => {
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="ניסיון בשידוכים"
                       fullWidth
+                      label="ניסיון בשידוכים"
                       multiline
                       rows={3}
-                      variant="outlined"
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12}>
+
+              <Grid item xs={12} sm={6}>
                 <Controller
-                  name="lifeSkills"
+                  name="isSeminarGraduate"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="כישורי חיים"
-                      fullWidth
-                      multiline
-                      rows={3}
-                      variant="outlined"
-                      sx={{ mb: 2 }}
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          {...field}
+                          checked={field.value}
+                          disabled={loading || submitLoading}
+                        />
+                      }
+                      label="בוגרת סמינר"
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name="hasChildrenInShidduchim"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          {...field}
+                          checked={field.value}
+                          disabled={loading || submitLoading}
+                        />
+                      }
+                      label="יש ילדים בגיל שידוכים"
                     />
                   )}
                 />
@@ -711,10 +681,11 @@ const MatchMakerForm = () => {
 
           {/* הערות */}
           <StyledPaper>
-            <SectionTitle variant="h5">
-              הערות
+            <SectionTitle variant="h6">
+              הערות נוספות
               <NoteIcon />
             </SectionTitle>
+            
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Controller
@@ -723,12 +694,11 @@ const MatchMakerForm = () => {
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="הערות להדפסה"
                       fullWidth
+                      label="הערות להדפסה"
                       multiline
                       rows={4}
-                      variant="outlined"
-                      sx={{ mb: 2 }}
+                      disabled={loading || submitLoading}
                     />
                   )}
                 />
@@ -737,45 +707,70 @@ const MatchMakerForm = () => {
           </StyledPaper>
 
           {/* כפתור שמירה */}
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <AnimatedButton
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: submitLoading ? 1 : 1.05 }}
+              whileTap={{ scale: submitLoading ? 1 : 0.95 }}
             >
               <Button
                 type="submit"
                 variant="contained"
                 size="large"
-                disabled={loading || !isValid}
-                startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                disabled={loading || submitLoading || !isValid}
+                startIcon={submitLoading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
                 sx={{
-                  background: "linear-gradient(45deg, #b87333 30%, #d4af37 90%)",
-                  color: "white",
                   px: 4,
                   py: 1.5,
-                  fontSize: "1.1rem",
-                  "&:hover": {
-                    background: "linear-gradient(45deg, #a0651f 30%, #b8941f 90%)",
+                  borderRadius: 2,
+                  background: 'linear-gradient(45deg, #b87333 30%, #d4af37 90%)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #a0651f 30%, #b8941f 90%)',
                   },
+                  '&:disabled': {
+                    background: '#ccc',
+                  }
                 }}
               >
-                {loading ? "שומר..." : "שמור פרטים"}
+                {submitLoading ? 'שומר נתונים...' : 'שמור פרטים'}
               </Button>
             </AnimatedButton>
           </Box>
+
+          {/* הצגת מצב הטופס לדיבוג */}
+          {process.env.NODE_ENV === 'development' && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              <Typography variant="caption" display="block">
+                Debug: Valid: {isValid ? '✅' : '❌'} | Dirty: {isDirty ? '✅' : '❌'} | Errors: {Object.keys(errors).length}
+              </Typography>
+              {Object.keys(errors).length > 0 && (
+                <Typography variant="caption" color="error" display="block">
+                  שגיאות: {Object.keys(errors).join(', ')}
+                </Typography>
+              )}
+            </Box>
+          )}
         </form>
 
-        {/* הודעת הצלחה */}
-        <Snackbar open={success} autoHideDuration={5000} onClose={handleCloseSuccess}>
-          <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: "100%" }}>
-            הפרטים נשמרו בהצלחה!
+        {/* הודעות */}
+        <Snackbar 
+          open={!!error} 
+          autoHideDuration={8000} 
+          onClose={handleCloseError}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+            {error}
           </Alert>
         </Snackbar>
 
-        {/* הודעת שגיאה */}
-        <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError}>
-          <Alert onClose={handleCloseError} severity="error" sx={{ width: "100%" }}>
-            {error}
+        <Snackbar 
+          open={success} 
+          autoHideDuration={5000} 
+          onClose={handleCloseSuccess}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
+            ✅ הפרטים נשמרו בהצלחה!
           </Alert>
         </Snackbar>
       </motion.div>
