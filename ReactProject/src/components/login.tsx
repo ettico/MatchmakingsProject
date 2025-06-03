@@ -48,7 +48,7 @@ const Login = () => {
 //   const theme = useTheme()
 //   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
 const { userType } = useParams(); // יקבל את הערך מה-URL
-  const { login,error: contextError } = useContext(userContext)
+  const { login, error: contextError } = useContext(userContext)
   const navigate = useNavigate()
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -60,6 +60,7 @@ const { userType } = useParams(); // יקבל את הערך מה-URL
   } = useForm({
     resolver: yupResolver(schema),
   })
+
 const onSubmit = async (data: { UserName: string; Password: string }) => {
   try {
     await login(data.UserName, data.Password)
@@ -72,22 +73,27 @@ const onSubmit = async (data: { UserName: string; Password: string }) => {
 
     let userData: any
     try {
-      console.log(storedUser);
-      
+      console.log("נתוני משתמש מ-localStorage:", storedUser)
       userData = JSON.parse(storedUser)
     } catch (e) {
       console.error("שגיאה בפענוח JSON:", e)
       setError("נתוני התחברות לא תקינים. נסה שוב.")
       return
     }
-console.log(userData);
 
-    const role = userData?.user?.role
-    // if (!role) {
-    //   setError("לא נמצא תפקיד למשתמש.")
-    //   return
-    // }
+    console.log("נתוני משתמש לאחר parsing:", userData)
 
+    // תיקון: הנתונים נמצאים ישירות ב-userData ולא ב-userData.user
+    const role = userData?.role || userData?.user?.role
+    console.log("תפקיד המשתמש:", role)
+    
+    if (!role) {
+      console.error("לא נמצא תפקיד למשתמש. מבנה הנתונים:", userData)
+      setError("לא נמצא תפקיד למשתמש.")
+      return
+    }
+
+    // ניתוב לפי תפקיד
     if (role === "Male" || role === "Women") {
       navigate("/candidate-auth")
       console.log("התחברות מוצלחת - מועמד")
@@ -95,6 +101,7 @@ console.log(userData);
       navigate("/matchmaker-auth")
       console.log("התחברות מוצלחת - שדכנית")
     } else {
+      console.error("תפקיד לא מזוהה:", role)
       setError("המערכת אינה זיהתה אותך במאגר המשתמשים המתאים.")
     }
   } catch (err) {
