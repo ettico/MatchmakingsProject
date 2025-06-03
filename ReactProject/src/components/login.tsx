@@ -68,7 +68,7 @@ const { userType } = useParams(); // יקבל את הערך מה-URL
       // בדיקת סוג המשתמש והפניה לדף המתאים
      const storedUser = localStorage.getItem("user")
       if (storedUser) {
-        const userData = JSON.parse(storedUser).data.user
+        const userData = JSON.parse(storedUser).user
 
         if ( userData.role === "Male" || userData.role === "Women") {
           navigate("/candidate-auth")

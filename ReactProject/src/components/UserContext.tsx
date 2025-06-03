@@ -145,8 +145,8 @@ interface UserProviderProps {
   token: userData.token,
 })
       // שמירת נתוני המשתמש בלוקל סטורג'
-      localStorage.setItem("user", JSON.stringify(userData))
-
+      localStorage.setItem("token", userData.token)
+      localStorage.setItem("user", JSON.stringify(userData.user))
       // הגדרת הטוקן בכותרות של הבקשה
       if (userData.token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${userData.token}`
