@@ -2,19 +2,23 @@
 
 import { createContext, useState, useEffect, type ReactNode } from "react"
 import axios from "axios"
-// import { useParams } from "react-router-dom"
-// import { jwtDecode } from "jwt-decode";
 
 interface User {
   id: number
   firstName: string
   lastName: string
+  username: string
   role: string
+}
+
+interface AuthenticatedUser {
+  user: User
   token: string
 }
 
 interface UserContextType {
   user: User | null
+  token: string | null
   loading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
@@ -23,6 +27,7 @@ interface UserContextType {
 
 export const userContext = createContext<UserContextType>({
   user: null,
+  token: null,
   loading: false,
   error: null,
   login: async () => {},
@@ -33,145 +38,43 @@ interface UserProviderProps {
   children: ReactNode
 }
 
-// const decodeAndVerifyToken = (token: string) => {
-//   try {
-//     const base64Url = token.split(".")[1];
-//     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-//     const jsonPayload = decodeURIComponent(
-//       atob(base64)
-//         .split("")
-//         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-//         .join("")
-//     );
-
-//     const payload = JSON.parse(jsonPayload);
-//     console.log("פענוח הטוקן:", payload);
-
-//     // בדיקת תוקף הטוקן
-//     const currentTime = Math.floor(Date.now() / 1000);
-//     if (payload.exp && payload.exp < currentTime) {
-//       console.error("הטוקן פג תוקף:", new Date(payload.exp * 1000));
-//       return null;
-//     }
-
-//     // שליפת מזהה המשתמש מהclaim המותאם אישית
-//     const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-//     const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-//     const name = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
-
-//     return {
-//       userId,
-//       role,
-//       name,
-//     };
-//   } catch (error) {
-//     console.error("שגיאה בפענוח הטוקן:", error);
-//     return null;
-//   }
-// };
-// const getUserDataFromToken = (token: string) => {
-//   try {
-//     const decoded: any = jwtDecode(token)
-//     return decoded.id
-//   } catch (error) {
-//     console.error("שגיאה בפענוח ה-Token", error)
-//     return null
-//   }
-// }
- const UserProvider = ({ children }: UserProviderProps) => {
+const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-    const ApiUrl=process.env.REACT_APP_API_URL
-
- useEffect(() => {
-  const storedUser = localStorage.getItem("user")
-  if (storedUser && storedUser !== "undefined") {
-    try {
-      const parsedUser = JSON.parse(storedUser)
-      setUser(parsedUser)
-
-      if (parsedUser.token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${parsedUser.token}`
+  useEffect(() => {
+    const storedData = localStorage.getItem("auth")
+    if (storedData) {
+      try {
+        const parsedData: AuthenticatedUser = JSON.parse(storedData)
+        setUser(parsedData.user)
+        setToken(parsedData.token)
+        axios.defaults.headers.common["Authorization"] = `Bearer ${parsedData.token}`
+      } catch (err) {
+        console.error("שגיאה בפענוח נתוני משתמש מהלוקל סטורג':", err)
+        localStorage.removeItem("auth")
       }
-    } catch (err) {
-      console.error("שגיאה בפענוח נתוני משתמש מהלוקל סטורג':", err)
-      localStorage.removeItem("user")
     }
-  } else {
-    localStorage.removeItem("user") // ניקוי אם לא תקני
-  }
-  setLoading(false)
-}, [])
-
-
-  // const fetchUserData = async (userId: number, role: string) => {
-  //   try {
-  //     let apiUrl:string|undefined
-  //     if(role === "Male"){
-  //      apiUrl=`https://localhost:7012/api/Male/${userId}`
-  //     }
-  //     else if(role === "Women"){
-  //       apiUrl=`https://localhost:7012/api/Women/${userId}`
-  //     }
-  //     else if(role === "MatchMaker"){
-  //       apiUrl=`https://localhost:7012/api/MatchMaker/${userId}`
-  //     }
-      
-  //     const response = await axios.get(apiUrl??"");
-      
-  //     console.log(response.data);
-      
-  //     return response.data;
-  //   } catch (err) {
-  //     console.error("שגיאה בטעינת נתוני המשתמש:", err);
-  //     setError("שגיאה בטעינת נתוני המשתמש");
-  //     return null;
-  //   }
-  // };
+    setLoading(false)
+  }, [])
 
   const login = async (username: string, password: string) => {
-    // const { userType } = useParams(); // יקבל את הערך מה-URL
-    // debugger;
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post(`${ApiUrl}/Auth/login`, {
+      const response = await axios.post("https://localhost:7012/api/Auth/login", {
         UserName: username,
         Password: password,
       })
 
-      const userData = response.data
-      setUser({
-  ...userData.user,
-  token: userData.token,
-})
-      // שמירת נתוני המשתמש בלוקל סטורג'
-   localStorage.setItem("user", JSON.stringify({
-  ...userData.user,
-  token: userData.token
-}))
+      const userData: AuthenticatedUser = response.data
 
-
-      // הגדרת הטוקן בכותרות של הבקשה
-      if (userData.token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${userData.token}`
-  
-        // פענוח ובדיקת הטוקן
-        // const decodedToken = decodeAndVerifyToken(userData.token);
-        // if (decodedToken) {
-        //   const { userId, role } = decodedToken;
-          // // טוען את פרטי המשתמש מהדאטה בייס
-          // const fullUserData = await fetchUserData(userId, role);
-          // if (fullUserData) {
-          //   setUser(fullUserData);
-          // }
-          // console.log("פרטים אישיים",fullUserData);
-      // }
-        
-      }
-
+      setUser(userData.user)
+      setToken(userData.token)
+      localStorage.setItem("auth", JSON.stringify(userData))
+      axios.defaults.headers.common["Authorization"] = `Bearer ${userData.token}`
     } catch (err) {
       console.error("שגיאה בהתחברות:", err)
       setError("שם משתמש או סיסמה שגויים")
@@ -179,14 +82,19 @@ interface UserProviderProps {
       setLoading(false)
     }
   }
-console.log(user);
 
   const logout = () => {
-    localStorage.removeItem("user")
+    localStorage.removeItem("auth")
     delete axios.defaults.headers.common["Authorization"]
     setUser(null)
+    setToken(null)
   }
 
-  return <userContext.Provider value={{ user, loading, error, login, logout }}>{children}</userContext.Provider>
+  return (
+    <userContext.Provider value={{ user, token, loading, error, login, logout }}>
+      {children}
+    </userContext.Provider>
+  )
 }
+
 export default UserProvider
