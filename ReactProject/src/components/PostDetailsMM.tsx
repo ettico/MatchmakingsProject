@@ -99,9 +99,9 @@ const MatchMakerForm = () => {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [initialDataLoaded, setInitialDataLoaded] = useState(false)
-
-  // שימוש ב-useContext לקבלת נתוני המשתמש
+  const [, setInitialDataLoaded] = useState(false)
+  
+  // שימוש ב-useContext במקום localStorage
   const { user, token } = useContext(userContext)
 
   const {
@@ -123,11 +123,37 @@ const MatchMakerForm = () => {
 
   const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
+  // טעינת נתוני המשתמש הבסיסיים מה-context
+  const loadInitialUserData = () => {
+    if (!user) {
+      console.error("לא נמצא משתמש בcontext")
+      setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
+      return
+    }
+
+    console.log("טוען נתוני משתמש מהcontext:", user)
+
+    // מילוי הפרטים הבסיסיים מה-context
+    const fullName = `${user.firstName} ${user.lastName}`.trim()
+    if (fullName) {
+      setValue("matchmakerName", fullName)
+      console.log("הוגדר שדה matchmakerName:", fullName)
+    }
+
+    if (user.username) {
+      setValue("email", user.username)
+      console.log("הוגדר שדה email:", user.username)
+    }
+
+    // טעינת נתוני השדכנית מהשרת
+    fetchMatchmakerData()
+  }
+
   // פונקציה לטעינת נתוני השדכנית מהשרת
   const fetchMatchmakerData = async () => {
     if (!user?.id || !token) {
       console.error("חסרים פרטי משתמש או טוקן לטעינת נתונים")
-      setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
+      setError("חסרים פרטי משתמש או טוקן. אנא התחבר מחדש.")
       return
     }
 
@@ -167,16 +193,11 @@ const MatchMakerForm = () => {
         console.log("טעינת נתונים הושלמה בהצלחה")
       }
     } catch (apiError: any) {
-      console.error("שגיאת API בטעינת נתוני שדכנית:", apiError)
+      console.error("שגיאת API בטעינת נתוני שדכנית:", apiError.message)
 
       // אם לא נמצאה שדכנית, זה בסדר - זה יכול להיות משתמש חדש
       if (apiError.response?.status === 404) {
         console.log("לא נמצאו נתוני שדכנית - ייתכן שזה משתמש חדש")
-        // מילוי שדות בסיסיים מנתוני המשתמש מהקונטקסט
-        if (user) {
-          setValue("matchmakerName", `${user.firstName} ${user.lastName}`)
-          setValue("email", user.username)
-        }
         setInitialDataLoaded(true)
       } else if (apiError.response?.status === 401) {
         setError("אין הרשאה לגשת לנתונים. אנא התחבר מחדש.")
@@ -226,10 +247,11 @@ const MatchMakerForm = () => {
         yearsInShidduchim: data.yearsInShidduchim || 0,
         isInternalMatchmaker: data.isInternalMatchmaker || false,
         printingNotes: data.printingNotes || "",
+        // שדות נוספים
         Role: user.role || "MatchMaker",
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
-        Username: user.username || "",
+        Username: user.username || data.email || "",
       }
 
       console.log("שולח נתוני שדכנית:", dataToSend)
@@ -259,7 +281,6 @@ const MatchMakerForm = () => {
       let errorMessage = "שגיאה בעדכון נתונים. אנא נסה שנית."
 
       if (apiError.response?.data?.errors) {
-        // הצגת שגיאות ולידציה מפורטות
         const errorMessages = []
         for (const field in apiError.response.data.errors) {
           errorMessages.push(`${field}: ${apiError.response.data.errors[field].join(", ")}`)
@@ -285,49 +306,32 @@ const MatchMakerForm = () => {
     setSuccess(false)
   }
 
-  // טעינת נתונים בעת טעינת הקומפוננטה
+  // useEffect לטעינת נתונים כשהמשתמש או הטוקן משתנים
   useEffect(() => {
-    if (user && token && !initialDataLoaded) {
-      fetchMatchmakerData()
-    } else if (user && !initialDataLoaded) {
-      // אם יש משתמש אבל אין נתונים בשרת, מלא את השדות הבסיסיים
-      setValue("matchmakerName", `${user.firstName} ${user.lastName}`)
-      setValue("email", user.username)
-      setInitialDataLoaded(true)
+    if (user && token) {
+      loadInitialUserData()
     }
-  }, [user, token, initialDataLoaded])
+  }, [user, token])
 
-  // אם אין משתמש מחובר, הצג הודעה
-  if (!user) {
+  // אם אין משתמש או טוקן, הצג הודעה
+  if (!user || !token) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Paper sx={{ p: 3, textAlign: "center" }}>
-          <Typography variant="h6" color="error">
-            אנא התחבר למערכת כדי לגשת לטופס השדכנית
-          </Typography>
-        </Paper>
+        <Alert severity="warning">
+          אנא התחבר למערכת כדי לגשת לטופס השדכנית
+        </Alert>
       </Container>
     )
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Typography
-          variant="h3"
-          component="h1"
-          gutterBottom
-          sx={{
-            textAlign: "center",
-            fontWeight: "bold",
-            color: "#333",
-            mb: 4,
-          }}
-        >
+        <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: "center", mb: 4, color: "#333" }}>
           טופס פרטי שדכנית
         </Typography>
 
@@ -348,9 +352,10 @@ const MatchMakerForm = () => {
                       {...field}
                       label="שם מלא"
                       fullWidth
+                      variant="outlined"
                       error={!!errors.matchmakerName}
                       helperText={errors.matchmakerName?.message}
-                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -362,11 +367,12 @@ const MatchMakerForm = () => {
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="מספר זהות"
+                      label="מספר תעודת זהות"
                       fullWidth
+                      variant="outlined"
                       error={!!errors.idNumber}
                       helperText={errors.idNumber?.message}
-                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -381,10 +387,11 @@ const MatchMakerForm = () => {
                       label="תאריך לידה"
                       type="date"
                       fullWidth
-                      error={!!errors.birthDate}
-                      helperText={errors.birthDate?.message}
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
+                      error={!!errors.birthDate}
+                      helperText={errors.birthDate?.message}
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -399,9 +406,10 @@ const MatchMakerForm = () => {
                       label="כתובת אימייל"
                       type="email"
                       fullWidth
+                      variant="outlined"
                       error={!!errors.email}
                       helperText={errors.email?.message}
-                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -411,11 +419,11 @@ const MatchMakerForm = () => {
                   name="gender"
                   control={control}
                   render={({ field }) => (
-                    <FormControl fullWidth variant="outlined">
+                    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                       <InputLabel>מגדר</InputLabel>
-                      <Select {...field} label="מגדר">
-                        <MenuItem value="female">נקבה</MenuItem>
+                      <Select {...field} label="מגדר" error={!!errors.gender}>
                         <MenuItem value="male">זכר</MenuItem>
+                        <MenuItem value="female">נקבה</MenuItem>
                       </Select>
                     </FormControl>
                   )}
@@ -424,10 +432,10 @@ const MatchMakerForm = () => {
             </Grid>
           </StyledPaper>
 
-          {/* פרטי קשר ומגורים */}
+          {/* פרטי מגורים */}
           <StyledPaper>
             <SectionTitle variant="h5">
-              פרטי קשר ומגורים
+              פרטי מגורים
               <LocationOnIcon />
             </SectionTitle>
             <Grid container spacing={3}>
@@ -440,9 +448,10 @@ const MatchMakerForm = () => {
                       {...field}
                       label="עיר"
                       fullWidth
+                      variant="outlined"
                       error={!!errors.city}
                       helperText={errors.city?.message}
-                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -454,15 +463,26 @@ const MatchMakerForm = () => {
                   render={({ field }) => (
                     <TextField
                       {...field}
-                      label="כתובת"
+                      label="כתובת מלאה"
                       fullWidth
+                      variant="outlined"
                       error={!!errors.address}
                       helperText={errors.address?.message}
-                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
               </Grid>
+            </Grid>
+          </StyledPaper>
+
+          {/* פרטי קשר */}
+          <StyledPaper>
+            <SectionTitle variant="h5">
+              פרטי קשר
+              <PersonIcon />
+            </SectionTitle>
+            <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Controller
                   name="mobilePhone"
@@ -472,9 +492,10 @@ const MatchMakerForm = () => {
                       {...field}
                       label="טלפון נייד"
                       fullWidth
+                      variant="outlined"
                       error={!!errors.mobilePhone}
                       helperText={errors.mobilePhone?.message}
-                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -489,6 +510,22 @@ const MatchMakerForm = () => {
                       label="טלפון קווי"
                       fullWidth
                       variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="phoneType"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="סוג טלפון"
+                      fullWidth
+                      variant="outlined"
+                      sx={{ mb: 2 }}
                     />
                   )}
                 />
@@ -496,68 +533,43 @@ const MatchMakerForm = () => {
             </Grid>
           </StyledPaper>
 
-          {/* פרטים מקצועיים */}
-          <StyledPaper>
-            <SectionTitle variant="h5">
-              פרטים מקצועיים
-              <WorkIcon />
-            </SectionTitle>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="occupation"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="עיסוק"
-                      fullWidth
-                      variant="outlined"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="yearsInShidduchim"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="שנות ניסיון בשידוכים"
-                      type="number"
-                      fullWidth
-                      variant="outlined"
-                    />
-                  )}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Controller
-                  name="experienceInShidduchim"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="ניסיון בשידוכים"
-                      multiline
-                      rows={3}
-                      fullWidth
-                      variant="outlined"
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </StyledPaper>
-
-          {/* שדות נוספים */}
+          {/* פרטים נוספים */}
           <StyledPaper>
             <SectionTitle variant="h5">
               פרטים נוספים
               <FamilyRestroomIcon />
             </SectionTitle>
             <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="personalClub"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="מועדון אישי"
+                      fullWidth
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="community"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="קהילה"
+                      fullWidth
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
               <Grid item xs={12}>
                 <Controller
                   name="isSeminarGraduate"
@@ -597,26 +609,131 @@ const MatchMakerForm = () => {
             </Grid>
           </StyledPaper>
 
+          {/* פרטי עבודה */}
+          <StyledPaper>
+            <SectionTitle variant="h5">
+              פרטי עבודה
+              <WorkIcon />
+            </SectionTitle>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="occupation"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="מקצוע"
+                      fullWidth
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="previousWorkplaces"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="מקומות עבודה קודמים"
+                      fullWidth
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </StyledPaper>
+
+          {/* ניסיון בשידוכים */}
+          <StyledPaper>
+            <SectionTitle variant="h5">
+              ניסיון בשידוכים
+              <FamilyRestroomIcon />
+            </SectionTitle>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="yearsInShidduchim"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="שנים בשידוכים"
+                      type="number"
+                      fullWidth
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Controller
+                  name="experienceInShidduchim"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="ניסיון בשידוכים"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Controller
+                  name="lifeSkills"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="כישורי חיים"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </StyledPaper>
+
           {/* הערות */}
           <StyledPaper>
             <SectionTitle variant="h5">
               הערות
               <NoteIcon />
             </SectionTitle>
-            <Controller
-              name="printingNotes"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="הערות להדפסה"
-                  multiline
-                  rows={4}
-                  fullWidth
-                  variant="outlined"
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Controller
+                  name="printingNotes"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="הערות להדפסה"
+                      fullWidth
+                      multiline
+                      rows={4}
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                  )}
                 />
-              )}
-            />
+              </Grid>
+            </Grid>
           </StyledPaper>
 
           {/* כפתור שמירה */}
@@ -632,12 +749,13 @@ const MatchMakerForm = () => {
                 disabled={loading || !isValid}
                 startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
                 sx={{
+                  background: "linear-gradient(45deg, #b87333 30%, #d4af37 90%)",
+                  color: "white",
                   px: 4,
                   py: 1.5,
                   fontSize: "1.1rem",
-                  background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
                   "&:hover": {
-                    background: "linear-gradient(45deg, #1976D2 30%, #0097A7 90%)",
+                    background: "linear-gradient(45deg, #a0651f 30%, #b8941f 90%)",
                   },
                 }}
               >
@@ -647,26 +765,17 @@ const MatchMakerForm = () => {
           </Box>
         </form>
 
-        {/* הודעות */}
-        <Snackbar
-          open={!!error}
-          autoHideDuration={6000}
-          onClose={handleCloseError}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert onClose={handleCloseError} severity="error" sx={{ width: "100%" }}>
-            {error}
+        {/* הודעת הצלחה */}
+        <Snackbar open={success} autoHideDuration={5000} onClose={handleCloseSuccess}>
+          <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: "100%" }}>
+            הפרטים נשמרו בהצלחה!
           </Alert>
         </Snackbar>
 
-        <Snackbar
-          open={success}
-          autoHideDuration={5000}
-          onClose={handleCloseSuccess}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: "100%" }}>
-            הפרטים נשמרו בהצלחה!
+        {/* הודעת שגיאה */}
+        <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError}>
+          <Alert onClose={handleCloseError} severity="error" sx={{ width: "100%" }}>
+            {error}
           </Alert>
         </Snackbar>
       </motion.div>
