@@ -68,7 +68,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
         UserName: username,
         Password: password,
       })
-console.log(response.data);
+      console.log("data:",response.data);
 
       const userData: AuthenticatedUser = response.data
 console.log(userData.token);
