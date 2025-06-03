@@ -59,12 +59,12 @@ const UserProvider = ({ children }: UserProviderProps) => {
     }
     setLoading(false)
   }, [])
-
+    const ApiUrl=process.env.REACT_APP_API_URL
   const login = async (username: string, password: string) => {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post("https://localhost:7012/api/Auth/login", {
+      const response = await axios.post(`${ApiUrl}/api/Auth/login`, {
         UserName: username,
         Password: password,
       })
