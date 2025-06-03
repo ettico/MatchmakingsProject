@@ -148,10 +148,11 @@ interface UserProviderProps {
   token: userData.token,
 })
       // שמירת נתוני המשתמש בלוקל סטורג'
-      localStorage.setItem("user", JSON.stringify({
-  user: userData.user,
+   localStorage.setItem("user", JSON.stringify({
+  ...userData.user,
   token: userData.token
 }))
+
 
       // הגדרת הטוקן בכותרות של הבקשה
       if (userData.token) {
