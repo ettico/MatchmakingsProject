@@ -85,23 +85,26 @@ interface UserProviderProps {
 
     const ApiUrl=process.env.REACT_APP_API_URL
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser)
-        setUser(parsedUser)
+ useEffect(() => {
+  const storedUser = localStorage.getItem("user")
+  if (storedUser && storedUser !== "undefined") {
+    try {
+      const parsedUser = JSON.parse(storedUser)
+      setUser(parsedUser)
 
-        if (parsedUser.token) {
-          axios.defaults.headers.common["Authorization"] = `Bearer ${parsedUser.token}`
-        }
-      } catch (err) {
-        console.error("שגיאה בפענוח נתוני משתמש מהלוקל סטורג':", err)
-        localStorage.removeItem("user")
+      if (parsedUser.token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${parsedUser.token}`
       }
+    } catch (err) {
+      console.error("שגיאה בפענוח נתוני משתמש מהלוקל סטורג':", err)
+      localStorage.removeItem("user")
     }
-    setLoading(false)
-  }, [])
+  } else {
+    localStorage.removeItem("user") // ניקוי אם לא תקני
+  }
+  setLoading(false)
+}, [])
+
 
   // const fetchUserData = async (userId: number, role: string) => {
   //   try {
