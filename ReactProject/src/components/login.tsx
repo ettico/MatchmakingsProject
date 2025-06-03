@@ -60,31 +60,45 @@ const { userType } = useParams(); // יקבל את הערך מה-URL
   } = useForm({
     resolver: yupResolver(schema),
   })
+const onSubmit = async (data: { UserName: string; Password: string }) => {
+  try {
+    await login(data.UserName, data.Password)
 
-  const onSubmit = async (data: { UserName: string; Password: string }) => {
-    try {
-      await login(data.UserName, data.Password)
-
-      // בדיקת סוג המשתמש והפניה לדף המתאים
-     const storedUser = localStorage.getItem("user")
-      if (storedUser) {
-        const userData = JSON.parse(storedUser).user
-
-        if ( userData.role === "Male" || userData.role === "Women") {
-          navigate("/candidate-auth")
-          console.log("התחברות מוצלחת - מועמד")
-        } else if ( userData.role === "MatchMaker") {
-          navigate("/matchmaker-auth")
-          console.log("התחברות מוצלחת - שדכנית")
-        } else {
-          setError("המערכת אינה זיהתה אותך במאגר המשתמשים המתאים.")
-        }
-      }
-    } catch (err) {
-      console.error("שגיאה בהתחברות:", err)
-      setError("ההתחברות נכשלה, אנא הירשמו אם אין לכם חשבון.")
+    const storedUser = localStorage.getItem("user")
+    if (!storedUser) {
+      setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
+      return
     }
+
+    let userData: any
+    try {
+      userData = JSON.parse(storedUser)
+    } catch (e) {
+      console.error("שגיאה בפענוח JSON:", e)
+      setError("נתוני התחברות לא תקינים. נסה שוב.")
+      return
+    }
+
+    const role = userData?.user?.role
+    if (!role) {
+      setError("לא נמצא תפקיד למשתמש.")
+      return
+    }
+
+    if (role === "Male" || role === "Women") {
+      navigate("/candidate-auth")
+      console.log("התחברות מוצלחת - מועמד")
+    } else if (role === "MatchMaker") {
+      navigate("/matchmaker-auth")
+      console.log("התחברות מוצלחת - שדכנית")
+    } else {
+      setError("המערכת אינה זיהתה אותך במאגר המשתמשים המתאים.")
+    }
+  } catch (err) {
+    console.error("שגיאה בהתחברות:", err)
+    setError("ההתחברות נכשלה, אנא הירשמו אם אין לכם חשבון.")
   }
+}
 
   const handleTogglePassword = () => {
     setShowPassword(!showPassword)
