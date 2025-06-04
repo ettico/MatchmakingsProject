@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  useState,
-  useEffect,
-  //  useContext
-} from "react"
+import { useState, useEffect, useContext } from "react"
 import {
   TextField,
   Button,
@@ -24,7 +20,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  // useTheme,
   Stepper,
   Step,
   StepLabel,
@@ -39,7 +34,7 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import axios from "axios"
 import { motion } from "framer-motion"
-// import { userContext } from "./UserContext"
+import { userContext } from "./UserContext"
 
 // אייקונים
 import PersonIcon from "@mui/icons-material/Person"
@@ -106,7 +101,6 @@ const OPTIONS = {
   parentsStatus: ["נשואים", "גרושים", "אלמן", "אלמנה", "שניהם נפטרו"],
   familyHealthStatus: ["תקין", "יש בעיות בריאותיות במשפחה"],
   contactType: ["רב", "מורה", "קרוב משפחה", "חבר", "שדכן", "אחר"],
-  // 🔧 הוספת אפשרויות חדשות לשדות החסרים
   appearance: ["יפה מאוד", "יפה", "ממוצע", "לא משנה"],
   generalAppearance: ["מטופח מאוד", "מטופח", "ממוצע", "לא משנה"],
   hot: ["חם מאוד", "חם", "ממוצע", "לא משנה"],
@@ -116,7 +110,7 @@ const OPTIONS = {
   preferredProfessionalPath: ["אברך", "עובד", "משלב לימודים ועבודה", "עצמאי", "לא משנה"],
 }
 
-// סטיילינג מותאם אישית מעודכן
+// סטיילינג מותאם אישית
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   marginBottom: theme.spacing(3),
@@ -127,7 +121,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   position: "relative",
   overflow: "hidden",
   transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-   width: "100%", // הוסף שורה זו
+  width: "100%",
   "&:hover": {
     transform: "translateY(-8px)",
     boxShadow: "0 32px 64px rgba(184, 115, 51, 0.15), 0 16px 32px rgba(0, 0, 0, 0.1)",
@@ -181,20 +175,6 @@ const ContactCard = styled(Paper)(({ theme }) => ({
     transform: "translateY(-4px) scale(1.02)",
     boxShadow: "0 20px 40px rgba(184, 115, 51, 0.2)",
     border: "2px solid rgba(184, 115, 51, 0.3)",
-  },
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: theme.spacing(2),
-    padding: "2px",
-    background: "linear-gradient(135deg, #b87333, #d4af37, #b87333)",
-    mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-    maskComposite: "exclude",
-    zIndex: -1,
   },
 }))
 
@@ -330,7 +310,6 @@ const personalInfoSchema = yup.object().shape({
   preferredProfessionalPath: yup.string(),
 })
 
-// סכמה לפרטי משפחה
 const familyDetailsSchema = yup.object().shape({
   fatherName: yup.string().required("שדה חובה"),
   fatherOrigin: yup.string().required("שדה חובה"),
@@ -348,7 +327,6 @@ const familyDetailsSchema = yup.object().shape({
   familyAbout: yup.string(),
 })
 
-// סכמה לפרטי התקשרות
 const contactSchema = yup.object().shape({
   contacts: yup.array().of(
     yup.object().shape({
@@ -360,7 +338,6 @@ const contactSchema = yup.object().shape({
 })
 
 const UserRegistrationForm = () => {
-  // const theme = useTheme()
   const [activeStep, setActiveStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [notification, setNotification] = useState<{
@@ -373,22 +350,18 @@ const UserRegistrationForm = () => {
     severity: "info",
   })
   const [gender, setGender] = useState<string>("")
-  // const { user } = useContext(userContext)
-  const [userId, setUserId] = useState<number | null>(null)
-  const [userToken, setUserToken] = useState<string>("")
-  const [initialDataLoaded, setInitialDataLoaded] = useState(false)
-  const [userEmail, setUserEmail] = useState<string>("")
-  const [userPassword, setUserPassword] = useState<string>("")
-  const [, setUserName] = useState<string>("")
-  const [firstName, setFirstName] = useState<string>("")
-  const [lastName, setLastName] = useState<string>("")
-  const [, setUserRole] = useState<string>("")
 
-  // 🔧 הוספת state לניהול נתונים קיימים
+  // שימוש ב-userContext
+  const { user, token } = useContext(userContext)
+
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false)
   const [existingFamilyId, setExistingFamilyId] = useState<number | null>(null)
   const [existingContactIds, setExistingContactIds] = useState<number[]>([])
 
-    const ApiUrl=process.env.REACT_APP_API_URL
+  // 🔧 שמירת הסיסמה הקודמת מהשרת
+  const [originalPassword, setOriginalPassword] = useState<string>("")
+
+  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
   // טפסים נפרדים לכל שלב
   const personalForm = useForm({
@@ -440,279 +413,89 @@ const UserRegistrationForm = () => {
     name: "contacts",
   })
 
-  // פונקציה לפענוח הטוקן
-  const decodeAndVerifyToken = (token: string) => {
-    try {
-      const base64Url = token.split(".")[1]
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/")
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join(""),
-      )
-
-      const payload = JSON.parse(jsonPayload)
-      console.log("פענוח הטוקן:", payload)
-
-      // בדיקת תוקף הטוקן
-      const currentTime = Math.floor(Date.now() / 1000)
-      if (payload.exp && payload.exp < currentTime) {
-        console.error("הטוקן פג תוקף:", new Date(payload.exp * 1000))
-        return null
-      }
-
-      // שליפת מזהה המשתמש מהclaim המותאם אישית
-      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
-      const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
-      const name = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]
-
-      console.log("מזהה משתמש מהטוקן:", userId)
-      console.log("תפקיד משתמש מהטוקן:", role)
-      console.log("שם משתמש מהטוקן:", name)
-
-      return {
-        ...payload,
-        userId,
-        role,
-        name,
-      }
-    } catch (error) {
-      console.error("שגיאה בפענוח הטוקן:", error)
-      return null
-    }
-  }
-
   // טעינת נתוני המשתמש בעת טעינת הקומפוננטה
   useEffect(() => {
-    loadUserData()
-  }, [])
-
-  const loadUserData = () => {
-    try {
-      console.log("מתחיל טעינת נתוני משתמש")
-
-      const storedUserString = localStorage.getItem("user")
-      console.log("נתוני משתמש מהלוקל סטורג' (גולמי):", storedUserString)
-
-      if (!storedUserString) {
-        console.error("לא נמצא מידע בלוקל סטורג'")
-        setNotification({
-          open: true,
-          message: "לא נמצאו נתוני משתמש. אנא התחבר מחדש.",
-          severity: "error",
-        })
-        return
-      }
-
-      let userData
-      try {
-        userData = JSON.parse(storedUserString)
-        console.log("נתוני משתמש לאחר פרסור:", userData)
-      } catch (parseError) {
-        console.error("שגיאה בפרסור נתוני משתמש:", parseError)
-        setNotification({
-          open: true,
-          message: "שגיאה בקריאת נתוני משתמש. אנא התחבר מחדש.",
-          severity: "error",
-        })
-        return
-      }
-
-      // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת מהלוקל סטורג' לפני כל דבר אחר
-      if (userData.password) {
-        setUserPassword(userData.password)
-        console.log("🔐 שמירת סיסמה קיימת מהלוקל סטורג':", userData.password)
-      }
-
-
-
-
-      // פענוח הטוקן לקבלת מזהה המשתמש
-      if (userData.token) {
-        const decodedToken = decodeAndVerifyToken(userData.token)
-        if (decodedToken && decodedToken.userId) {
-          const tokenUserId = Number(decodedToken.userId)
-          console.log("מזהה משתמש מהטוקן:", tokenUserId)
-
-          if (decodedToken.name) {
-            setUserEmail(decodedToken.name)
-            setUserName(decodedToken.name)
-            console.log("שם משתמש מהטוקן:", decodedToken.name)
-          }
-
-          if (decodedToken.role) {
-            setUserRole(decodedToken.role)
-            console.log("תפקיד משתמש מהטוקן:", decodedToken.role)
-
-            // 🔧 תיקון קריטי: קביעת המגדר לפני טעינת הנתונים
-            if (decodedToken.role === "Male") {
-              setGender("Male")
-              console.log("🚹 הוגדר מגדר: בחור")
-            } else if (decodedToken.role === "Women") {
-              setGender("Women")
-              console.log("🚺 הוגדר מגדר: בחורה")
-            }
-          }
-
-          if (!userData.id) {
-            userData.id = tokenUserId
-            console.log("עדכון מזהה משתמש מהטוקן:", tokenUserId)
-
-            try {
-              localStorage.setItem("user", JSON.stringify(userData))
-              console.log("עדכון הלוקל סטורג' עם מזהה משתמש מהטוקן")
-            } catch (storageError) {
-              console.error("שגיאה בעדכון הלוקל סטורג':", storageError)
-            }
-          }
-        }
-      }
-
-      if (!userData.id) {
-        console.error("חסר מזהה משתמש בנתונים שנטענו")
-        setNotification({
-          open: true,
-          message: "חסר מזהה משתמש. אנא התחבר מחדש.",
-          severity: "error",
-        })
-        return
-      }
-
-      if (!userData.token) {
-        console.error("חסר טוקן בנתונים שנטענו")
-        setNotification({
-          open: true,
-          message: "חסר טוקן הזדהות. אנא התחבר מחדש.",
-          severity: "error",
-        })
-        return
-      }
-
-      setUserId(userData.id)
-      setUserToken(userData.token)
-      console.log("נשמר בסטייט - מזהה משתמש:", userData.id)
-      console.log("נשמר בסטייט - טוקן:", userData.token.substring(0, 15) + "...")
-
-      // מילוי הפרטים הבסיסיים מהלוקל סטורג'
-      if (userData.firstName) {
-        personalForm.setValue("firstName", userData.firstName)
-        setFirstName(userData.firstName)
-        console.log("הוגדר שדה firstName:", userData.firstName)
-      }
-
-      if (userData.lastName) {
-        personalForm.setValue("lastName", userData.lastName)
-        setLastName(userData.lastName)
-        console.log("הוגדר שדה lastName:", userData.lastName)
-      }
-
-      if (userData.email) {
-        personalForm.setValue("email", userData.email)
-        setUserEmail(userData.email)
-        console.log("הוגדר שדה email:", userData.email)
-      }
-
-      if (userData.tz) {
-        personalForm.setValue("tz", userData.tz)
-        console.log("הוגדר שדה tz:", userData.tz)
-      }
-
-      // 🔧 תיקון קריטי: הגדרת הסיסמה בטופס לאחר מילוי הפרטים הבסיסיים
-      if (userData.password) {
-        personalForm.setValue("Password", userData.password)
-        console.log("🔐 הוגדרה סיסמה בטופס:", userData.password)
-      }
-
-      // טעינת נתוני המשתמש מהשרת
-      console.log("מתחיל טעינת נתונים מהשרת")
-      const currentGender = decodeAndVerifyToken(userData.token)?.role || userData.role || "Male"
-      fetchUserData(userData.id, userData.token, currentGender)
-    } catch (err) {
-      console.error("שגיאה כללית בטעינת נתוני משתמש:", err)
+    if (user && user.id && token) {
+      loadUserData()
+    } else {
       setNotification({
         open: true,
-        message: "שגיאה בטעינת נתוני משתמש. אנא התחבר מחדש.",
+        message: "לא נמצאו נתוני משתמש. אנא התחבר מחדש.",
         severity: "error",
       })
     }
-  }
+  }, [user, token])
 
-  // פונקציה לטעינת נתוני המשתמש מהשרת
-  const fetchUserData = async (id: number, token: string, userGender: string) => {
-    if (!id || !token) {
-      console.error("חסרים פרטי משתמש או טוקן לטעינת נתונים")
+  const loadUserData = async () => {
+    if (!user || !user.id || !token) {
+      console.error("חסרים פרטי משתמש")
       return
     }
 
     setLoading(true)
     try {
-      console.log("מנסה לטעון נתוני משתמש עם ID:", id)
-      console.log("משתמש בטוקן:", token.substring(0, 15) + "...")
-      console.log("מגדר משתמש:", userGender)
+      console.log("טוען נתוני משתמש עם ID:", user.id)
+      console.log("מגדר משתמש:", user.role)
 
-      if (!token.startsWith("ey")) {
-        console.error("הטוקן אינו בפורמט JWT תקין")
-        setNotification({
-          open: true,
-          message: "טוקן הזדהות אינו תקין. אנא התחבר מחדש.",
-          severity: "error",
-        })
-        setLoading(false)
-        return
+      // הגדרת מגדר מהקונטקסט
+      setGender(user.role || "Male")
+
+      // מילוי פרטים בסיסיים מהקונטקסט
+      if (user.firstName) {
+        personalForm.setValue("firstName", user.firstName)
+      }
+      if (user.lastName) {
+        personalForm.setValue("lastName", user.lastName)
+      }
+      if (user.username) {
+        personalForm.setValue("email", user.username)
       }
 
-      // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת לפני טעינת נתונים מהשרת
-      const existingPassword = userPassword || personalForm.getValues("Password")
-      console.log("🔐 שמירת סיסמה קיימת לפני טעינת נתונים:", existingPassword)
+      // טעינת נתוני המשתמש מהשרת
+      await fetchUserData(user.id, token, user.role || "Male")
+    } catch (error) {
+      console.error("שגיאה בטעינת נתוני משתמש:", error)
+      setNotification({
+        open: true,
+        message: "שגיאה בטעינת נתונים. אנא נסה שוב.",
+        severity: "error",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
+  // פונקציה לטעינת נתוני המשתמש מהשרת
+  const fetchUserData = async (id: number, userToken: string, userGender: string) => {
+    try {
       // טעינת פרטים אישיים
-      const userApiUrl =
-        userGender === "Male" ? `${ApiUrl}/Male/${id}` : `${ApiUrl}/Women/${id}`
+      const userApiUrl = userGender === "Male" ? `${ApiUrl}/Male/${id}` : `${ApiUrl}/Women/${id}`
 
       try {
-        const response = await axios({
-          method: "get",
-          url: userApiUrl,
+        const response = await axios.get(userApiUrl, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userToken}`,
             "Content-Type": "application/json",
           },
-          timeout: 10000,
         })
-
-        console.log("סטטוס תשובה מהשרת:", response.status)
-        console.log("נתוני משתמש שהתקבלו מהשרת:", response.data)
 
         if (response.data) {
           const serverData = response.data
+          console.log("נתוני משתמש מהשרת:", serverData)
 
-          // 🔧 תיקון קריטי: מילוי כל השדות מהשרת למעט הסיסמה
+          // 🔧 שמירת הסיסמה הקודמת מהשרת לפני מילוי השדות
+          if (serverData.password) {
+            setOriginalPassword(serverData.password)
+            console.log("🔐 נשמרה סיסמה קודמת מהשרת")
+          }
+
+          // מילוי כל השדות מהשרת (כולל הסיסמה)
           Object.keys(serverData).forEach((key) => {
             if (serverData[key] !== null && serverData[key] !== undefined) {
               try {
-                console.log(`מגדיר שדה ${key} לערך:`, serverData[key])
-
-                // 🔧 תיקון: לא לעדכן סיסמה מהשרת - לשמור על הקיימת
-            
-                if ( key === "password") {//key !== "Password" &&
-                  // בדיקה אם השדה קיים בטופס
-                  const formFields = personalForm.getValues()
-                  if (key in formFields) {
-                    personalForm.setValue(key as any, serverData[key])
-                  }
-                }
-
-                // עדכון state נוספים
-                if (key === "firstName") {
-                  setFirstName(serverData[key])
-                }
-                if (key === "lastName") {
-                  setLastName(serverData[key])
-                }
-                if (key === "email") {
-                  setUserEmail(serverData[key])
-                  setUserName(serverData[key])
+                const formFields = personalForm.getValues()
+                if (key in formFields) {
+                  personalForm.setValue(key as any, serverData[key])
                 }
               } catch (setValueError) {
                 console.error(`שגיאה בהגדרת שדה ${key}:`, setValueError)
@@ -720,40 +503,22 @@ const UserRegistrationForm = () => {
             }
           })
 
-          // 🔧 תיקון קריטי: החזרת הסיסמה הקיימת לאחר טעינת כל הנתונים
-          if (existingPassword) {
-            personalForm.setValue("Password", existingPassword)
-            setUserPassword(existingPassword)
-            console.log("🔐 החזרת סיסמה קיימת לאחר טעינת נתונים:", existingPassword)
-          }
-
           setInitialDataLoaded(true)
-          console.log("טעינת נתונים הושלמה בהצלחה")
         }
       } catch (apiError: any) {
-        console.error("שגיאת API בטעינת נתוני משתמש:", apiError.message)
-        console.error("סטטוס קוד:", apiError.response?.status)
-        console.error("הודעת שגיאה:", apiError.response?.data)
-
         if (apiError.response?.status === 404) {
-          console.log("לא נמצאו נתוני משתמש - ייתכן שזה משתמש חדש")
+          console.log("לא נמצאו נתוני משתמש - משתמש חדש")
           setInitialDataLoaded(true)
-        } else if (apiError.response?.status === 401) {
-          setNotification({
-            open: true,
-            message: "אין הרשאה לגשת לנתונים. אנא התחבר מחדש.",
-            severity: "error",
-          })
         } else {
           throw apiError
         }
       }
 
-      // 🔧 תיקון קריטי: טעינת פרטי משפחה עם מילוי נכון של השדות
+      // טעינת פרטי משפחה
       try {
         const familyResponse = await axios.get(`${ApiUrl}/FamilyDetails`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userToken}`,
           },
         })
 
@@ -764,31 +529,23 @@ const UserRegistrationForm = () => {
           )
 
           if (familyDetails) {
-            console.log("נתוני משפחה שהתקבלו:", familyDetails)
-
-            // 🔧 שמירת ID הקיים לעדכון עתידי
+            console.log("נתוני משפחה מהשרת:", familyDetails)
             setExistingFamilyId(familyDetails.id)
 
-            // 🔧 תיקון קריטי: מילוי נכון של שדות המשפחה
+            // מילוי שדות המשפחה
             Object.keys(familyDetails).forEach((key) => {
               if (familyDetails[key] !== null && familyDetails[key] !== undefined) {
                 try {
                   const formFields = familyForm.getValues()
                   if (key in formFields) {
-                    // 🔧 תיקון מיוחד לשדות בוליאניים
                     if (key === "parentsStatus") {
-                      // המרה מבוליאני לטקסט
                       const statusText = familyDetails[key] === true ? "נשואים" : "גרושים"
                       familyForm.setValue(key as any, statusText)
-                      console.log(`מגדיר שדה משפחה ${key} לערך:`, statusText)
                     } else if (key === "healthStatus") {
-                      // המרה מבוליאני לטקסט
                       const healthText = familyDetails[key] === true ? "תקין" : "יש בעיות בריאותיות במשפחה"
                       familyForm.setValue(key as any, healthText)
-                      console.log(`מגדיר שדה משפחה ${key} לערך:`, healthText)
                     } else {
                       familyForm.setValue(key as any, familyDetails[key])
-                      console.log(`מגדיר שדה משפחה ${key} לערך:`, familyDetails[key])
                     }
                   }
                 } catch (setValueError) {
@@ -799,14 +556,14 @@ const UserRegistrationForm = () => {
           }
         }
       } catch (error) {
-        console.log("אין פרטי משפחה קיימים או שגיאה בטעינתם:", error)
+        console.log("אין פרטי משפחה קיימים:", error)
       }
 
-      // 🔧 טעינת אנשי קשר עם שמירת IDs קיימים
+      // טעינת אנשי קשר
       try {
         const contactsResponse = await axios.get(`${ApiUrl}/Contact`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userToken}`,
           },
         })
 
@@ -817,9 +574,7 @@ const UserRegistrationForm = () => {
           )
 
           if (userContacts.length > 0) {
-            console.log("אנשי קשר שהתקבלו:", userContacts)
-
-            // 🔧 שמירת IDs הקיימים לעדכון עתידי
+            console.log("אנשי קשר מהשרת:", userContacts)
             setExistingContactIds(userContacts.map((contact) => contact.id))
 
             contactForm.setValue(
@@ -833,17 +588,11 @@ const UserRegistrationForm = () => {
           }
         }
       } catch (error) {
-        console.log("אין אנשי קשר קיימים או שגיאה בטעינתם:", error)
+        console.log("אין אנשי קשר קיימים:", error)
       }
     } catch (error: any) {
       console.error("שגיאה כללית בטעינת נתוני המשתמש:", error)
-      setNotification({
-        open: true,
-        message: "שגיאה בטעינת נתונים. אנא נסה שוב.",
-        severity: "error",
-      })
-    } finally {
-      setLoading(false)
+      throw error
     }
   }
 
@@ -853,7 +602,7 @@ const UserRegistrationForm = () => {
 
   const handleGenderChange = (newGender: "Male" | "Women") => {
     setGender(newGender)
-    console.log("🔄 שינוי מגדר ל:", newGender)
+    console.log("שינוי מגדר ל:", newGender)
   }
 
   const handleBack = () => {
@@ -861,12 +610,7 @@ const UserRegistrationForm = () => {
   }
 
   const onSubmitPersonalInfo = async (data: any) => {
-    console.log("מתחיל שליחת נתוני משתמש")
-    console.log("מזהה משתמש:", userId)
-    console.log("טוקן:", userToken ? userToken.substring(0, 15) + "..." : "לא קיים")
-
-    if (!userId || !userToken) {
-      console.error("חסרים פרטי משתמש או טוקן לשליחת נתונים")
+    if (!user || !user.id || !token) {
       setNotification({
         open: true,
         message: "לא נמצאו נתוני משתמש. אנא התחבר מחדש.",
@@ -877,16 +621,15 @@ const UserRegistrationForm = () => {
 
     setLoading(true)
     try {
-      const userApiUrl =
-        gender === "Male" ? `${ApiUrl}/Male/${userId}` : `${ApiUrl}/Women/${userId}`
+      const userApiUrl = gender === "Male" ? `${ApiUrl}/Male/${user.id}` : `${ApiUrl}/Women/${user.id}`
 
-      // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת ולא שליחת ערך ריק
-      const passwordToSend = userPassword || data.Password || ""
+      // 🔧 שימוש בסיסמה הקודמת מהשרת או מהטופס
+      const passwordToSend = originalPassword || data.Password || ""
       console.log("🔐 סיסמה לשליחה:", passwordToSend ? "קיימת" : "ריקה")
 
-      // 🔧 הכנת הנתונים לשליחה עם כל השדות הנדרשים בפורמט הנכון
+      // הכנת הנתונים לשליחה
       const baseData = {
-        id: userId,
+        id: user.id,
         firstName: data.firstName || "",
         lastName: data.lastName || "",
         country: data.country || "ישראל",
@@ -914,16 +657,14 @@ const UserRegistrationForm = () => {
         importantTraitsInMe: data.importantTraitsInMe || "",
         importantTraitsIAmLookingFor: data.importantTraitsIAmLookingFor || "",
         role: gender === "Male" ? "Male" : "Women",
-        // שדות נוספים שנדרשים לפי השגיאה
-        FirstName: data.firstName || firstName || "",
-        LastName: data.lastName || lastName || "",
-        Username: data.email || userEmail || "",
-        Password: passwordToSend, // 🔧 תיקון קריטי: שמירת הסיסמה הקיימת
+        FirstName: data.firstName || "",
+        LastName: data.lastName || "",
+        Username: data.email || user.username || "",
+        Password: passwordToSend, // 🔧 שימוש בסיסמה הקודמת
         photoUrl: data.photoUrl || "",
         photoName: data.photoName || "",
         TZFormUrl: data.TZFormUrl || "",
         TZFormName: data.TZFormName || "",
-        // 🔧 הוספת השדות החסרים עם ערכי string (לא boolean)
         hot: data.hot || "לא משנה",
         facePaint: data.facePaint || "לא",
         appearance: data.appearance || "ממוצע",
@@ -943,10 +684,10 @@ const UserRegistrationForm = () => {
           hat: data.hat || "ללא כובע",
           suit: data.suit || "ארוכה",
           headCovering: data.headCovering || "כיפה סרוגה",
-          smallYeshiva: data.smallYeshiva || "", // 🔧 תיקון: הוספת השדה החסר
-          bigYeshiva: data.bigYeshiva || "", // 🔧 תיקון: הוספת השדה החסר
+          smallYeshiva: data.smallYeshiva || "",
+          bigYeshiva: data.bigYeshiva || "",
           yeshivaType: data.yeshivaType || "ליטאית",
-          kibbutz: data.kibbutz || "", // 🔧 תיקון: הוספת השדה החסר
+          kibbutz: data.kibbutz || "",
           occupation: data.occupation || "אברך",
           preferredOccupation: data.preferredOccupation || "אברך",
           studyPath: "",
@@ -972,97 +713,38 @@ const UserRegistrationForm = () => {
         }),
       }
 
-      console.log("שולח נתוני משתמש:", { ...dataToSend, Password: "***" }) // הסתרת סיסמה בלוג
-      console.log("כתובת API:", userApiUrl)
+      console.log("שולח נתוני משתמש:", { ...dataToSend, Password: "***" })
 
-      try {
-        const response = await axios({
-          method: "put",
-          url: userApiUrl,
-          data: dataToSend,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${userToken}`,
-          },
-          timeout: 15000,
-        })
+      const response = await axios.put(userApiUrl, dataToSend, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
-        console.log("סטטוס תשובה מהשרת:", response.status)
-        console.log("תשובה מהשרת:", response.data)
+      console.log("תשובה מהשרת:", response.data)
 
-        // 🔧 עדכון הלוקל סטורג' עם הנתונים החדשים תוך שמירת הסיסמה
-        try {
-          const storedUser = localStorage.getItem("user")
-          if (storedUser) {
-            const userData = JSON.parse(storedUser)
-            const updatedUserData = {
-              ...userData,
-              firstName: dataToSend.firstName,
-              lastName: dataToSend.lastName,
-              email: dataToSend.email,
-              role: gender, // 🔧 תיקון: עדכון המגדר בלוקל סטורג'
-              // 🔧 שמירה מפורשת על הסיסמה הקיימת
-              password: passwordToSend,
-            }
-            localStorage.setItem("user", JSON.stringify(updatedUserData))
-            console.log("עדכון הלוקל סטורג' הושלם עם שמירת סיסמה ומגדר")
-          }
-        } catch (storageError) {
-          console.error("שגיאה בעדכון הלוקל סטורג':", storageError)
-        }
+      // 🔧 עדכון הסיסמה הקודמת אחרי העדכון המוצלח
+      setOriginalPassword(passwordToSend)
 
-        // 🔧 עדכון הstate עם הנתונים החדשים
-        setFirstName(dataToSend.firstName)
-        setLastName(dataToSend.lastName)
-        setUserEmail(dataToSend.email)
-        // 🔧 שמירה מפורשת של הסיסמה
-        setUserPassword(passwordToSend)
+      setNotification({
+        open: true,
+        message: "הפרטים האישיים נשמרו בהצלחה!",
+        severity: "success",
+      })
 
-        setNotification({
-          open: true,
-          message: "הפרטים האישיים נשמרו בהצלחה!",
-          severity: "success",
-        })
-
-        console.log("נתונים נשמרו בהצלחה")
-
-        // מעבר לשלב הבא
-        setActiveStep(1)
-      } catch (apiError: any) {
-        console.error("שגיאת API בשליחת נתוני משתמש:", apiError.message)
-        console.error("סטטוס קוד:", apiError.response?.status)
-        console.error("הודעת שגיאה:", apiError.response?.data)
-
-        if (apiError.response?.data?.errors) {
-          console.log("שגיאות ולידציה:", apiError.response.data.errors)
-          const errorMessages = []
-          for (const field in apiError.response.data.errors) {
-            errorMessages.push(`${field}: ${apiError.response.data.errors[field].join(", ")}`)
-          }
-          setNotification({
-            open: true,
-            message: `שגיאות ולידציה: ${errorMessages.join("; ")}`,
-            severity: "error",
-          })
-        } else {
-          throw apiError
-        }
-      }
+      // מעבר לשלב הבא
+      setActiveStep(1)
     } catch (error: any) {
-      console.error("שגיאה כללית בעדכון נתונים:", error)
+      console.error("שגיאה בעדכון נתונים:", error)
 
       let errorMessage = "שגיאה בעדכון נתונים. אנא נסה שנית."
-
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
-      } else if (error.response?.data?.errors) {
+      if (error.response?.data?.errors) {
         const validationErrors = []
         for (const field in error.response.data.errors) {
           validationErrors.push(`${field}: ${error.response.data.errors[field].join(", ")}`)
         }
         errorMessage = validationErrors.join("; ")
-      } else if (error.message) {
-        errorMessage = error.message
       }
 
       setNotification({
@@ -1076,7 +758,7 @@ const UserRegistrationForm = () => {
   }
 
   const onSubmitFamilyInfo = async (data: any) => {
-    if (!userId || !userToken) {
+    if (!user || !user.id || !token) {
       setNotification({
         open: true,
         message: "לא נמצאו נתוני משתמש. אנא התחבר מחדש.",
@@ -1087,12 +769,6 @@ const UserRegistrationForm = () => {
 
     setLoading(true)
     try {
-      // 🔧 תיקון המרת parentsStatus
-      const getParentsStatusValue = (status: string): boolean => {
-        return status === "נשואים"
-      }
-
-      // 🔧 הכנת הנתונים עם כל השדות הנדרשים ותיקון הבוליאנים
       const familyData = {
         id: existingFamilyId || 0,
         fatherName: data.fatherName || "",
@@ -1105,24 +781,19 @@ const UserRegistrationForm = () => {
         motherGraduateSeminar: data.motherGraduateSeminar || "",
         motherPreviousName: data.motherPreviousName || "",
         motherOccupation: data.motherOccupation || "עקרת בית",
-        parentsStatus: getParentsStatusValue(data.parentsStatus || "נשואים"),
+        parentsStatus: data.parentsStatus === "נשואים",
         healthStatus: data.healthStatus === "תקין",
         familyRabbi: data.familyRabbi || "",
         familyAbout: data.familyAbout || "",
         f: true,
-        maleId: gender === "Male" ? Number(userId) : null,
-        womenId: gender === "Women" ? Number(userId) : null,
+        maleId: gender === "Male" ? Number(user.id) : null,
+        womenId: gender === "Women" ? Number(user.id) : null,
       }
 
       console.log("שולח נתוני משפחה:", familyData)
 
-      // 🔧 בחירה נכונה בין POST ל-PUT
       const method = existingFamilyId ? "put" : "post"
-      const url = existingFamilyId
-        ? `${ApiUrl}/FamilyDetails/${existingFamilyId}`
-        : `${ApiUrl}/FamilyDetails`
-
-      console.log(`משתמש ב-${method.toUpperCase()} לכתובת:`, url)
+      const url = existingFamilyId ? `${ApiUrl}/FamilyDetails/${existingFamilyId}` : `${ApiUrl}/FamilyDetails`
 
       const response = await axios({
         method,
@@ -1130,13 +801,10 @@ const UserRegistrationForm = () => {
         data: familyData,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${userToken}`,
+          Authorization: `Bearer ${token}`,
         },
       })
 
-      console.log("תשובה מהשרת:", response.data)
-
-      // 🔧 שמירת ID החדש אם זה POST
       if (!existingFamilyId && response.data?.id) {
         setExistingFamilyId(response.data.id)
       }
@@ -1151,13 +819,9 @@ const UserRegistrationForm = () => {
       setActiveStep(2)
     } catch (error: any) {
       console.error("שגיאה בשמירת פרטי משפחה:", error)
-      console.error("פרטי השגיאה:", error.response?.data)
 
       let errorMessage = "שגיאה בשמירת פרטי משפחה. אנא נסה שנית."
-
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
-      } else if (error.response?.data?.errors) {
+      if (error.response?.data?.errors) {
         const validationErrors = []
         for (const field in error.response.data.errors) {
           validationErrors.push(`${field}: ${error.response.data.errors[field].join(", ")}`)
@@ -1176,7 +840,7 @@ const UserRegistrationForm = () => {
   }
 
   const onSubmitContactInfo = async (data: any) => {
-    if (!userId || !userToken) {
+    if (!user || !user.id || !token) {
       setNotification({
         open: true,
         message: "לא נמצאו נתוני משתמש. אנא התחבר מחדש.",
@@ -1187,15 +851,13 @@ const UserRegistrationForm = () => {
 
     setLoading(true)
     try {
-      // 🔧 מחיקת אנשי קשר קיימים לפני הוספת חדשים
+      // מחיקת אנשי קשר קיימים
       if (existingContactIds.length > 0) {
-        console.log("מוחק אנשי קשר קיימים:", existingContactIds)
-
         for (const contactId of existingContactIds) {
           try {
             await axios.delete(`${ApiUrl}/Contact/${contactId}`, {
               headers: {
-                Authorization: `Bearer ${userToken}`,
+                Authorization: `Bearer ${token}`,
               },
             })
           } catch (deleteError) {
@@ -1204,23 +866,22 @@ const UserRegistrationForm = () => {
         }
       }
 
+      // הוספת אנשי קשר חדשים
       const contactsToSave = data.contacts.map((contact: any) => ({
         name: contact.name || "",
         contactType: contact.contactType || "רב",
         phone: contact.phone || "",
-        maleId: gender === "Male" ? Number(userId) : null,
-        womenId: gender === "Women" ? Number(userId) : null,
+        maleId: gender === "Male" ? Number(user.id) : null,
+        womenId: gender === "Women" ? Number(user.id) : null,
         matchMakerId: null,
       }))
-
-      console.log("שולח אנשי קשר חדשים:", contactsToSave)
 
       const newContactIds = []
       for (const contact of contactsToSave) {
         const response = await axios.post(`${ApiUrl}/Contact`, contact, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${userToken}`,
+            Authorization: `Bearer ${token}`,
           },
         })
 
@@ -1229,7 +890,6 @@ const UserRegistrationForm = () => {
         }
       }
 
-      // 🔧 עדכון רשימת IDs החדשים
       setExistingContactIds(newContactIds)
 
       setNotification({
@@ -1238,18 +898,15 @@ const UserRegistrationForm = () => {
         severity: "success",
       })
 
+      // מעבר לדף candidate-auth
       setTimeout(() => {
-        window.location.href = "/dashboard"
+        window.location.href = "/candidate-auth"
       }, 2000)
     } catch (error: any) {
       console.error("שגיאה בשמירת אנשי קשר:", error)
-      console.error("פרטי השגיאה:", error.response?.data)
 
       let errorMessage = "שגיאה בשמירת אנשי קשר. אנא נסה שנית."
-
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
-      } else if (error.response?.data?.errors) {
+      if (error.response?.data?.errors) {
         const validationErrors = Object.values(error.response.data.errors).flat()
         errorMessage = validationErrors.join(", ")
       }
@@ -1270,7 +927,7 @@ const UserRegistrationForm = () => {
     { label: "אנשי קשר", icon: <ContactPhoneIcon /> },
   ]
 
-  // רנדור שדה טקסט מעודכן
+  // רנדור שדה טקסט
   const renderTextField = (name: string, label: string, form: any, type = "text", multiline = false, rows = 1) => (
     <Grid item xs={12} sm={6} md={4}>
       <Controller
@@ -1293,7 +950,7 @@ const UserRegistrationForm = () => {
     </Grid>
   )
 
-  // רנדור תיבת בחירה מעודכנת
+  // רנדור תיבת בחירה
   const renderSelect = (name: string, label: string, options: string[], form: any) => (
     <Grid item xs={12} sm={6} md={4}>
       <Controller
@@ -1351,7 +1008,7 @@ const UserRegistrationForm = () => {
     </Grid>
   )
 
-  // רנדור תיבת סימון מעודכנת
+  // רנדור תיבת סימון
   const renderCheckbox = (name: string, label: string, form: any) => (
     <Grid item xs={12} sm={6} md={4}>
       <Controller
@@ -1383,8 +1040,39 @@ const UserRegistrationForm = () => {
     </Grid>
   )
 
+  // אם אין משתמש מחובר
+  if (!user) {
+    return (
+      <Container maxWidth="lg" sx={{ direction: "rtl", py: 4 }}>
+        <StyledPaper elevation={3}>
+          <Box sx={{ p: 4, textAlign: "center" }}>
+            <Typography variant="h4" color="error" gutterBottom>
+              🚫 אין גישה
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              אנא התחבר למערכת כדי לגשת לטופס הרישום
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => (window.location.href = "/login")}
+              sx={{
+                background: "linear-gradient(135deg, #2c1810 0%, #b87333 50%, #d4af37 100%)",
+                color: "white",
+                px: 4,
+                py: 2,
+                borderRadius: 4,
+              }}
+            >
+              חזרה להתחברות
+            </Button>
+          </Box>
+        </StyledPaper>
+      </Container>
+    )
+  }
+
   return (
-    <Container maxWidth="lg" sx={{ direction: "rtl", py: 4 }} >
+    <Container maxWidth="lg" sx={{ direction: "rtl", py: 4 }}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <StyledPaper elevation={3}>
           <Box sx={{ p: 4 }}>
@@ -1407,7 +1095,26 @@ const UserRegistrationForm = () => {
               ✨ השלמת פרטי רישום ✨
             </Typography>
 
-            {/* סטפר מעודכן */}
+            {/* הצגת פרטי המשתמש המחובר */}
+            <Box
+              sx={{
+                mb: 4,
+                p: 3,
+                background: "linear-gradient(135deg, #fff8f0, #f0f8ff)",
+                borderRadius: 3,
+                border: "2px solid rgba(184, 115, 51, 0.2)",
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="h6" sx={{ color: "#2c1810", fontWeight: "700", mb: 1 }}>
+                👋 שלום {user.firstName} {user.lastName}
+              </Typography>
+              <Typography variant="body1" sx={{ color: "#b87333", fontWeight: "600" }}>
+                📧 {user.username} | 🎭 {user.role === "Male" ? "בחור" : "בחורה"}
+              </Typography>
+            </Box>
+
+            {/* סטפר */}
             <Stepper
               activeStep={activeStep}
               alternativeLabel
@@ -1616,7 +1323,7 @@ const UserRegistrationForm = () => {
                                   העלאת תעודת זהות + ספח
                                 </Typography>
                                 <FileUploader
-                                  onUploadSuccess={({url,name}:any) => {
+                                  onUploadSuccess={({ url, name }: any) => {
                                     personalForm.setValue("TZFormUrl", url)
                                     personalForm.setValue("TZFormName", name)
                                   }}
@@ -1649,7 +1356,7 @@ const UserRegistrationForm = () => {
                             }}
                           >
                             <FileUploader
-                              onUploadSuccess={({url,name}:any) => {
+                              onUploadSuccess={({ url, name }: any) => {
                                 personalForm.setValue("photoUrl", url)
                                 personalForm.setValue("photoName", name)
                               }}
@@ -2181,7 +1888,7 @@ const UserRegistrationForm = () => {
         </StyledPaper>
       </motion.div>
 
-      {/* הודעות הצלחה/שגיאה מעודכנות */}
+      {/* הודעות הצלחה/שגיאה */}
       <Snackbar
         open={notification.open}
         autoHideDuration={6000}

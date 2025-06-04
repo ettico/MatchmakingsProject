@@ -141,7 +141,7 @@ const MatchMakerForm = () => {
     },
   })
 
-  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
+  const ApiUrl = process.env.REACT_APP_API_URL 
 
   // טעינת נתוני המשתמש הבסיסיים מה-context
   const loadInitialUserData = () => {
