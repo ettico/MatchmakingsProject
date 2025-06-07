@@ -358,8 +358,8 @@ const UserRegistrationForm = () => {
   const [existingFamilyId, setExistingFamilyId] = useState<number | null>(null)
   const [existingContactIds, setExistingContactIds] = useState<number[]>([])
 
-  // 🔧 שמירת הסיסמה הקודמת מהשרת
-  const [originalPassword, setOriginalPassword] = useState<string>("")
+  // 🔧 שמירת הסיסמה הקודמת מהשרת - שינוי השם להתאמה לטופס השדכנית
+  const [serverPassword, setServerPassword] = useState<string>("")
 
   const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
@@ -483,9 +483,9 @@ const UserRegistrationForm = () => {
           const serverData = response.data
           console.log("נתוני משתמש מהשרת:", serverData)
 
-          // 🔧 שמירת הסיסמה הקודמת מהשרת
+          // 🔧 שמירת הסיסמה הקודמת מהשרת - כמו בטופס השדכנית
           if (serverData.password) {
-            setOriginalPassword(serverData.password)
+            setServerPassword(serverData.password)
             console.log("🔐 נשמרה סיסמה קודמת מהשרת")
           }
 
@@ -709,9 +709,7 @@ const UserRegistrationForm = () => {
     try {
       const userApiUrl = gender === "Male" ? `${ApiUrl}/Male/${user.id}` : `${ApiUrl}/Women/${user.id}`
 
-      // 🔧 שימוש בסיסמה הקודמת מהשרת - אם אין, לא שולחים סיסמה בכלל
-      const shouldIncludePassword = originalPassword && originalPassword.trim() !== ""
-      console.log("🔐 האם לכלול סיסמה:", shouldIncludePassword, "סיסמה קיימת:", !!originalPassword)
+      console.log("🔐 סיסמה מהשרת:", serverPassword ? "קיימת" : "לא קיימת")
 
       // הכנת הנתונים לשליחה
       const baseData = {
@@ -758,8 +756,8 @@ const UserRegistrationForm = () => {
         expectationsFromPartner: data.expectationsFromPartner || "לא משנה",
         preferredProfessionalPath: data.preferredProfessionalPath || "לא משנה",
 
-        // 🔧 כלול סיסמה רק אם יש סיסמה קודמת
-        ...(shouldIncludePassword && { Password: originalPassword }),
+        // 🔧 שימוש בסיסמה מהשרת - כמו בטופס השדכנית
+        Password: serverPassword || "",
       }
 
       // שדות ייחודיים לפי מגדר
@@ -803,7 +801,7 @@ const UserRegistrationForm = () => {
 
       console.log("שולח נתוני משתמש:", {
         ...dataToSend,
-        Password: shouldIncludePassword ? "***" : "לא נשלח",
+        Password: serverPassword ? "***" : "ריק",
       })
 
       const response = await axios.put(userApiUrl, dataToSend, {

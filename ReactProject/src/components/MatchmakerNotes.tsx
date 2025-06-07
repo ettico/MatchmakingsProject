@@ -43,45 +43,6 @@ import axios from "axios"
 import { userContext } from "./UserContext"
 import { Candidate, Male, Note, Women } from "../Models"
 
-// // ממשקים
-// interface User {
-//   id: number
-//   firstName: string
-//   lastName: string
-//   username: string
-//   role: string
-// }
-
-// interface Note {
-//   id: number
-//   matchMakerId: number
-//   userId: number
-//   content: string
-//   createdAt: string
-//   userRole?: string
-// }
-
-// interface Male {
-//   id: number
-//   firstName: string
-//   lastName: string
-//   email: string
-//   age: number
-//   city: string
-//   role: "Male"
-// }
-
-// interface Women {
-//   id: number
-//   firstName: string
-//   lastName: string
-//   email: string
-//   age: number
-//   city: string
-//   role: "Women"
-// }
-
-// type Candidate = Male | Women
 
 // צבעים
 const colors = {
@@ -126,7 +87,8 @@ const MatchmakerNotes = () => {
     severity: "info",
   })
 
-  const ApiUrl = process.env.REACT_APP_API_URL 
+  // 🔧 תיקון ה-API URL - הסרת הקידומת השגויה
+  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
   // פונקציה להצגת הודעות
   const showNotification = (message: string, severity: "success" | "error" | "info" | "warning" = "info") => {
@@ -141,13 +103,16 @@ const MatchmakerNotes = () => {
   const fetchNotes = async () => {
     if (!user?.id || !token) {
       console.log("חסרים פרטי משתמש או טוקן")
+      showNotification("חסרים פרטי משתמש או טוקן", "error")
       return
     }
 
     setLoading(true)
     try {
       console.log("טוען הערות עבור שדכן ID:", user.id)
+      console.log("טוקן:", token ? "קיים" : "חסר")
 
+      // 🔧 תיקון ה-URL - שימוש ב-API הנכון
       const response = await axios.get<Note[]>(`${ApiUrl}/Note`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,12 +140,14 @@ const MatchmakerNotes = () => {
   const fetchCandidates = async () => {
     if (!token) {
       console.log("אין טוקן זמין")
+      showNotification("אין טוקן זמין", "error")
       return
     }
 
     try {
       console.log("טוען מועמדים...")
 
+      // 🔧 תיקון ה-URLs - שימוש ב-API הנכון
       // טעינת גברים
       const malesResponse = await axios.get<Male[]>(`${ApiUrl}/Male`, {
         headers: {
@@ -230,6 +197,7 @@ const MatchmakerNotes = () => {
       fetchCandidates()
     } else {
       console.log("משתמש לא מחובר או אין טוקן")
+      showNotification("משתמש לא מחובר", "warning")
     }
   }, [user, token])
 

@@ -12,8 +12,6 @@ import {
   InputAdornment,
   IconButton,
   Divider,
-//   useMediaQuery,
-//   useTheme,
   Avatar,
 } from "@mui/material"
 import { useForm } from "react-hook-form"
@@ -22,7 +20,6 @@ import * as yup from "yup"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { userContext } from "./UserContext"
 import { motion } from "framer-motion"
-// import { Link as RouterLink } from 'react-router-dom';
 import { Visibility, VisibilityOff, Email, Lock, WineBar, Login as LoginIcon, PersonAdd } from "@mui/icons-material"
 
 const schema = yup.object().shape({
@@ -40,15 +37,9 @@ const colors = {
   darkText: "#111111", // שחור
 }
 
-// interface LoginProps {
-//   userType: string
-// }
-
 const Login = () => {
-//   const theme = useTheme()
-//   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-const { userType } = useParams(); // יקבל את הערך מה-URL
-  const { login, error: contextError } = useContext(userContext)
+  const { userType } = useParams() // יקבל את הערך מה-URL
+  const { login, error: contextError, user } = useContext(userContext) // 🔧 הוספת user מהקונטקסט
   const navigate = useNavigate()
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -61,54 +52,58 @@ const { userType } = useParams(); // יקבל את הערך מה-URL
     resolver: yupResolver(schema),
   })
 
-const onSubmit = async (data: { UserName: string; Password: string }) => {
-  try {
-    await login(data.UserName, data.Password)
-
-    const storedUser = localStorage.getItem("user")
-    if (!storedUser) {
-      setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
-      return
-    }
-
-    let userData: any
+  const onSubmit = async (data: { UserName: string; Password: string }) => {
     try {
-      console.log("נתוני משתמש מ-localStorage:", storedUser)
-      userData = JSON.parse(storedUser)
-    } catch (e) {
-      console.error("שגיאה בפענוח JSON:", e)
-      setError("נתוני התחברות לא תקינים. נסה שוב.")
-      return
-    }
+      setError("") // איפוס שגיאות קודמות
 
-    console.log("נתוני משתמש לאחר parsing:", userData)
+      console.log("מתחיל תהליך התחברות...")
+      await login(data.UserName, data.Password)
 
-    // תיקון: הנתונים נמצאים ישירות ב-userData ולא ב-userData.user
-    const role = userData?.role || userData?.user?.role
-    console.log("תפקיד המשתמש:", role)
-    
-    if (!role) {
-      console.error("לא נמצא תפקיד למשתמש. מבנה הנתונים:", userData)
-      setError("לא נמצא תפקיד למשתמש.")
-      return
-    }
+      // 🔧 תיקון: שימוש בנתונים מהקונטקסט במקום localStorage
+      console.log("נתוני משתמש מהקונטקסט:", user)
 
-    // ניתוב לפי תפקיד
-    if (role === "Male" || role === "Women") {
-      navigate("/candidate-auth")
-      console.log("התחברות מוצלחת - מועמד")
-    } else if (role === "MatchMaker") {
-      navigate("/matchmaker-auth")
-      console.log("התחברות מוצלחת - שדכנית")
-    } else {
-      console.error("תפקיד לא מזוהה:", role)
-      setError("המערכת אינה זיהתה אותך במאגר המשתמשים המתאים.")
+      // המתנה קצרה לוודא שהקונטקסט התעדכן
+      setTimeout(() => {
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
+        console.log("נתוני משתמש מ-localStorage:", currentUser)
+
+        // 🔧 תיקון: בדיקה מתוקנת של התפקיד
+        const role = currentUser?.role || currentUser?.user?.role
+        console.log("תפקיד המשתמש שזוהה:", role)
+
+        if (!role) {
+          console.error("לא נמצא תפקיד למשתמש. מבנה הנתונים:", currentUser)
+          setError("לא נמצא תפקיד למשתמש. אנא התחבר מחדש.")
+          return
+        }
+
+        // ניתוב לפי תפקיד
+        if (role === "Male" || role === "Women") {
+          navigate("/candidate-auth")
+          console.log("התחברות מוצלחת - מועמד")
+        } else if (role === "MatchMaker") {
+          navigate("/matchmaker-auth")
+          console.log("התחברות מוצלחת - שדכנית")
+        } else {
+          console.error("תפקיד לא מזוהה:", role)
+          setError(`תפקיד לא מזוהה: ${role}. אנא פנה לתמיכה.`)
+        }
+      }, 500) // המתנה של חצי שנייה
+    } catch (err: any) {
+      console.error("שגיאה בהתחברות:", err)
+
+      // 🔧 תיקון: הודעות שגיאה מפורטות יותר
+      if (err?.response?.status === 401) {
+        setError("שם משתמש או סיסמה שגויים.")
+      } else if (err?.response?.status === 404) {
+        setError("המשתמש לא נמצא במערכת. אנא הירשם תחילה.")
+      } else if (err?.message) {
+        setError(err.message)
+      } else {
+        setError("ההתחברות נכשלה. אנא נסה שוב או הירשם אם אין לך חשבון.")
+      }
     }
-  } catch (err) {
-    console.error("שגיאה בהתחברות:", err)
-    setError("ההתחברות נכשלה, אנא הירשמו אם אין לכם חשבון.")
   }
-}
 
   const handleTogglePassword = () => {
     setShowPassword(!showPassword)
@@ -458,9 +453,6 @@ const onSubmit = async (data: { UserName: string; Password: string }) => {
                       color: colors.text + "80",
                       textDecoration: "none",
                       transition: "all 0.3s",
-                    //   "&:hover": {
-                    //     color: colors.primary,
-                    //   },
                     }}
                   >
                     חזרה לדף הבית
