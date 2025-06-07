@@ -483,22 +483,90 @@ const UserRegistrationForm = () => {
           const serverData = response.data
           console.log("נתוני משתמש מהשרת:", serverData)
 
-          // 🔧 שמירת הסיסמה הקודמת מהשרת לפני מילוי השדות
+          // 🔧 שמירת הסיסמה הקודמת מהשרת
           if (serverData.password) {
             setOriginalPassword(serverData.password)
             console.log("🔐 נשמרה סיסמה קודמת מהשרת")
           }
 
-          // מילוי כל השדות מהשרת (כולל הסיסמה)
-          Object.keys(serverData).forEach((key) => {
-            if (serverData[key] !== null && serverData[key] !== undefined) {
+          // מיפוי מפורט של כל השדות מהשרת לטופס
+          const fieldMapping = {
+            // שדות בסיסיים
+            firstName: serverData.firstName || serverData.FirstName,
+            lastName: serverData.lastName || serverData.LastName,
+            country: serverData.country,
+            city: serverData.city,
+            address: serverData.address,
+            tz: serverData.tz,
+            class: serverData.class,
+            anOutsider: serverData.anOutsider,
+            backGround: serverData.backGround,
+            openness: serverData.openness,
+            age: serverData.age,
+            healthCondition: serverData.healthCondition,
+            status: serverData.status,
+            statusVacant: serverData.statusVacant,
+            pairingType: serverData.pairingType,
+            height: serverData.height,
+            phone: serverData.phone,
+            email: serverData.email || serverData.Username,
+            fatherPhone: serverData.fatherPhone,
+            motherPhone: serverData.motherPhone,
+            moreInformation: serverData.moreInformation,
+            club: serverData.club,
+            ageFrom: serverData.ageFrom,
+            ageTo: serverData.ageTo,
+            importantTraitsInMe: serverData.importantTraitsInMe,
+            importantTraitsIAmLookingFor: serverData.importantTraitsIAmLookingFor,
+            photoUrl: serverData.photoUrl,
+            photoName: serverData.photoName,
+            TZFormUrl: serverData.TZFormUrl || serverData.tzFormUrl,
+            TZFormName: serverData.TZFormName || serverData.tzFormName,
+            hot: serverData.hot,
+            facePaint: serverData.facePaint,
+            appearance: serverData.appearance,
+            generalAppearance: serverData.generalAppearance,
+            preferredSeminarStyle: serverData.preferredSeminarStyle,
+            expectationsFromPartner: serverData.expectationsFromPartner,
+            preferredProfessionalPath: serverData.preferredProfessionalPath,
+
+            // שדות ייחודיים לבחור
+            ...(userGender === "Male" && {
+              driversLicense: serverData.driversLicense,
+              smoker: serverData.smoker,
+              beard: serverData.beard,
+              hat: serverData.hat,
+              suit: serverData.suit,
+              headCovering: serverData.headCovering,
+              smallYeshiva: serverData.smallYeshiva,
+              bigYeshiva: serverData.bigYeshiva,
+              yeshivaType: serverData.yeshivaType,
+              kibbutz: serverData.kibbutz,
+              occupation: serverData.occupation || serverData.currentOccupation,
+              preferredOccupation: serverData.preferredOccupation,
+            }),
+
+            // שדות ייחודיים לבחורה
+            ...(userGender === "Women" && {
+              drivingLicense: serverData.drivingLicense,
+              smoker: serverData.smoker,
+              headCovering: serverData.headCovering,
+              highSchool: serverData.highSchool,
+              seminar: serverData.seminar,
+              seminarType: serverData.seminarType,
+              studyPath: serverData.studyPath,
+              currentOccupation: serverData.currentOccupation || serverData.occupation,
+            }),
+          }
+
+          // מילוי השדות בטופס
+          Object.entries(fieldMapping).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== "") {
               try {
-                const formFields = personalForm.getValues()
-                if (key in formFields) {
-                  personalForm.setValue(key as any, serverData[key])
-                }
+                personalForm.setValue(key as any, value)
+                console.log(`✅ עודכן שדה ${key}:`, value)
               } catch (setValueError) {
-                console.error(`שגיאה בהגדרת שדה ${key}:`, setValueError)
+                console.error(`❌ שגיאה בהגדרת שדה ${key}:`, setValueError)
               }
             }
           })
@@ -514,7 +582,7 @@ const UserRegistrationForm = () => {
         }
       }
 
-      // טעינת פרטי משפחה
+      // טעינת פרטי משפחה עם מיפוי מתוקן
       try {
         const familyResponse = await axios.get(`${ApiUrl}/FamilyDetails`, {
           headers: {
@@ -532,24 +600,42 @@ const UserRegistrationForm = () => {
             console.log("נתוני משפחה מהשרת:", familyDetails)
             setExistingFamilyId(familyDetails.id)
 
+            // מיפוי מפורט של שדות המשפחה
+            const familyFieldMapping = {
+              fatherName: familyDetails.fatherName,
+              fatherOrigin: familyDetails.fatherOrigin,
+              fatherYeshiva: familyDetails.fatherYeshiva,
+              fatherAffiliation: familyDetails.fatherAffiliation,
+              fatherOccupation: familyDetails.fatherOccupation,
+              motherName: familyDetails.motherName,
+              motherOrigin: familyDetails.motherOrigin,
+              motherGraduateSeminar: familyDetails.motherGraduateSeminar,
+              motherPreviousName: familyDetails.motherPreviousName,
+              motherOccupation: familyDetails.motherOccupation,
+              parentsStatus:
+                familyDetails.parentsStatus === true
+                  ? "נשואים"
+                  : familyDetails.parentsStatus === false
+                    ? "גרושים"
+                    : familyDetails.parentsStatus || "נשואים",
+              healthStatus:
+                familyDetails.healthStatus === true
+                  ? "תקין"
+                  : familyDetails.healthStatus === false
+                    ? "יש בעיות בריאותיות במשפחה"
+                    : familyDetails.healthStatus || "תקין",
+              familyRabbi: familyDetails.familyRabbi,
+              familyAbout: familyDetails.familyAbout,
+            }
+
             // מילוי שדות המשפחה
-            Object.keys(familyDetails).forEach((key) => {
-              if (familyDetails[key] !== null && familyDetails[key] !== undefined) {
+            Object.entries(familyFieldMapping).forEach(([key, value]) => {
+              if (value !== null && value !== undefined && value !== "") {
                 try {
-                  const formFields = familyForm.getValues()
-                  if (key in formFields) {
-                    if (key === "parentsStatus") {
-                      const statusText = familyDetails[key] === true ? "נשואים" : "גרושים"
-                      familyForm.setValue(key as any, statusText)
-                    } else if (key === "healthStatus") {
-                      const healthText = familyDetails[key] === true ? "תקין" : "יש בעיות בריאותיות במשפחה"
-                      familyForm.setValue(key as any, healthText)
-                    } else {
-                      familyForm.setValue(key as any, familyDetails[key])
-                    }
-                  }
+                  familyForm.setValue(key as any, value)
+                  console.log(`✅ עודכן שדה משפחה ${key}:`, value)
                 } catch (setValueError) {
-                  console.error(`שגיאה בהגדרת שדה משפחה ${key}:`, setValueError)
+                  console.error(`❌ שגיאה בהגדרת שדה משפחה ${key}:`, setValueError)
                 }
               }
             })
@@ -623,9 +709,9 @@ const UserRegistrationForm = () => {
     try {
       const userApiUrl = gender === "Male" ? `${ApiUrl}/Male/${user.id}` : `${ApiUrl}/Women/${user.id}`
 
-      // 🔧 שימוש בסיסמה הקודמת מהשרת או מהטופס
-      const passwordToSend = originalPassword || data.Password || ""
-      console.log("🔐 סיסמה לשליחה:", passwordToSend ? "קיימת" : "ריקה")
+      // 🔧 שימוש בסיסמה הקודמת מהשרת - אם אין, לא שולחים סיסמה בכלל
+      const shouldIncludePassword = originalPassword && originalPassword.trim() !== ""
+      console.log("🔐 האם לכלול סיסמה:", shouldIncludePassword, "סיסמה קיימת:", !!originalPassword)
 
       // הכנת הנתונים לשליחה
       const baseData = {
@@ -660,7 +746,6 @@ const UserRegistrationForm = () => {
         FirstName: data.firstName || "",
         LastName: data.lastName || "",
         Username: data.email || user.username || "",
-        Password: passwordToSend, // 🔧 שימוש בסיסמה הקודמת
         photoUrl: data.photoUrl || "",
         photoName: data.photoName || "",
         TZFormUrl: data.TZFormUrl || "",
@@ -672,6 +757,9 @@ const UserRegistrationForm = () => {
         preferredSeminarStyle: data.preferredSeminarStyle || "חרדי",
         expectationsFromPartner: data.expectationsFromPartner || "לא משנה",
         preferredProfessionalPath: data.preferredProfessionalPath || "לא משנה",
+
+        // 🔧 כלול סיסמה רק אם יש סיסמה קודמת
+        ...(shouldIncludePassword && { Password: originalPassword }),
       }
 
       // שדות ייחודיים לפי מגדר
@@ -713,7 +801,10 @@ const UserRegistrationForm = () => {
         }),
       }
 
-      console.log("שולח נתוני משתמש:", { ...dataToSend, Password: "***" })
+      console.log("שולח נתוני משתמש:", {
+        ...dataToSend,
+        Password: shouldIncludePassword ? "***" : "לא נשלח",
+      })
 
       const response = await axios.put(userApiUrl, dataToSend, {
         headers: {
@@ -723,9 +814,6 @@ const UserRegistrationForm = () => {
       })
 
       console.log("תשובה מהשרת:", response.data)
-
-      // 🔧 עדכון הסיסמה הקודמת אחרי העדכון המוצלח
-      setOriginalPassword(passwordToSend)
 
       setNotification({
         open: true,
@@ -745,6 +833,8 @@ const UserRegistrationForm = () => {
           validationErrors.push(`${field}: ${error.response.data.errors[field].join(", ")}`)
         }
         errorMessage = validationErrors.join("; ")
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
       }
 
       setNotification({
