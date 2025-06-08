@@ -323,7 +323,7 @@ const CandidatesPage = () => {
   const [notes, setNotes] = useState<Note[]>([])
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [newNoteText, setNewNoteText] = useState("")
-  const { user } = useContext(userContext)
+  const { user ,token} = useContext(userContext)
   const [error, setError] = useState<string | null>(null)
   const [familyDetails, setFamilyDetails] = useState<FamilyDetails | null>(null)
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -359,14 +359,20 @@ const CandidatesPage = () => {
     setError(null)
     try {
       // טעינת גברים
-      const malesResponse = await axios.get<MaleType[]>(`${ApiUrl}/Male`)
+      const malesResponse = await axios.get<MaleType[]>(`${ApiUrl}/Male`, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       const males = malesResponse.data.map((male) => ({
         ...male,
         role: "Male" as const,
       }))
 
       // טעינת נשים
-      const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`)
+      const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`,  {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       const females = femalesResponse.data.map((female) => ({
         ...female,
         role: "Women" as const,
@@ -400,7 +406,10 @@ const CandidatesPage = () => {
   // פונקציה לטעינת פרטי משפחה
   const fetchFamilyDetails = async (candidateId: number, role: string) => {
     try {
-      const response = await axios.get<FamilyDetails[]>(`${ApiUrl}/FamilyDetails`)
+      const response = await axios.get<FamilyDetails[]>(`${ApiUrl}/FamilyDetails` ,{headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
 
       // סינון לפי מזהה המועמד
       const details = response.data.find(
@@ -418,7 +427,10 @@ const CandidatesPage = () => {
   // פונקציה לטעינת פרטי התקשרות
   const fetchContacts = async (candidateId: number, role: string) => {
     try {
-      const response = await axios.get<Contact[]>(`${ApiUrl}/Contact`)
+      const response = await axios.get<Contact[]>(`${ApiUrl}/Contact`, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
 
       // סינון לפי מזהה המועמד
       const candidateContacts = response.data.filter(
@@ -468,7 +480,10 @@ const CandidatesPage = () => {
       const endpoint = role === "Male" ? "Male" : "Women"
 
       // שלב 1: קבלת הנתונים הקיימים של המועמד
-      const response = await axios.get(`${ApiUrl}/${endpoint}/${id}`)
+      const response = await axios.get(`${ApiUrl}/${endpoint}/${id}`, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       const data = response.data
 
       // שלב 2: יצירת גוף מעודכן כולל כל השדות הנדרשים לפי Swagger
@@ -524,7 +539,10 @@ const CandidatesPage = () => {
       console.log("נשלח לשרת:", updatedCandidate)
 
       // שלב 3: שליחת הבקשה לעדכון
-      await axios.put(`${ApiUrl}/${endpoint}/${id}`, updatedCandidate)
+      await axios.put(`${ApiUrl}/${endpoint}/${id}`, updatedCandidate, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
 
       // שלב 4: עדכון ברשימה המקומית
       setCandidates((prev) =>
@@ -578,7 +596,10 @@ const CandidatesPage = () => {
   // הוספת הערות מהשרת
   const fetchNotes = async () => {
     try {
-      const response = await axios.get(`${ApiUrl}/Note`)
+      const response = await axios.get(`${ApiUrl}/Note`, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       setNotes(response.data)
     } catch (error) {
       console.error("שגיאה בהבאת הערות:", error)
@@ -597,7 +618,10 @@ const CandidatesPage = () => {
         createdAt: new Date().toISOString(),
       }
 
-      const response = await axios.post(`${ApiUrl}/Note`, newNote)
+      const response = await axios.post(`${ApiUrl}/Note`, newNote, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       setNotes((prev) => [...prev, response.data])
       setNewNoteText("")
     } catch (error) {
@@ -613,7 +637,10 @@ const CandidatesPage = () => {
       await axios.put(`${ApiUrl}/Note/${editingNote.id}`, {
         ...editingNote,
         content: editingNote.content,
-      })
+      }, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       setNotes((prev) => prev.map((note) => (note.id === editingNote.id ? editingNote : note)))
       setEditingNote(null)
     } catch (error) {
@@ -624,7 +651,10 @@ const CandidatesPage = () => {
   // מחיקת הערה
   const deleteNote = async (noteId: number) => {
     try {
-      await axios.delete(`${ApiUrl}/Note/${noteId}`)
+      await axios.delete(`${ApiUrl}/Note/${noteId}`, {headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }},)
       setNotes((prev) => prev.filter((note) => note.id !== noteId))
     } catch (error) {
       console.error("שגיאה במחיקת הערה:", error)
