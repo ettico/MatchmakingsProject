@@ -36,6 +36,8 @@ import {
   Avatar,
   ThemeProvider,
   createTheme,
+  Alert,
+  AlertTitle,
 } from "@mui/material"
 import { styled, useTheme, alpha } from "@mui/material/styles"
 import {
@@ -70,6 +72,8 @@ import {
   ContactPhone,
   Male,
   Female,
+  Login,
+  Refresh,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note, FamilyDetails, Contact } from "../Models"
@@ -331,9 +335,31 @@ const CandidatesPage = () => {
   const [, setModalType] = useState("")
   const navigate = useNavigate()
   const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   // Fix: Use environment variable correctly with fallback
-  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
+  const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
+
+  // פונקציה לקבלת headers עם אימות
+  const getAuthHeaders = () => {
+    const tokenfromuser = localStorage.getItem("authToken") || localStorage.getItem("token") || token
+    if (tokenfromuser) {
+      return {
+        Authorization: `Bearer ${tokenfromuser}`,
+        "Content-Type": "application/json",
+      }
+    }
+    return {
+      "Content-Type": "application/json",
+    }
+  }
+
+  // פונקציה לבדיקת אימות
+  const checkAuthentication = () => {
+    const tokenfromuser = localStorage.getItem("authToken") || localStorage.getItem("token") || token
+    setIsAuthenticated(!!tokenfromuser)
+    return !!tokenfromuser
+  }
 
   const handleNavigate = (path: string, type: string) => {
     navigate(path)
@@ -353,30 +379,35 @@ const CandidatesPage = () => {
     backgrounds: [] as string[],
   })
 
-  // פונקציה לטעינת נתונים
+  // פונקציה לטעינת נתונים עם אימות
   const fetchCandidates = async () => {
     setLoading(true)
     setError(null)
+
+    // בדיקת אימות לפני הקריאה
+    if (!checkAuthentication()) {
+      setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
+      setLoading(false)
+      return
+    }
+
     try {
+      const headers = getAuthHeaders()
+
       // טעינת גברים
-      const malesResponse = await axios.get<MaleType[]>(`${ApiUrl}/Male`, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const malesResponse = await axios.get<MaleType[]>(`${ApiUrl}/Male`, { headers })
       const males = malesResponse.data.map((male) => ({
         ...male,
         role: "Male" as const,
       }))
 
       // טעינת נשים
-      const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`,  {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`, { headers })
       const females = femalesResponse.data.map((female) => ({
         ...female,
         role: "Women" as const,
       }))
+
       console.log("גברים:", malesResponse.data)
       console.log("נשים:", femalesResponse.data)
 
@@ -388,13 +419,24 @@ const CandidatesPage = () => {
       console.log("סה״כ מועמדים:", males.length + females.length)
 
       if (males.length === 0 && females.length === 0) {
-        setError("לא נמצאו מועמדים במערכת. ייתכן שיש בעיה בחיבור לשרת.")
+        setError("לא נמצאו מועמדים במערכת.")
       }
     } catch (error) {
       console.error("שגיאה בטעינת נתונים:", error)
-      // Fix: Better error handling with specific messages for different error types
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        setError("לא ניתן למצוא את נתוני המועמדים. נא לבדוק את כתובת ה-API.")
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          setError("אין הרשאה לגשת למערכת. נא להתחבר מחדש.")
+          setIsAuthenticated(false)
+          // ניתן להוסיף כאן ניווט לדף התחברות
+          // navigate('/login')
+        } else if (error.response?.status === 404) {
+          setError("לא ניתן למצוא את נתוני המועמדים. נא לבדוק את כתובת ה-API.")
+        } else if (error.response?.status === 403) {
+          setError("אין הרשאה לצפות במועמדים. נא לפנות למנהל המערכת.")
+        } else {
+          setError(`שגיאה בטעינת נתונים: ${error.response?.data?.message || error.message}`)
+        }
       } else {
         setError("שגיאה בטעינת נתונים מהשרת. אנא נסה שוב מאוחר יותר.")
       }
@@ -405,11 +447,11 @@ const CandidatesPage = () => {
 
   // פונקציה לטעינת פרטי משפחה
   const fetchFamilyDetails = async (candidateId: number, role: string) => {
+    if (!checkAuthentication()) return
+
     try {
-      const response = await axios.get<FamilyDetails[]>(`${ApiUrl}/FamilyDetails` ,{headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const headers = getAuthHeaders()
+      const response = await axios.get<FamilyDetails[]>(`${ApiUrl}/FamilyDetails`, { headers })
 
       // סינון לפי מזהה המועמד
       const details = response.data.find(
@@ -426,11 +468,11 @@ const CandidatesPage = () => {
 
   // פונקציה לטעינת פרטי התקשרות
   const fetchContacts = async (candidateId: number, role: string) => {
+    if (!checkAuthentication()) return
+
     try {
-      const response = await axios.get<Contact[]>(`${ApiUrl}/Contact`, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const headers = getAuthHeaders()
+      const response = await axios.get<Contact[]>(`${ApiUrl}/Contact`, { headers })
 
       // סינון לפי מזהה המועמד
       const candidateContacts = response.data.filter(
@@ -446,14 +488,15 @@ const CandidatesPage = () => {
   }
 
   useEffect(() => {
+    checkAuthentication()
     fetchCandidates()
   }, [])
 
   useEffect(() => {
-    if (notesDrawerOpen && user?.id) {
+    if (notesDrawerOpen && user?.id && isAuthenticated) {
       fetchNotes()
     }
-  }, [notesDrawerOpen, user?.id])
+  }, [notesDrawerOpen, user?.id, isAuthenticated])
 
   // פתיחת דיאלוג פרטים
   const handleOpenDetails = (candidate: Candidate) => {
@@ -474,75 +517,26 @@ const CandidatesPage = () => {
 
   // עדכון סטטוס מועמד
   const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
-    if (!selectedCandidate) return
+    if (!selectedCandidate || !checkAuthentication()) return
 
     try {
       const endpoint = role === "Male" ? "Male" : "Women"
+      const headers = getAuthHeaders()
 
       // שלב 1: קבלת הנתונים הקיימים של המועמד
-      const response = await axios.get(`${ApiUrl}/${endpoint}/${id}`, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const response = await axios.get(`${ApiUrl}/${endpoint}/${id}`, { headers })
       const data = response.data
 
       // שלב 2: יצירת גוף מעודכן כולל כל השדות הנדרשים לפי Swagger
       const updatedCandidate = {
-        firstName: data.firstName ?? "",
-        lastName: data.lastName ?? "",
-        username: data.username ?? "",
-        password: data.password ?? "", // חובה לפי Swagger
-        role: data.role ?? role,
-        country: data.country ?? "",
-        city: data.city ?? "",
-        address: data.address ?? "",
-        tz: data.tz ?? "",
-        class: data.class ?? "",
-        anOutsider: data.anOutsider ?? false,
-        backGround: data.backGround ?? "",
-        openness: data.openness ?? "",
-        burnDate: data.burnDate ?? new Date().toISOString(),
-        age: data.age ?? 0,
-        healthCondition: data.healthCondition ?? false,
-        status: data.status ?? "",
+        ...data,
         statusVacant: isAvailable,
-        pairingType: data.pairingType ?? "",
-        height: data.height ?? 0,
-        generalAppearance: data.generalAppearance ?? "",
-        facePaint: data.facePaint ?? "",
-        appearance: data.appearance ?? "",
-        phone: data.phone ?? "",
-        email: data.email ?? "",
-        fatherPhone: data.fatherPhone ?? "",
-        motherPhone: data.motherPhone ?? "",
-        moreInformation: data.moreInformation ?? "",
-        driversLicense: data.driversLicense ?? false,
-        smoker: data.smoker ?? false,
-        beard: data.beard ?? "",
-        hot: data.hot ?? "",
-        suit: data.suit ?? "",
-        smallYeshiva: data.smallYeshiva ?? "",
-        bigYeshiva: data.bigYeshiva ?? "",
-        kibbutz: data.kibbutz ?? "",
-        occupation: data.occupation ?? "",
-        expectationsFromPartner: data.expectationsFromPartner ?? "",
-        club: data.club ?? "",
-        ageFrom: data.ageFrom ?? 0,
-        ageTo: data.ageTo ?? 0,
-        importantTraitsInMe: data.importantTraitsInMe ?? "",
-        importantTraitsIAmLookingFor: data.importantTraitsIAmLookingFor ?? "",
-        preferredSeminarStyle: data.preferredSeminarStyle ?? "",
-        preferredProfessionalPath: data.preferredProfessionalPath ?? "",
-        headCovering: data.headCovering ?? "",
       }
 
       console.log("נשלח לשרת:", updatedCandidate)
 
       // שלב 3: שליחת הבקשה לעדכון
-      await axios.put(`${ApiUrl}/${endpoint}/${id}`, updatedCandidate, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      await axios.put(`${ApiUrl}/${endpoint}/${id}`, updatedCandidate, { headers })
 
       // שלב 4: עדכון ברשימה המקומית
       setCandidates((prev) =>
@@ -558,6 +552,9 @@ const CandidatesPage = () => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("שגיאה בעדכון סטטוס:", error.response?.data || error.message)
+        if (error.response?.status === 401) {
+          setError("אין הרשאה לעדכן סטטוס. נא להתחבר מחדש.")
+        }
       } else {
         console.error("שגיאה בעדכון סטטוס:", error)
       }
@@ -595,11 +592,11 @@ const CandidatesPage = () => {
 
   // הוספת הערות מהשרת
   const fetchNotes = async () => {
+    if (!checkAuthentication()) return
+
     try {
-      const response = await axios.get(`${ApiUrl}/Note`, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const headers = getAuthHeaders()
+      const response = await axios.get(`${ApiUrl}/Note`, { headers })
       setNotes(response.data)
     } catch (error) {
       console.error("שגיאה בהבאת הערות:", error)
@@ -608,9 +605,10 @@ const CandidatesPage = () => {
 
   // הוספת הערה חדשה
   const addNote = async () => {
-    if (!user?.id || !newNoteText.trim() || !selectedCandidate) return
+    if (!user?.id || !newNoteText.trim() || !selectedCandidate || !checkAuthentication()) return
 
     try {
+      const headers = getAuthHeaders()
       const newNote: Partial<Note> = {
         matchMakerId: user.id,
         userId: selectedCandidate.id,
@@ -618,10 +616,7 @@ const CandidatesPage = () => {
         createdAt: new Date().toISOString(),
       }
 
-      const response = await axios.post(`${ApiUrl}/Note`, newNote, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const response = await axios.post(`${ApiUrl}/Note`, newNote, { headers })
       setNotes((prev) => [...prev, response.data])
       setNewNoteText("")
     } catch (error) {
@@ -631,16 +626,18 @@ const CandidatesPage = () => {
 
   // עדכון הערה
   const updateNote = async () => {
-    if (!editingNote) return
+    if (!editingNote || !checkAuthentication()) return
 
     try {
-      await axios.put(`${ApiUrl}/Note/${editingNote.id}`, {
-        ...editingNote,
-        content: editingNote.content,
-      }, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const headers = getAuthHeaders()
+      await axios.put(
+        `${ApiUrl}/Note/${editingNote.id}`,
+        {
+          ...editingNote,
+          content: editingNote.content,
+        },
+        { headers },
+      )
       setNotes((prev) => prev.map((note) => (note.id === editingNote.id ? editingNote : note)))
       setEditingNote(null)
     } catch (error) {
@@ -650,11 +647,11 @@ const CandidatesPage = () => {
 
   // מחיקת הערה
   const deleteNote = async (noteId: number) => {
+    if (!checkAuthentication()) return
+
     try {
-      await axios.delete(`${ApiUrl}/Note/${noteId}`, {headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }},)
+      const headers = getAuthHeaders()
+      await axios.delete(`${ApiUrl}/Note/${noteId}`, { headers })
       setNotes((prev) => prev.filter((note) => note.id !== noteId))
     } catch (error) {
       console.error("שגיאה במחיקת הערה:", error)
@@ -664,6 +661,19 @@ const CandidatesPage = () => {
   // Handle gender tab change
   const handleGenderTabChange = (_event: React.SyntheticEvent, newValue: "all" | "male" | "female") => {
     setGenderTab(newValue)
+  }
+
+  // פונקציה לטיפול בהתחברות מחדש
+  const handleReconnect = () => {
+    setError(null)
+    checkAuthentication()
+    fetchCandidates()
+  }
+
+  // פונקציה לניווט לדף התחברות
+  const handleLogin = () => {
+    // ניתן להתאים את הנתיב לפי המבנה שלך
+    navigate("/login")
   }
 
   // סינון מועמדים
@@ -782,244 +792,269 @@ const CandidatesPage = () => {
           </Typography>
         </CopperGradientBox>
 
-        {/* חיפוש ופילטרים */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            mb: 4,
-            borderRadius: 4,
-            background: "linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
-          }}
-        >
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <SearchTextField
-                fullWidth
-                placeholder="חיפוש לפי שם, עיר, חוג..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: "flex", gap: 1, justifyContent: { xs: "flex-start", md: "flex-end" } }}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<FilterAltOutlined />}
-                  onClick={() => setExpandedFilters(!expandedFilters)}
-                >
-                  {expandedFilters ? "הסתר פילטרים" : "הצג פילטרים"}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<ClearAll />}
-                  onClick={resetFilters}
-                  disabled={
-                    filters.statusFilter === "all" &&
-                    filters.genderFilter === "all" &&
-                    filters.ageRange[0] === 18 &&
-                    filters.ageRange[1] === 50 &&
-                    filters.heightRange[0] === 150 &&
-                    filters.heightRange[1] === 200 &&
-                    filters.cities.length === 0 &&
-                    filters.classes.length === 0 &&
-                    filters.occupations.length === 0 &&
-                    filters.backgrounds.length === 0 &&
-                    !searchQuery &&
-                    genderTab === "all"
-                  }
-                >
-                  נקה פילטרים
-                </Button>
-                {user?.id && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<NotesIcon />}
-                    onClick={() => setNotesDrawerOpen(true)}
-                  >
-                    הערות שדכנית
+        {/* הודעת שגיאה או אימות */}
+        {error && (
+          <Alert
+            severity={error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? "warning" : "error"}
+            sx={{ mb: 3, borderRadius: 2 }}
+            action={
+              <Box sx={{ display: "flex", gap: 1 }}>
+                {error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? (
+                  <Button color="inherit" size="small" startIcon={<Login />} onClick={handleLogin}>
+                    התחבר
+                  </Button>
+                ) : (
+                  <Button color="inherit" size="small" startIcon={<Refresh />} onClick={handleReconnect}>
+                    נסה שוב
                   </Button>
                 )}
               </Box>
-            </Grid>
-          </Grid>
-          <Collapse in={expandedFilters}>
-            <Box sx={{ mt: 3 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6} lg={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="status-filter-label">סטטוס</InputLabel>
-                    <Select
-                      labelId="status-filter-label"
-                      value={filters.statusFilter}
-                      label="סטטוס"
-                      onChange={(e) => handleFilterChange("statusFilter", e.target.value)}
-                    >
-                      <MenuItem value="all">הכל</MenuItem>
-                      <MenuItem value="available">פנוי להצעות</MenuItem>
-                      <MenuItem value="unavailable">לא פנוי להצעות</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
+            }
+          >
+            <AlertTitle>שגיאה</AlertTitle>
+            {error}
+          </Alert>
+        )}
 
-                <Grid item xs={12} md={6} lg={3}>
-                  <Autocomplete
-                    multiple
-                    options={uniqueCities}
-                    value={filters.cities}
-                    onChange={(_, newValue) => handleFilterChange("cities", newValue)}
-                    renderInput={(params) => <TextField {...params} label="ערים" size="small" />}
-                    size="small"
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6} lg={3}>
-                  <Autocomplete
-                    multiple
-                    options={uniqueClasses}
-                    value={filters.classes}
-                    onChange={(_, newValue) => handleFilterChange("classes", newValue)}
-                    renderInput={(params) => <TextField {...params} label="חוגים" size="small" />}
-                    size="small"
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6} lg={3}>
-                  <Autocomplete
-                    multiple
-                    options={uniqueOccupations}
-                    value={filters.occupations}
-                    onChange={(_, newValue) => handleFilterChange("occupations", newValue)}
-                    renderInput={(params) => <TextField {...params} label="עיסוקים" size="small" />}
-                    size="small"
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Typography gutterBottom>
-                    טווח גילאים: {filters.ageRange[0]} - {filters.ageRange[1]}
-                  </Typography>
-                  <Slider
-                    value={filters.ageRange}
-                    onChange={(_, newValue) => handleFilterChange("ageRange", newValue)}
-                    valueLabelDisplay="auto"
-                    min={18}
-                    max={70}
-                    sx={{
-                      "& .MuiSlider-thumb": {
-                        backgroundColor: theme.palette.primary.main,
-                      },
-                      "& .MuiSlider-track": {
-                        backgroundColor: theme.palette.primary.main,
-                      },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Typography gutterBottom>
-                    טווח גבהים: {filters.heightRange[0]} - {filters.heightRange[1]} ס"מ
-                  </Typography>
-                  <Slider
-                    value={filters.heightRange}
-                    onChange={(_, newValue) => handleFilterChange("heightRange", newValue)}
-                    valueLabelDisplay="auto"
-                    min={140}
-                    max={210}
-                    sx={{
-                      "& .MuiSlider-thumb": {
-                        backgroundColor: theme.palette.primary.main,
-                      },
-                      "& .MuiSlider-track": {
-                        backgroundColor: theme.palette.primary.main,
-                      },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Autocomplete
-                    multiple
-                    options={uniqueBackgrounds}
-                    value={filters.backgrounds}
-                    onChange={(_, newValue) => handleFilterChange("backgrounds", newValue)}
-                    renderInput={(params) => <TextField {...params} label="רקע" size="small" />}
-                    size="small"
-                  />
-                </Grid>
-              </Grid>
-            </Box>
-          </Collapse>
-        </Paper>
-
-        {/* Gender Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-          <Tabs
-            value={genderTab}
-            onChange={handleGenderTabChange}
-            aria-label="gender tabs"
+        {/* חיפוש ופילטרים */}
+        {isAuthenticated && (
+          <Paper
+            elevation={0}
             sx={{
-              "& .MuiTabs-indicator": {
-                backgroundColor: theme.palette.primary.main,
-                height: 3,
-              },
+              p: 3,
+              mb: 4,
+              borderRadius: 4,
+              background: "linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
             }}
           >
-            <GenderTab
-              value="all"
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Person />
-                  <span>כל המועמדים ({candidates.length})</span>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <SearchTextField
+                  fullWidth
+                  placeholder="חיפוש לפי שם, עיר, חוג..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ display: "flex", gap: 1, justifyContent: { xs: "flex-start", md: "flex-end" } }}>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<FilterAltOutlined />}
+                    onClick={() => setExpandedFilters(!expandedFilters)}
+                  >
+                    {expandedFilters ? "הסתר פילטרים" : "הצג פילטרים"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<ClearAll />}
+                    onClick={resetFilters}
+                    disabled={
+                      filters.statusFilter === "all" &&
+                      filters.genderFilter === "all" &&
+                      filters.ageRange[0] === 18 &&
+                      filters.ageRange[1] === 50 &&
+                      filters.heightRange[0] === 150 &&
+                      filters.heightRange[1] === 200 &&
+                      filters.cities.length === 0 &&
+                      filters.classes.length === 0 &&
+                      filters.occupations.length === 0 &&
+                      filters.backgrounds.length === 0 &&
+                      !searchQuery &&
+                      genderTab === "all"
+                    }
+                  >
+                    נקה פילטרים
+                  </Button>
+                  {user?.id && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<NotesIcon />}
+                      onClick={() => setNotesDrawerOpen(true)}
+                    >
+                      הערות שדכנית
+                    </Button>
+                  )}
                 </Box>
-              }
-            />
-            <GenderTab
-              value="male"
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Male />
-                  <span>גברים ({maleCount})</span>
-                </Box>
-              }
-            />
-            <GenderTab
-              value="female"
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Female />
-                  <span>נשים ({femaleCount})</span>
-                </Box>
-              }
-            />
-          </Tabs>
-        </Box>
+              </Grid>
+            </Grid>
+            <Collapse in={expandedFilters}>
+              <Box sx={{ mt: 3 }}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6} lg={3}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel id="status-filter-label">סטטוס</InputLabel>
+                      <Select
+                        labelId="status-filter-label"
+                        value={filters.statusFilter}
+                        label="סטטוס"
+                        onChange={(e) => handleFilterChange("statusFilter", e.target.value)}
+                      >
+                        <MenuItem value="all">הכל</MenuItem>
+                        <MenuItem value="available">פנוי להצעות</MenuItem>
+                        <MenuItem value="unavailable">לא פנוי להצעות</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6} lg={3}>
+                    <Autocomplete
+                      multiple
+                      options={uniqueCities}
+                      value={filters.cities}
+                      onChange={(_, newValue) => handleFilterChange("cities", newValue)}
+                      renderInput={(params) => <TextField {...params} label="ערים" size="small" />}
+                      size="small"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6} lg={3}>
+                    <Autocomplete
+                      multiple
+                      options={uniqueClasses}
+                      value={filters.classes}
+                      onChange={(_, newValue) => handleFilterChange("classes", newValue)}
+                      renderInput={(params) => <TextField {...params} label="חוגים" size="small" />}
+                      size="small"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6} lg={3}>
+                    <Autocomplete
+                      multiple
+                      options={uniqueOccupations}
+                      value={filters.occupations}
+                      onChange={(_, newValue) => handleFilterChange("occupations", newValue)}
+                      renderInput={(params) => <TextField {...params} label="עיסוקים" size="small" />}
+                      size="small"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography gutterBottom>
+                      טווח גילאים: {filters.ageRange[0]} - {filters.ageRange[1]}
+                    </Typography>
+                    <Slider
+                      value={filters.ageRange}
+                      onChange={(_, newValue) => handleFilterChange("ageRange", newValue)}
+                      valueLabelDisplay="auto"
+                      min={18}
+                      max={70}
+                      sx={{
+                        "& .MuiSlider-thumb": {
+                          backgroundColor: theme.palette.primary.main,
+                        },
+                        "& .MuiSlider-track": {
+                          backgroundColor: theme.palette.primary.main,
+                        },
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography gutterBottom>
+                      טווח גבהים: {filters.heightRange[0]} - {filters.heightRange[1]} ס"מ
+                    </Typography>
+                    <Slider
+                      value={filters.heightRange}
+                      onChange={(_, newValue) => handleFilterChange("heightRange", newValue)}
+                      valueLabelDisplay="auto"
+                      min={140}
+                      max={210}
+                      sx={{
+                        "& .MuiSlider-thumb": {
+                          backgroundColor: theme.palette.primary.main,
+                        },
+                        "& .MuiSlider-track": {
+                          backgroundColor: theme.palette.primary.main,
+                        },
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Autocomplete
+                      multiple
+                      options={uniqueBackgrounds}
+                      value={filters.backgrounds}
+                      onChange={(_, newValue) => handleFilterChange("backgrounds", newValue)}
+                      renderInput={(params) => <TextField {...params} label="רקע" size="small" />}
+                      size="small"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            </Collapse>
+          </Paper>
+        )}
+
+        {/* Gender Tabs */}
+        {isAuthenticated && candidates.length > 0 && (
+          <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+            <Tabs
+              value={genderTab}
+              onChange={handleGenderTabChange}
+              aria-label="gender tabs"
+              sx={{
+                "& .MuiTabs-indicator": {
+                  backgroundColor: theme.palette.primary.main,
+                  height: 3,
+                },
+              }}
+            >
+              <GenderTab
+                value="all"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Person />
+                    <span>כל המועמדים ({candidates.length})</span>
+                  </Box>
+                }
+              />
+              <GenderTab
+                value="male"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Male />
+                    <span>גברים ({maleCount})</span>
+                  </Box>
+                }
+              />
+              <GenderTab
+                value="female"
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Female />
+                    <span>נשים ({femaleCount})</span>
+                  </Box>
+                }
+              />
+            </Tabs>
+          </Box>
+        )}
 
         {/* רשימת מועמדים */}
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
             <CircularProgress sx={{ color: theme.palette.primary.main }} />
           </Box>
-        ) : error ? (
-          <Paper sx={{ p: 3, textAlign: "center", bgcolor: "#fff4f4", borderRadius: 2 }}>
-            <Typography color="error">{error}</Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-              onClick={() => {
-                setError(null)
-                fetchCandidates()
-              }}
-            >
-              נסה שוב
+        ) : !isAuthenticated ? (
+          <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              נדרש להתחבר למערכת
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              כדי לצפות במועמדים, נדרש להתחבר למערכת
+            </Typography>
+            <Button variant="contained" color="primary" startIcon={<Login />} onClick={handleLogin}>
+              התחבר למערכת
             </Button>
           </Paper>
         ) : (
@@ -1419,7 +1454,7 @@ const CandidatesPage = () => {
                             <Typography variant="body1">מראה כללי: {selectedCandidate.generalAppearance}</Typography>
                           </Grid>
                           <Grid item xs={6}>
-                            <Typography variant="body1">צ��ע פנים: {selectedCandidate.facePaint}</Typography>
+                            <Typography variant="body1">צבע פנים: {selectedCandidate.facePaint}</Typography>
                           </Grid>
                           <Grid item xs={6}>
                             <Typography variant="body1">מראה: {selectedCandidate.appearance}</Typography>
@@ -1904,8 +1939,504 @@ const CandidatesPage = () => {
                     <Tab label="משפחה וקשר" />
                   </Tabs>
 
-                  {/* Rest of the desktop dialog content - same as mobile but with better layout */}
-                  {/* ... (continuing with the same content structure as mobile) ... */}
+                  {tabValue === 0 && (
+                    <Box>
+                      <InfoSection>
+                        <Typography
+                          variant="h6"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          פרטים אישיים
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <PersonOutline sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              גיל: {selectedCandidate.age}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <LocationOn sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              עיר: {selectedCandidate.city}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <Height sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              גובה: {selectedCandidate.height} ס"מ
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <HomeOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              מדינה: {selectedCandidate.country}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <HomeOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              כתובת: {selectedCandidate.address}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <FamilyRestroomOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              חוג: {selectedCandidate.class}
+                            </Typography>
+                          </Grid>
+                          {selectedCandidate.anOutsider !== undefined && (
+                            <Grid item xs={12}>
+                              <Typography variant="body1">
+                                חיצוני: {selectedCandidate.anOutsider ? "כן" : "לא"}
+                              </Typography>
+                            </Grid>
+                          )}
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                              <FamilyRestroomOutlined
+                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                              />
+                              רקע: {selectedCandidate.backGround}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                              <FamilyRestroomOutlined
+                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                              />
+                              פתיחות: {selectedCandidate.openness}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <Email sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              אימייל: {selectedCandidate.email}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <Phone sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              טלפון: {selectedCandidate.phone}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </InfoSection>
+
+                      <InfoSection>
+                        <Typography
+                          variant="h6"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          פרטים נוספים
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <HealthAndSafetyOutlined
+                                sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }}
+                              />
+                              מצב בריאותי: {selectedCandidate.healthCondition ? "כן" : "לא"}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <SettingsOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              סטטוס: {selectedCandidate.status}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <SettingsOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              כיסוי ראש: {selectedCandidate.headCovering}
+                            </Typography>
+                          </Grid>
+                          {selectedCandidate.role === "Male" && (
+                            <>
+                              {(selectedCandidate as MaleType).driversLicense && (
+                                <Grid item xs={6}>
+                                  <Typography variant="body1">רשיון נהיגה: כן</Typography>
+                                </Grid>
+                              )}
+                              {(selectedCandidate as MaleType).smoker && (
+                                <Grid item xs={6}>
+                                  <Typography variant="body1">מעשן: כן</Typography>
+                                </Grid>
+                              )}
+                              <Grid item xs={6}>
+                                <Typography variant="body1">זקן: {(selectedCandidate as MaleType).beard}</Typography>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Typography variant="body1">כובע: {(selectedCandidate as MaleType).hot}</Typography>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Typography variant="body1">חליפה: {(selectedCandidate as MaleType).suit}</Typography>
+                              </Grid>
+                            </>
+                          )}
+                          {selectedCandidate.role === "Women" && (
+                            <>
+                              {(selectedCandidate as Women).drivingLicense && (
+                                <Grid item xs={6}>
+                                  <Typography variant="body1">
+                                    רשיון נהיגה: {(selectedCandidate as Women).drivingLicense}
+                                  </Typography>
+                                </Grid>
+                              )}
+                              {(selectedCandidate as Women).smoker && (
+                                <Grid item xs={6}>
+                                  <Typography variant="body1">מעשנת: כן</Typography>
+                                </Grid>
+                              )}
+                            </>
+                          )}
+                        </Grid>
+                      </InfoSection>
+
+                      <InfoSection>
+                        <Typography
+                          variant="h6"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          מראה חיצוני
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Typography variant="body1">גובה: {selectedCandidate.height} ס"מ</Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1">מראה כללי: {selectedCandidate.generalAppearance}</Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1">צבע פנים: {selectedCandidate.facePaint}</Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body1">מראה: {selectedCandidate.appearance}</Typography>
+                          </Grid>
+                        </Grid>
+                      </InfoSection>
+                    </Box>
+                  )}
+
+                  {tabValue === 1 && (
+                    <Box>
+                      {selectedCandidate.role === "Male" ? (
+                        <InfoSection>
+                          <Typography
+                            variant="h6"
+                            gutterBottom
+                            sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                          >
+                            רקע ישיבתי
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                ישיבה קטנה: {(selectedCandidate as MaleType).smallYeshiva}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                ישיבה גדולה: {(selectedCandidate as MaleType).bigYeshiva}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                קיבוץ: {(selectedCandidate as MaleType).kibbutz}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <WorkOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                עיסוק: {(selectedCandidate as MaleType).occupation}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </InfoSection>
+                      ) : (
+                        <InfoSection>
+                          <Typography
+                            variant="h6"
+                            gutterBottom
+                            sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                          >
+                            רקע השכלתי
+                          </Typography>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                תיכון: {(selectedCandidate as Women).highSchool}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                סמינר: {(selectedCandidate as Women).seminar}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                מסלול לימודי: {(selectedCandidate as Women).studyPath}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                <SchoolOutlined
+                                  sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                                />
+                                מוסד לימודי נוסף: {(selectedCandidate as Women).additionalEducationalInstitution}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                <WorkOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                                עיסוק כיום: {(selectedCandidate as Women).currentOccupation}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </InfoSection>
+                      )}
+                    </Box>
+                  )}
+
+                  {tabValue === 2 && (
+                    <Box>
+                      <InfoSection>
+                        <Typography
+                          variant="h6"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          ציפיות {selectedCandidate.role === "Male" ? "מבת" : "מבן"} הזוג
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6} md={3}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <Cake sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              גיל מינימלי: {selectedCandidate.ageFrom}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6} md={3}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <Cake sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              גיל מקסימלי: {selectedCandidate.ageTo}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                              <FamilyRestroomOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
+                              חוג: {selectedCandidate.club}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                              <FavoriteOutlined
+                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                              />
+                              תכונות חשובות בי: {selectedCandidate.importantTraitsInMe}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                              <FavoriteOutlined
+                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                              />
+                              תכונות חשובות שאני מחפש:{" "}
+                              {selectedCandidate.role === "Male"
+                                ? (selectedCandidate as MaleType).importantTraitsIAmLookingFor
+                                : (selectedCandidate as Women).importantTraitsIMLookingFor}
+                            </Typography>
+                          </Grid>
+                          {selectedCandidate.role === "Male" && (
+                            <>
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                  <SchoolOutlined
+                                    sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                                  />
+                                  סגנון סמינר מועדף: {(selectedCandidate as MaleType).preferredSeminarStyle}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                  <WorkOutlined
+                                    sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                                  />
+                                  מסלול מקצועי מועדף: {(selectedCandidate as MaleType).preferredProfessionalPath}
+                                </Typography>
+                              </Grid>
+                              {(selectedCandidate as MaleType).expectationsFromPartner && (
+                                <Grid item xs={12}>
+                                  <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                    <FavoriteOutlined
+                                      sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                                    />
+                                    ציפיות מהשותף: {(selectedCandidate as MaleType).expectationsFromPartner}
+                                  </Typography>
+                                </Grid>
+                              )}
+                            </>
+                          )}
+                          {selectedCandidate.role === "Women" && (
+                            <>
+                              <Grid item xs={12}>
+                                <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                  <SchoolOutlined
+                                    sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
+                                  />
+                                  סגנון הישיבות המועדף: {(selectedCandidate as Women).preferredSittingStyle}
+                                </Typography>
+                              </Grid>
+                              {(selectedCandidate as Women).interestedInBoy && (
+                                <Grid item xs={12}>
+                                  <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                    <Info sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }} />
+                                    מעוניינת בבחור: {(selectedCandidate as Women).interestedInBoy}
+                                  </Typography>
+                                </Grid>
+                              )}
+                              <Grid item xs={12}>
+                                <Typography
+                                  variant="h6"
+                                  gutterBottom
+                                  sx={{ fontWeight: "bold", color: theme.palette.primary.main, mt: 2 }}
+                                >
+                                  מעוניינת שהבחור יהיה:
+                                </Typography>
+                                <Grid container spacing={2}>
+                                  {(selectedCandidate as Women).drivingLicense && (
+                                    <Grid item xs={6} md={4}>
+                                      <Typography variant="body1">
+                                        בעל רישיון נהיגה: {(selectedCandidate as Women).drivingLicense}
+                                      </Typography>
+                                    </Grid>
+                                  )}
+                                  {(selectedCandidate as Women).smoker && (
+                                    <Grid item xs={6} md={4}>
+                                      <Typography variant="body1">לא מעשן</Typography>
+                                    </Grid>
+                                  )}
+                                  <Grid item xs={6} md={4}>
+                                    <Typography variant="body1">זקן: {(selectedCandidate as Women).beard}</Typography>
+                                  </Grid>
+                                  <Grid item xs={6} md={4}>
+                                    <Typography variant="body1">כובע: {(selectedCandidate as Women).hat}</Typography>
+                                  </Grid>
+                                  <Grid item xs={6} md={4}>
+                                    <Typography variant="body1">חליפה: {(selectedCandidate as Women).suit}</Typography>
+                                  </Grid>
+                                  <Grid item xs={6} md={4}>
+                                    <Typography variant="body1">
+                                      עיסוק: {(selectedCandidate as Women).occupation}
+                                    </Typography>
+                                  </Grid>
+                                </Grid>
+                              </Grid>
+                            </>
+                          )}
+                        </Grid>
+                      </InfoSection>
+                    </Box>
+                  )}
+
+                  {tabValue === 3 && (
+                    <Box>
+                      {/* פרטי משפחה */}
+                      <InfoSection>
+                        <Typography
+                          variant="h6"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          פרטי משפחה
+                        </Typography>
+                        {familyDetails ? (
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
+                                פרטי אב
+                              </Typography>
+                              <Typography variant="body1">שם: {familyDetails.fatherName}</Typography>
+                              <Typography variant="body1">מוצא: {familyDetails.fatherOrigin}</Typography>
+                              <Typography variant="body1">ישיבה: {familyDetails.fatherYeshiva}</Typography>
+                              <Typography variant="body1">שיוך: {familyDetails.fatherAffiliation}</Typography>
+                              <Typography variant="body1">עיסוק: {familyDetails.fatherOccupation}</Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
+                                פרטי אם
+                              </Typography>
+                              <Typography variant="body1">שם: {familyDetails.motherName}</Typography>
+                              <Typography variant="body1">מוצא: {familyDetails.motherOrigin}</Typography>
+                              <Typography variant="body1">סמינר: {familyDetails.motherGraduateSeminar}</Typography>
+                              <Typography variant="body1">שם קודם: {familyDetails.motherPreviousName}</Typography>
+                              <Typography variant="body1">עיסוק: {familyDetails.motherOccupation}</Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Divider sx={{ my: 2 }} />
+                              <Typography variant="body1">
+                                סטטוס הורים: {familyDetails.parentsStatus ? "נשואים" : "אחר"}
+                              </Typography>
+                              <Typography variant="body1">
+                                מצב בריאותי: {familyDetails.healthStatus ? "תקין" : "לא תקין"}
+                              </Typography>
+                              <Typography variant="body1">רב המשפחה: {familyDetails.familyRabbi}</Typography>
+                              <Typography variant="body1" sx={{ mt: 1 }}>
+                                אודות המשפחה: {familyDetails.familyAbout}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        ) : (
+                          <Typography variant="body1" color="text.secondary" align="center">
+                            אין פרטי משפחה זמינים
+                          </Typography>
+                        )}
+                      </InfoSection>
+
+                      {/* פרטי התקשרות */}
+                      <InfoSection>
+                        <Typography
+                          variant="h6"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          אנשי קשר לבירורים
+                        </Typography>
+                        {contacts && contacts.length > 0 ? (
+                          <Grid container spacing={2}>
+                            {contacts.map((contact, index) => (
+                              <Grid item xs={12} md={6} key={contact.id || index}>
+                                <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
+                                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                    <ContactPhone sx={{ mr: 1, color: theme.palette.primary.main }} />
+                                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                                      {contact.name}
+                                    </Typography>
+                                  </Box>
+                                  <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
+                                    <Phone sx={{ mr: 1, fontSize: 18, color: "text.secondary" }} />
+                                    {contact.phone}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Typography variant="body1" color="text.secondary" align="center">
+                            אין אנשי קשר זמינים
+                          </Typography>
+                        )}
+                      </InfoSection>
+                    </Box>
+                  )}
                 </DetailContent>
               </>
             )}
