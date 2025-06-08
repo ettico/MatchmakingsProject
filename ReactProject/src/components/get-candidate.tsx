@@ -342,10 +342,9 @@ const CandidatesPage = () => {
 
   // פונקציה לקבלת headers עם אימות
   const getAuthHeaders = () => {
-    const tokenfromuser = localStorage.getItem("authToken") || localStorage.getItem("token") || token
-    if (tokenfromuser) {
+    if (token) {
       return {
-        Authorization: `Bearer ${tokenfromuser}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       }
     }
@@ -356,9 +355,9 @@ const CandidatesPage = () => {
 
   // פונקציה לבדיקת אימות
   const checkAuthentication = () => {
-    const tokenfromuser = localStorage.getItem("authToken") || localStorage.getItem("token") || token
-    setIsAuthenticated(!!tokenfromuser)
-    return !!tokenfromuser
+    // const tokenfromuser =  token
+    setIsAuthenticated(!!token)
+    return !!token
   }
 
   const handleNavigate = (path: string, type: string) => {
