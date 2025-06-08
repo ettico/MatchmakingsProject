@@ -383,12 +383,12 @@ const CandidatesPage = () => {
     setLoading(true)
     setError(null)
 
-    // בדיקת אימות לפני הקריאה
-    if (!checkAuthentication()) {
-      setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
-      setLoading(false)
-      return
-    }
+    // // בדיקת אימות לפני הקריאה
+    // if (!checkAuthentication()) {
+    //   setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
+    //   setLoading(false)
+    //   return
+    // }
 
     try {
       const headers = getAuthHeaders()
