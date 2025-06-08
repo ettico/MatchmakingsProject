@@ -333,7 +333,7 @@ const CandidatesPage = () => {
   const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all")
 
   // Fix: Use environment variable correctly with fallback
-  const ApiUrl = process.env.REACT_APP_API_URL || "https://api.example.com"
+  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
   const handleNavigate = (path: string, type: string) => {
     navigate(path)
