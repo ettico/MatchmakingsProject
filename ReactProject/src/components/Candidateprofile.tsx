@@ -16,7 +16,6 @@ import {
   CircularProgress,
   Alert,
   Collapse,
-  
 } from "@mui/material"
 import { styled, keyframes } from "@mui/material/styles"
 import axios from "axios"
@@ -73,7 +72,9 @@ const glow = keyframes`
     box-shadow: 0 0 40px rgba(184, 115, 51, 0.6);
   }
 `
-  const ApiUrl=process.env.REACT_APP_API_URL
+
+// 🔧 תיקון כתובת ה-API
+const API_BASE_URL = "https://matchmakingsprojectserver.onrender.com/api"
 
 // סטיילינג מותאם אישית
 const ProfileContainer = styled(Container)(({ theme }) => ({
@@ -128,7 +129,7 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
   },
 }))
 
-const ProfileAvatar = styled(Avatar)(({ }) => ({
+const ProfileAvatar = styled(Avatar)(({}) => ({
   width: 180,
   height: 180,
   border: "4px solid rgba(255, 255, 255, 0.9)",
@@ -300,7 +301,7 @@ const UserProfile = () => {
   const [contactsData, setContactsData] = useState<ContactData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
-  const { user,token } = useContext(userContext)
+  const { user, token } = useContext(userContext)
 
   // State לניהול הרחבת כרטיסים
   const [expandedSections, setExpandedSections] = useState({
@@ -315,75 +316,138 @@ const UserProfile = () => {
     const loadUserProfile = async () => {
       try {
         setLoading(true)
+        setError("")
 
-        // בדיקה שיש user מה-context
-        if (!user  || !user.id || !user.role) {
-          setError("לא נמצאו נתוני משתמש")
+        console.log("🔍 מתחיל טעינת פרופיל משתמש...")
+        console.log("👤 נתוני משתמש מהקונטקסט:", user)
+        console.log("🔑 טוקן:", token ? "קיים" : "לא קיים")
+
+        // 🔧 בדיקה משופרת של נתוני המשתמש
+        if (!user) {
+          console.error("❌ לא נמצא משתמש בקונטקסט")
+          setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
           return
         }
 
-        const {  id, role } = user
+        if (!token) {
+          console.error("❌ לא נמצא טוקן")
+          setError("לא נמצא טוקן אימות. אנא התחבר מחדש.")
+          return
+        }
 
-        // קביעת כתובת ה-API לפי המגדר
-        const apiUrl =
-          role === "Male" ? `${ApiUrl}/Male/${id}` : `${ApiUrl}/Women/${id}`
+        if (!user.id) {
+          console.error("❌ לא נמצא ID משתמש")
+          setError("לא נמצא מזהה משתמש")
+          return
+        }
+
+        if (!user.role) {
+          console.error("❌ לא נמצא תפקיד משתמש")
+          setError("לא נמצא תפקיד משתמש")
+          return
+        }
+
+        const { id, role } = user
+        console.log(`📋 פרטי משתמש: ID=${id}, Role=${role}`)
+
+        // 🔧 קביעת כתובת ה-API לפי המגדר
+        const apiUrl = role === "Male" ? `${API_BASE_URL}/Male/${id}` : `${API_BASE_URL}/Women/${id}`
+
+        console.log("🌐 כתובת API:", apiUrl)
+
+        // 🔧 הגדרת headers משופרת
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+
+        console.log("📡 שולח בקשה לטעינת נתוני משתמש...")
 
         // טעינת נתוני המשתמש
-        const userResponse = await axios.get(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        const userResponse = await axios.get(apiUrl, { headers })
 
+        console.log("✅ התקבלו נתוני משתמש:", userResponse.data)
         setUserData(userResponse.data)
 
         // טעינת נתוני משפחה
         try {
-          const familyResponse = await axios.get(`${ApiUrl}/FamilyDetails`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
+          console.log("📡 שולח בקשה לטעינת נתוני משפחה...")
+          const familyResponse = await axios.get(`${API_BASE_URL}/FamilyDetails`, { headers })
+
+          console.log("📋 כל נתוני המשפחות:", familyResponse.data)
 
           const familyDetails = familyResponse.data.find(
-            (detail: any) =>
-              (role === "Male" && detail.maleId === id) || (role === "Women" && detail.womenId === id),
+            (detail: any) => (role === "Male" && detail.maleId === id) || (role === "Women" && detail.womenId === id),
           )
 
           if (familyDetails) {
+            console.log("✅ נמצאו נתוני משפחה:", familyDetails)
             setFamilyData(familyDetails)
+          } else {
+            console.log("ℹ️ לא נמצאו נתוני משפחה למשתמש זה")
           }
-        } catch (familyError) {
-          console.log("לא נמצאו נתוני משפחה")
+        } catch (familyError: any) {
+          console.log("⚠️ שגיאה בטעינת נתוני משפחה:", familyError.message)
         }
 
         // טעינת אנשי קשר
         try {
-          const contactsResponse = await axios.get(`${ApiUrl}/Contact`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
+          console.log("📡 שולח בקשה לטעינת אנשי קשר...")
+          const contactsResponse = await axios.get(`${API_BASE_URL}/Contact`, { headers })
+
+          console.log("📋 כל אנשי הקשר:", contactsResponse.data)
 
           const userContacts = contactsResponse.data.filter(
             (contact: any) =>
               (role === "Male" && contact.maleId === id) || (role === "Women" && contact.womenId === id),
           )
 
+          console.log("✅ אנשי קשר של המשתמש:", userContacts)
           setContactsData(userContacts)
-        } catch (contactError) {
-          console.log("לא נמצאו אנשי קשר")
+        } catch (contactError: any) {
+          console.log("⚠️ שגיאה בטעינת אנשי קשר:", contactError.message)
         }
+
+        console.log("🎉 טעינת הפרופיל הושלמה בהצלחה!")
       } catch (error: any) {
-        console.error("שגיאה בטעינת פרופיל:", error)
-        setError("שגיאה בטעינת נתוני הפרופיל")
+        console.error("❌ שגיאה בטעינת פרופיל:", error)
+
+        // 🔧 הודעות שגיאה מפורטות יותר
+        if (error.response) {
+          const status = error.response.status
+          const message = error.response.data?.message || error.response.statusText
+
+          console.error(`📊 סטטוס שגיאה: ${status}`)
+          console.error(`📝 הודעת שגיאה: ${message}`)
+
+          if (status === 401) {
+            setError("אין הרשאה לצפות בפרופיל. אנא התחבר מחדש.")
+          } else if (status === 404) {
+            setError("הפרופיל לא נמצא במערכת.")
+          } else if (status === 500) {
+            setError("שגיאה בשרת. אנא נסה שוב מאוחר יותר.")
+          } else {
+            setError(`שגיאה בטעינת הפרופיל: ${message}`)
+          }
+        } else if (error.request) {
+          console.error("📡 לא התקבלה תגובה מהשרת")
+          setError("לא ניתן להתחבר לשרת. בדוק את החיבור לאינטרנט.")
+        } else {
+          console.error("⚙️ שגיאה בהגדרת הבקשה:", error.message)
+          setError("שגיאה טכנית בטעינת הפרופיל.")
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    loadUserProfile()
-  }, [user])
+    // 🔧 הוספת עיכוב קצר לוודא שהקונטקסט נטען
+    const timer = setTimeout(() => {
+      loadUserProfile()
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [user, token])
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
@@ -422,45 +486,24 @@ const UserProfile = () => {
   if (error || !userData) {
     return (
       <ProfileContainer>
-        <Alert severity="error" sx={{ mt: 4, borderRadius: 3 }}>
-          {error || "לא נמצאו נתוני משתמש"}
-        </Alert>
-      </ProfileContainer>
-    )
-  }
-
-  if (loading) {
-    return (
-      <ProfileContainer>
-        <Box
+        <Alert
+          severity="error"
           sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "50vh",
-            flexDirection: "column",
+            mt: 4,
+            borderRadius: 3,
+            fontSize: "1.1rem",
+            "& .MuiAlert-message": {
+              width: "100%",
+            },
           }}
         >
-          <CircularProgress
-            size={60}
-            sx={{
-              color: "#b87333",
-              animation: `${pulse} 2s infinite`,
-            }}
-          />
-          <Typography variant="h5" sx={{ mt: 3, color: "#2c1810", fontWeight: "600" }}>
-            🔄 טוען פרופיל...
+          <Typography variant="h6" gutterBottom>
+            ❌ שגיאה בטעינת הפרופיל
           </Typography>
-        </Box>
-      </ProfileContainer>
-    )
-  }
-
-  if (error || !userData) {
-    return (
-      <ProfileContainer>
-        <Alert severity="error" sx={{ mt: 4, borderRadius: 3 }}>
-          {error || "לא נמצאו נתוני משתמש"}
+          <Typography variant="body1">{error || "לא נמצאו נתוני משתמש"}</Typography>
+          <Typography variant="body2" sx={{ mt: 2, opacity: 0.8 }}>
+            💡 נסה לרענן את הדף או להתחבר מחדש
+          </Typography>
         </Alert>
       </ProfileContainer>
     )
@@ -474,7 +517,7 @@ const UserProfile = () => {
           <ProfileHeader>
             <Box sx={{ display: "flex", alignItems: "center", gap: 4, position: "relative", zIndex: 2 }}>
               <ProfileAvatar
-                src={userData.photoUrl || "/placeholder.svg?height=180&width=180&query=profile"}
+                src={userData.photoUrl || "/placeholder.svg?height=180&width=180"}
                 alt={`${userData.firstName} ${userData.lastName}`}
               >
                 <PersonIcon sx={{ fontSize: 100, color: "#b87333" }} />

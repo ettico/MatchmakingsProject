@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useContext } from "react"
+import { useState, useContext, useEffect } from "react"
 import {
   TextField,
   Button,
@@ -13,6 +13,7 @@ import {
   IconButton,
   Divider,
   Avatar,
+  CircularProgress,
 } from "@mui/material"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
@@ -39,10 +40,12 @@ const colors = {
 
 const Login = () => {
   const { userType } = useParams() // יקבל את הערך מה-URL
-  const { login, error: contextError, user } = useContext(userContext) // 🔧 הוספת user מהקונטקסט
+  const { login, error: contextError,user } = useContext(userContext)
   const navigate = useNavigate()
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [loginSuccess, setLoginSuccess] = useState(false)
 
   const {
     register,
@@ -52,47 +55,74 @@ const Login = () => {
     resolver: yupResolver(schema),
   })
 
+  // בדיקה אם המשתמש כבר מחובר
+  useEffect(() => {
+    const checkUserAuth = () => {
+      const storedAuth = localStorage.getItem("auth")
+      if (storedAuth) {
+        try {
+          const authData = JSON.parse(storedAuth)
+          if (authData.user && authData.token) {
+            console.log("משתמש כבר מחובר:", authData.user)
+
+            // ניתוב לפי תפקיד
+            const role = authData.user.role
+            if (role === "Male" || role === "Women") {
+              navigate("/candidate-auth")
+            } else if (role === "MatchMaker") {
+              navigate("/matchmaker-auth")
+            }
+          }
+        } catch (err) {
+          console.error("שגיאה בפענוח נתוני משתמש מהלוקל סטורג':", err)
+        }
+      }
+    }
+
+    checkUserAuth()
+  }, [navigate])
+
   const onSubmit = async (data: { UserName: string; Password: string }) => {
     try {
-      setError("") // איפוס שגיאות קודמות
+      setError("")
+      setIsLoggingIn(true)
 
       console.log("מתחיל תהליך התחברות...")
       await login(data.UserName, data.Password)
 
-      // 🔧 תיקון: שימוש בנתונים מהקונטקסט במקום localStorage
-      console.log("נתוני משתמש מהקונטקסט:", user)
+      // סימון שההתחברות הצליחה
+      setLoginSuccess(true)
 
-      // המתנה קצרה לוודא שהקונטקסט התעדכן
-      setTimeout(() => {
-        const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
-        console.log("נתוני משתמש מ-localStorage:", currentUser)
+      // קריאה מיידית ל-localStorage לאחר התחברות
+      // const authData = localStorage.getItem("auth")
+      // if (!authData) {
+      //   throw new Error("לא נמצאו נתוני התחברות")
+      // }
 
-        // 🔧 תיקון: בדיקה מתוקנת של התפקיד
-        const role = currentUser?.role || currentUser?.user?.role
-        console.log("תפקיד המשתמש שזוהה:", role)
+      // const parsedAuth = JSON.parse(authData)
+      // console.log("נתוני התחברות:", parsedAuth)
 
-        if (!role) {
-          console.error("לא נמצא תפקיד למשתמש. מבנה הנתונים:", currentUser)
-          setError("לא נמצא תפקיד למשתמש. אנא התחבר מחדש.")
-          return
-        }
+      // if (!parsedAuth.user || !parsedAuth.user.role) {
+      //   throw new Error("לא נמצא תפקיד משתמש")
+      // }
 
-        // ניתוב לפי תפקיד
-        if (role === "Male" || role === "Women") {
-          navigate("/candidate-auth")
-          console.log("התחברות מוצלחת - מועמד")
-        } else if (role === "MatchMaker") {
-          navigate("/matchmaker-auth")
-          console.log("התחברות מוצלחת - שדכנית")
-        } else {
-          console.error("תפקיד לא מזוהה:", role)
-          setError(`תפקיד לא מזוהה: ${role}. אנא פנה לתמיכה.`)
-        }
-      }, 500) // המתנה של חצי שנייה
+      const role = user?.role
+      console.log("תפקיד המשתמש:", role)
+
+      // ניתוב לפי תפקיד
+      if (role === "Male" || role === "Women") {
+        console.log("מנווט למועמד...")
+        navigate("/candidate-auth")
+      } else if (role === "MatchMaker") {
+        console.log("מנווט לשדכנית...")
+        navigate("/matchmaker-auth")
+      } else {
+        throw new Error(`תפקיד לא מזוהה: ${role}`)
+      }
     } catch (err: any) {
       console.error("שגיאה בהתחברות:", err)
+      setLoginSuccess(false)
 
-      // 🔧 תיקון: הודעות שגיאה מפורטות יותר
       if (err?.response?.status === 401) {
         setError("שם משתמש או סיסמה שגויים.")
       } else if (err?.response?.status === 404) {
@@ -102,6 +132,8 @@ const Login = () => {
       } else {
         setError("ההתחברות נכשלה. אנא נסה שוב או הירשם אם אין לך חשבון.")
       }
+    } finally {
+      setIsLoggingIn(false)
     }
   }
 
@@ -315,7 +347,8 @@ const Login = () => {
                   type="submit"
                   variant="contained"
                   fullWidth
-                  startIcon={<LoginIcon />}
+                  disabled={isLoggingIn}
+                  startIcon={!isLoggingIn && <LoginIcon />}
                   sx={{
                     mt: 2,
                     py: 1.5,
@@ -331,10 +364,30 @@ const Login = () => {
                     },
                   }}
                 >
-                  התחבר
+                  {isLoggingIn ? <CircularProgress size={24} color="inherit" /> : "התחבר"}
                 </Button>
               </motion.div>
             </form>
+
+            {loginSuccess && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                <Alert
+                  severity="success"
+                  sx={{
+                    mt: 3,
+                    borderRadius: 2,
+                    backgroundColor: "rgba(46, 125, 50, 0.1)",
+                    color: "#4caf50",
+                    border: "1px solid rgba(46, 125, 50, 0.2)",
+                    "& .MuiAlert-icon": {
+                      color: "#4caf50",
+                    },
+                  }}
+                >
+                  התחברת בהצלחה! מעביר אותך...
+                </Alert>
+              </motion.div>
+            )}
 
             {(error || contextError) && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
@@ -384,7 +437,7 @@ const Login = () => {
               </motion.div>
             )}
 
-            {!error && !contextError && (
+            {!error && !contextError && !loginSuccess && (
               <>
                 <Divider sx={{ my: 3, borderColor: colors.primary + "30" }}>
                   <Typography variant="body2" sx={{ color: colors.text + "70", px: 1 }}>
