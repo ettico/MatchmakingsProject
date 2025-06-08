@@ -383,14 +383,18 @@ const CandidatesPage = () => {
     setLoading(true)
     setError(null)
 
-    // // בדיקת אימות לפני הקריאה
-    // if (!checkAuthentication()) {
-    //   setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
-    //   setLoading(false)
-    //   return
-    // }
+    // בדיקת אימות לפני הקריאה
+    if (!checkAuthentication()) {
+      setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
+      setLoading(false)
+      return
+    }
 
     try {
+        console.log(token);
+        console.log(user);
+        
+        
       const headers = getAuthHeaders()
 
       // טעינת גברים
