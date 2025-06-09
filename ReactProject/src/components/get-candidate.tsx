@@ -70,7 +70,7 @@ import {
   Male,
   Female,
   Login,
-  Refresh,
+//   Refresh,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note, FamilyDetails, Contact } from "../Models"
@@ -422,10 +422,35 @@ const CandidatesPage = () => {
 
       // איחוד הנתונים - מציג את כל המועמדים ללא סינון
       const allCandidates = [...males, ...females]
-      setCandidates(allCandidates)
 
+      // בדיקת נתונים מפורטת
       console.log("סה״כ מועמדים:", allCandidates.length)
-      console.log("דוגמה למועמד:", allCandidates[0])
+
+      if (allCandidates.length > 0) {
+        // בדיקת המועמד הראשון
+        const firstCandidate = allCandidates[0]
+        console.log("דוגמה למועמד ראשון:", {
+          id: firstCandidate.id,
+          firstName: firstCandidate.firstName,
+          lastName: firstCandidate.lastName,
+          role: firstCandidate.role,
+          city: firstCandidate.city,
+          statusVacant: firstCandidate.statusVacant,
+        })
+
+        // בדיקת המועמד האחרון
+        const lastCandidate = allCandidates[allCandidates.length - 1]
+        console.log("דוגמה למועמד אחרון:", {
+          id: lastCandidate.id,
+          firstName: lastCandidate.firstName,
+          lastName: lastCandidate.lastName,
+          role: lastCandidate.role,
+          city: lastCandidate.city,
+          statusVacant: lastCandidate.statusVacant,
+        })
+      }
+
+      setCandidates(allCandidates)
 
       if (allCandidates.length === 0) {
         setError("לא נמצאו מועמדים במערכת.")
@@ -770,12 +795,12 @@ const CandidatesPage = () => {
   }
 
   // פונקציה לטיפול בניסיון חוזר
-  const handleRetry = () => {
-    setError(null)
-    if (token) {
-      fetchCandidates()
-    }
-  }
+//   const handleRetry = () => {
+//     setError(null)
+//     if (token) {
+//       fetchCandidates()
+//     }
+//   }
 
   // פונקציה לניווט לדף התחברות
   const handleLogin = () => {
@@ -784,17 +809,22 @@ const CandidatesPage = () => {
 
   // סינון מועמדים - מתוקן לעבוד עם כל המועמדים
   const filteredCandidates = candidates.filter((candidate) => {
-    // בדיקה שיש לנו את כל השדות הנדרשים
+    // בדיקה בסיסית שיש מזהה
     if (!candidate || typeof candidate.id === "undefined") {
       console.log("מועמד לא תקין:", candidate)
       return false
+    }
+
+    // הוספת לוג לדיבוג
+    if (candidate.firstName && candidate.lastName) {
+      console.log(`בודק מועמד: ${candidate.firstName} ${candidate.lastName}, ID: ${candidate.id}`)
     }
 
     // Filter by gender tab
     if (genderTab === "male" && candidate.role !== "Male") return false
     if (genderTab === "female" && candidate.role !== "Women") return false
 
-    // חיפוש טקסטואלי - מתוקן לעבוד עם שדות שיכולים להיות null
+    // חיפוש טקסטואלי - בטוח מפני null
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase()
       const firstName = (candidate.firstName || "").toLowerCase()
@@ -804,7 +834,7 @@ const CandidatesPage = () => {
 
       const occupation = (
         candidate.occupation ||
-        (candidate.role === "Women" && (candidate as Women).currentOccupation) ||
+        (candidate.role === "Women" ? (candidate as Women).currentOccupation : "") ||
         ""
       ).toLowerCase()
 
@@ -821,23 +851,27 @@ const CandidatesPage = () => {
       if (!matchesSearch) return false
     }
 
-    // סינון לפי סטטוס
+    // סינון לפי סטטוס - רק אם בחרו סטטוס ספציפי
     if (filters.statusFilter !== "all") {
       const isAvailable = filters.statusFilter === "available"
       if (candidate.statusVacant !== isAvailable) return false
     }
 
-    // סינון לפי מגדר
+    // סינון לפי מגדר - רק אם בחרו מגדר ספציפי
     if (filters.genderFilter !== "all") {
       if (candidate.role !== filters.genderFilter) return false
     }
 
-    // סינון לפי גיל - רק אם יש ערך תקין
-    if (candidate.age && (candidate.age < filters.ageRange[0] || candidate.age > filters.ageRange[1])) return false
+    // סינון לפי גיל - רק אם יש ערך תקין ובחרו טווח
+    if (filters.ageRange[0] !== 18 || filters.ageRange[1] !== 50) {
+      if (candidate.age && (candidate.age < filters.ageRange[0] || candidate.age > filters.ageRange[1])) return false
+    }
 
-    // סינון לפי גובה - רק אם יש ערך תקין
-    if (candidate.height && (candidate.height < filters.heightRange[0] || candidate.height > filters.heightRange[1]))
-      return false
+    // סינון לפי גובה - רק אם יש ערך תקין ובחרו טווח
+    if (filters.heightRange[0] !== 150 || filters.heightRange[1] !== 200) {
+      if (candidate.height && (candidate.height < filters.heightRange[0] || candidate.height > filters.heightRange[1]))
+        return false
+    }
 
     // סינון לפי עיר - רק אם בחרו ערים
     if (filters.cities.length > 0 && candidate.city && !filters.cities.includes(candidate.city)) return false
@@ -857,8 +891,17 @@ const CandidatesPage = () => {
     if (filters.backgrounds.length > 0 && candidate.backGround && !filters.backgrounds.includes(candidate.backGround))
       return false
 
+    // אם הגענו לכאן, המועמד עבר את כל הסינונים
     return true
   })
+
+  // הוסף גם לוג לבדיקת המועמדים שעברו את הסינון
+  useEffect(() => {
+    console.log(`סה"כ מועמדים אחרי סינון: ${filteredCandidates.length}`)
+    if (filteredCandidates.length > 0) {
+      console.log("דוגמה למועמד מסונן:", filteredCandidates[0])
+    }
+  }, [filteredCandidates.length])
 
   // רשימות ערכים לפילטרים - מתוקן לעבוד עם שדות שיכולים להיות null
   const uniqueCities = [...new Set(candidates.map((c) => c.city).filter(Boolean))]
@@ -901,19 +944,19 @@ const CandidatesPage = () => {
           <Alert
             severity={error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? "warning" : "error"}
             sx={{ mb: 3, borderRadius: 2 }}
-            action={
-              <Box sx={{ display: "flex", gap: 1 }}>
-                {error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? (
-                  <Button color="inherit" size="small" startIcon={<Login />} onClick={handleLogin}>
-                    התחבר
-                  </Button>
-                ) : (
-                  <Button color="inherit" size="small" startIcon={<Refresh />} onClick={handleRetry}>
-                    נסה שוב
-                  </Button>
-                )}
-              </Box>
-            }
+            // on={
+            //   <Box sx={{ display: "flex", gap: 1 }}>
+            //     {error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? (
+            //       <Button color="inherit" size="small" startIcon={<Login />} onClick={handleLogin}>
+            //         התחבר
+            //       </Button>
+            //     ) : (
+            //       <Button color="inherit" size="small" startIcon={<Refresh />} onClick={handleRetry}>
+            //         נסה שוב
+            //       </Button>
+            //     )}
+            //   </Box>
+            // }
           >
             <AlertTitle>שגיאה</AlertTitle>
             {error}
@@ -975,6 +1018,27 @@ const CandidatesPage = () => {
                     }
                   >
                     נקה פילטרים
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    onClick={() => {
+                      console.log("הצגת כל המועמדים ללא סינון:", candidates.length)
+                      // הצג את כל המועמדים ישירות בקונסול
+                      candidates.forEach((c, index) => {
+                        console.log(`מועמד ${index + 1}:`, {
+                          id: c.id,
+                          firstName: c.firstName,
+                          lastName: c.lastName,
+                          role: c.role,
+                          city: c.city,
+                        })
+                      })
+                      // הצג התראה עם מספר המועמדים
+                      alert(`יש ${candidates.length} מועמדים במערכת. פרטים מלאים בקונסול.`)
+                    }}
+                  >
+                    בדיקת מועמדים
                   </Button>
                   {user?.id && (
                     <Button
@@ -1169,19 +1233,9 @@ const CandidatesPage = () => {
               </Typography>
             </Box>
 
-            {filteredCandidates.length === 0 ? (
-              <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
-                <Typography variant="h6">לא נמצאו מועמדים מתאימים</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  נסה לשנות את הפילטרים או לנקות את החיפוש
-                </Typography>
-                <Button variant="outlined" color="primary" sx={{ mt: 2 }} onClick={resetFilters}>
-                  נקה את כל הפילטרים
-                </Button>
-              </Paper>
-            ) : (
-              <Grid container spacing={3} sx={{ mt: 2 }}>
-                {filteredCandidates.map((candidate) => (
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              {filteredCandidates.length > 0 ? (
+                filteredCandidates.map((candidate) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
                     <StyledCard onClick={() => handleOpenDetails(candidate)}>
                       {/* תג סטטוס */}
@@ -1209,7 +1263,7 @@ const CandidatesPage = () => {
                         {candidate.photoName ? (
                           <img
                             src={candidate.photoUrl || "/placeholder.svg"}
-                            alt={`${candidate.firstName}'s profile`}
+                            alt={`${candidate.firstName || "Profile"}`}
                             style={{
                               width: 120,
                               height: 120,
@@ -1262,7 +1316,9 @@ const CandidatesPage = () => {
 
                         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                           <Height fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                          <Typography variant="body2">גובה: {candidate.height || "לא צוין"} ס"מ</Typography>
+                          <Typography variant="body2">
+                            גובה: {candidate.height || "לא צוין"} {candidate.height ? 'ס"מ' : ""}
+                          </Typography>
                         </Box>
 
                         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -1294,9 +1350,21 @@ const CandidatesPage = () => {
                       </CardOverlay>
                     </StyledCard>
                   </Grid>
-                ))}
-              </Grid>
-            )}
+                ))
+              ) : (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
+                    <Typography variant="h6">לא נמצאו מועמדים מתאימים</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      נסה לשנות את הפילטרים או לנקות את החיפוש
+                    </Typography>
+                    <Button variant="outlined" color="primary" sx={{ mt: 2 }} onClick={resetFilters}>
+                      נקה את כל הפילטרים
+                    </Button>
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
           </>
         )}
 
