@@ -59,6 +59,37 @@ namespace ApiMatchMaker.Controllers
             return Unauthorized();
         }
 
+        //[HttpPost("register")]
+        //public async Task<IActionResult> RegisterAsync([FromBody] RegisterDTO model)
+        //{
+        //    if (model == null)
+        //    {
+        //        return Conflict("User is not valid");
+        //    }
+
+        //    try
+        //    {
+        //        var newUser = await _authService.RegisterUser(model); // ← זו הפונקציה הנכונה
+        //                                                              // שומרת את הסוג הנכון (MatchMaker, Male, Women)
+        //        int roleId = await _roleRpository.GetIdByRoleAsync(model.Role);
+        //        if (roleId == -1)
+        //        {
+        //            return BadRequest("Role not found.");
+        //        }
+
+        //        var userRole = await _userRoleService.AddAsync(model.Role, newUser.Id);
+        //        if (userRole == null)
+        //            return BadRequest("Error assigning role to user.");
+        //        var userDto = _mapper.Map<BaseUserDTO>(newUser);
+        //        var token = _authService.GenerateToken(userDto); // העבירי את ה־User המלא, לא DTO
+
+        //        return Ok(new { Token = token, User = newUser });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+        //}
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterDTO model)
         {
@@ -67,30 +98,25 @@ namespace ApiMatchMaker.Controllers
                 return Conflict("User is not valid");
             }
 
-            try
-            {
-                var newUser = await _authService.RegisterUser(model); // ← זו הפונקציה הנכונה
-                                                                      // שומרת את הסוג הנכון (MatchMaker, Male, Women)
-                int roleId = await _roleRpository.GetIdByRoleAsync(model.Role);
-                if (roleId == -1)
-                {
-                    return BadRequest("Role not found.");
-                }
+            var modelD = _mapper.Map<BaseUserDTO>(model);
+            var existingUser = await _userService.AddUserAsync(modelD);
+            if (existingUser == null)
+                return BadRequest("User could not be created.");
 
-                var userRole = await _userRoleService.AddAsync(model.Role, newUser.Id);
-                if (userRole == null)
-                    return BadRequest("Error assigning role to user.");
-                var userDto = _mapper.Map<BaseUserDTO>(newUser);
-                var token = _authService.GenerateToken(userDto); // העבירי את ה־User המלא, לא DTO
-
-                return Ok(new { Token = token, User = newUser });
-            }
-            catch (Exception ex)
+            // Check if the role exists
+            int roleId = await _roleRpository.GetIdByRoleAsync(model.Role);
+            if (roleId == -1)
             {
-                return BadRequest(ex.Message);
+                return BadRequest("Role not found.");
             }
+
+            var userRole = await _userRoleService.AddAsync(model.Role, existingUser.Id);
+            if (userRole == null)
+                return BadRequest("Error assigning role to user.");
+            //existingUser.Role = model.RoleName;
+            var token = _authService.GenerateToken(modelD);
+            return Ok(new { Token = token, User = existingUser });
         }
-
 
     }
 }
