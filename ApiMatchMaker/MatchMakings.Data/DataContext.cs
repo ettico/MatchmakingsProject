@@ -49,7 +49,7 @@ namespace MatchMakings.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<BaseUser>()
-                  .HasDiscriminator<string>("UserType")
+                  .HasDiscriminator<string>("Role")
                   .HasValue<MatchMaker>("Matchmaker")
                   .HasValue<Women>("Woman")
                   .HasValue<Male>("Man");
