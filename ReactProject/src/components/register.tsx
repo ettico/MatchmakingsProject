@@ -98,7 +98,7 @@ export default function SignIn() {
     setError("")
 
     try {
-      const response = await axios.post(`${ApiUrl}/${userType}/Auth/register`, data)
+      const response = await axios.post(`${ApiUrl}/Auth/register`, data)
       console.log("תגובת הרשמה:", response.data)
 
       // שמירת נתוני המשתמש בלוקל סטורג'
