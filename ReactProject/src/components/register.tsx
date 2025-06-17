@@ -82,7 +82,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [activeStep] = useState(0)
 
-    const ApiUrl=process.env.REACT_APP_API_URL
+    const ApiUrl=process.env.REACT_APP_API_URL|| "https://matchmakingsprojectserver.onrender.com/api"
 
 //   const selectedRole = watch("role")
   const steps = ["פרטים אישיים", "אימות", "סיום"]
