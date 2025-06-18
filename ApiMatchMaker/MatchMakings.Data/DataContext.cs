@@ -50,9 +50,9 @@ namespace MatchMakings.Data
         {
             modelBuilder.Entity<BaseUser>()
                   .HasDiscriminator<string>("UserType")
-                  .HasValue<MatchMaker>("MatchMaker")
-                  .HasValue<Women>("Women")
-                  .HasValue<Male>("Male");
+                  .HasValue<MatchMaker>("Matchmaker")
+                  .HasValue<Women>("Woman")
+                  .HasValue<Male>("Man");
             modelBuilder.Entity<MatchMaking>()
                 .HasOne(m => m.Male) // קשר לגבר
                 .WithMany() // קשר אחד לרבים (אפשר לשנות לפי הצורך)
