@@ -17,7 +17,7 @@ namespace MatchMakings.Core.Models
         public string Username { get; set; }
         public string? Password { get; set; }
         public string Role { get; set; } // "Male", "Women", "MatchMaker"
-        public string UserType { get; set; }
+        //public string UserType { get; set; }
         public ICollection<UserRole> UserRoles { get; set; }
         public BaseUser(string FName,string LName, string Username,string Password,string Role)
         {
@@ -26,7 +26,7 @@ namespace MatchMakings.Core.Models
             this.Username = Username;
             this.Password = Password;
             this.Role = Role;
-            this.UserType=Role;
+            //this.UserType=Role;
         }
         public BaseUser()
         {

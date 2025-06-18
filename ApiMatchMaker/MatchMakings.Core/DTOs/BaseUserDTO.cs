@@ -15,7 +15,7 @@ namespace MatchMakings.Core.DTOs
         public string Username { get; set; }
         public string? Password { get; set; }
         public string Role { get; set; } // "Male", "Women", "MatchMaker"
-        public string UserType { get; set; }
+        //public string UserType { get; set; }
         public BaseUserDTO(string FName, string LName, string Username, string Password, string Role)
         {
             this.FirstName = FName;
@@ -23,7 +23,7 @@ namespace MatchMakings.Core.DTOs
             this.Username = Username;
             this.Password = Password;
             this.Role = Role;
-            this.UserType = Role;
+            //this.UserType = Role;
         }
         public BaseUserDTO()
         {
