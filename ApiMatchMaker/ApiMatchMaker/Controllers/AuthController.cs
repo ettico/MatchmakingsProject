@@ -99,7 +99,7 @@ namespace ApiMatchMaker.Controllers
             }
 
             var modelD = _mapper.Map<BaseUserDTO>(model);
-            modelD.UserType=model.Role;
+            //modelD.UserType=model.Role;
             var existingUser = await _userService.AddUserAsync(modelD);
             if (existingUser == null)
                 return BadRequest("User could not be created.");
