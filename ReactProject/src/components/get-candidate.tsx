@@ -387,30 +387,61 @@ const CandidatesPage = () => {
 
   // פונקציה לבדיקת השלמת פרופיל
   const isProfileComplete = (candidate: Candidate): boolean => {
-    const basicFields = [
-      candidate.firstName,
-      candidate.lastName,
-      candidate.age,
-      candidate.city,
-      candidate.height,
-      candidate.email,
-      candidate.phone,
-    ]
+    try {
+      // שדות בסיסיים חובה
+      const basicFields = [
+        candidate.firstName,
+        candidate.lastName,
+        candidate.age,
+        candidate.city,
+        candidate.height,
+        candidate.email,
+        candidate.phone,
+      ]
 
-    const roleSpecificFields =
-      candidate.role === "Male"
-        ? [(candidate as MaleType).bigYeshiva, (candidate as MaleType).smallYeshiva, candidate.occupation]
-        : [(candidate as Women).seminar, (candidate as Women).highSchool, (candidate as Women).currentOccupation]
+      // שדות ספציפיים לפי מגדר
+      let roleSpecificFields: any[] = []
+      if (candidate.role === "Male") {
+        const maleCandidate = candidate as MaleType
+        roleSpecificFields = [maleCandidate.bigYeshiva, maleCandidate.smallYeshiva, candidate.occupation]
+      } else {
+        const femaleCandidate = candidate as Women
+        roleSpecificFields = [femaleCandidate.seminar, femaleCandidate.highSchool, femaleCandidate.currentOccupation]
+      }
 
-    const expectationFields = [candidate.ageFrom, candidate.ageTo, candidate.club, candidate.importantTraitsInMe]
+      // שדות ציפיות
+      const expectationFields = [candidate.ageFrom, candidate.ageTo, candidate.club, candidate.importantTraitsInMe]
 
-    const allFields = [...basicFields, ...roleSpecificFields, ...expectationFields]
+      // בדיקה שכל השדות הבסיסיים מלאים
+      const basicFieldsFilled = basicFields.every(
+        (field) => field !== null && field !== undefined && field !== "" && field.toString().trim() !== "",
+      )
 
-    // בודק שלפחות 80% מהשדות מלאים
-    const filledFields = allFields.filter((field) => field && field.toString().trim() !== "").length
-    const completionPercentage = (filledFields / allFields.length) * 100
+      // בדיקה שלפחות חלק מהשדות הספציפיים מלאים
+      const roleSpecificFilled = roleSpecificFields.some(
+        (field) => field !== null && field !== undefined && field !== "" && field.toString().trim() !== "",
+      )
 
-    return completionPercentage >= 80
+      // בדיקה שלפחות חלק מהציפיות מלאות
+      const expectationsFilled = expectationFields.some(
+        (field) => field !== null && field !== undefined && field !== "" && field.toString().trim() !== "",
+      )
+
+      console.log(`מועמד ${candidate.firstName} ${candidate.lastName}:`, {
+        basicFieldsFilled,
+        roleSpecificFilled,
+        expectationsFilled,
+        basicFields: basicFields.map((f) => f || "ריק"),
+        roleSpecificFields: roleSpecificFields.map((f) => f || "ריק"),
+        expectationFields: expectationFields.map((f) => f || "ריק"),
+      })
+
+      // פרופיל נחשב מלא אם השדות הבסיסיים מלאים ולפחות אחד מהקטגוריות האחרות
+      return basicFieldsFilled && (roleSpecificFilled || expectationsFilled)
+    } catch (error) {
+      console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
+      return false
+    }
   }
 
   // פונקציה לטעינת נתונים עם אימות - מציגה את כל המועמדים
@@ -480,6 +511,12 @@ const CandidatesPage = () => {
       console.log("סה״כ מועמדים:", sortedCandidates.length)
       console.log("מועמדים עם פרופיל מלא:", sortedCandidates.filter(isProfileComplete).length)
       console.log("מועמדים עם פרופיל חלקי:", sortedCandidates.filter((c) => !isProfileComplete(c)).length)
+
+      // הוספת לוג מפורט לכל מועמד
+      sortedCandidates.forEach((candidate, index) => {
+        const complete = isProfileComplete(candidate)
+        console.log(`מועמד ${index + 1}: ${candidate.firstName} ${candidate.lastName} - ${complete ? "מלא" : "חלקי"}`)
+      })
 
       if (sortedCandidates.length === 0) {
         setError("לא נמצאו מועמדים במערכת.")
@@ -839,87 +876,103 @@ const CandidatesPage = () => {
 
   // סינון מועמדים - מתוקן לעבוד עם כל המועמדים ללא הסתרה
   const filteredCandidates = candidates.filter((candidate) => {
-    // בדיקה שיש לנו את כל השדות הנדרשים
-    if (!candidate || typeof candidate.id === "undefined") {
-      console.log("מועמד לא תקין:", candidate)
-      return false
+    try {
+      // בדיקה שיש לנו את כל השדות הנדרשים
+      if (!candidate || typeof candidate.id === "undefined") {
+        console.log("מועמד לא תקין:", candidate)
+        return false
+      }
+
+      // Filter by gender tab
+      if (genderTab === "male" && candidate.role !== "Male") return false
+      if (genderTab === "female" && candidate.role !== "Women") return false
+
+      // סינון לפי השלמת פרופיל
+      if (filters.profileCompletion !== "all") {
+        const profileComplete = isProfileComplete(candidate)
+        if (filters.profileCompletion === "complete" && !profileComplete) return false
+        if (filters.profileCompletion === "incomplete" && profileComplete) return false
+      }
+
+      // חיפוש טקסטואלי - מתוקן לעבוד עם שדות שיכולים להיות null
+      if (searchQuery && searchQuery.trim()) {
+        const searchLower = searchQuery.toLowerCase()
+        const searchFields = [
+          candidate.firstName || "",
+          candidate.lastName || "",
+          candidate.city || "",
+          candidate.class || "",
+          candidate.occupation || "",
+          candidate.backGround || "",
+        ]
+
+        // הוספת שדות ספציפיים לנשים
+        if (candidate.role === "Women") {
+          searchFields.push((candidate as Women).currentOccupation || "")
+          searchFields.push((candidate as Women).seminar || "")
+          searchFields.push((candidate as Women).highSchool || "")
+        }
+
+        // הוספת שדות ספציפיים לגברים
+        if (candidate.role === "Male") {
+          searchFields.push((candidate as MaleType).bigYeshiva || "")
+          searchFields.push((candidate as MaleType).smallYeshiva || "")
+        }
+
+        const matchesSearch = searchFields.some((field) => field.toLowerCase().includes(searchLower))
+
+        if (!matchesSearch) return false
+      }
+
+      // סינון לפי סטטוס
+      if (filters.statusFilter !== "all") {
+        const isAvailable = filters.statusFilter === "available"
+        if (candidate.statusVacant !== isAvailable) return false
+      }
+
+      // סינון לפי מגדר
+      if (filters.genderFilter !== "all") {
+        const expectedRole = filters.genderFilter === "Male" ? "Male" : "Women"
+        if (candidate.role !== expectedRole) return false
+      }
+
+      // סינון לפי גיל - רק אם יש ערך תקין
+      if (candidate.age && typeof candidate.age === "number") {
+        if (candidate.age < filters.ageRange[0] || candidate.age > filters.ageRange[1]) return false
+      }
+
+      // סינון לפי גובה - רק אם יש ערך תקין
+      if (candidate.height && typeof candidate.height === "number") {
+        if (candidate.height < filters.heightRange[0] || candidate.height > filters.heightRange[1]) return false
+      }
+
+      // סינון לפי עיר - רק אם בחרו ערים
+      if (filters.cities.length > 0) {
+        if (!candidate.city || !filters.cities.includes(candidate.city)) return false
+      }
+
+      // סינון לפי חוג - רק אם בחרו חוגים
+      if (filters.classes.length > 0) {
+        if (!candidate.class || !filters.classes.includes(candidate.class)) return false
+      }
+
+      // סינון לפי עיסוק - רק אם בחרו עיסוקים
+      if (filters.occupations.length > 0) {
+        const occupation = candidate.role === "Male" ? candidate.occupation : (candidate as Women).currentOccupation
+
+        if (!occupation || !filters.occupations.includes(occupation)) return false
+      }
+
+      // סינון לפי רקע - רק אם בחרו רקעים
+      if (filters.backgrounds.length > 0) {
+        if (!candidate.backGround || !filters.backgrounds.includes(candidate.backGround)) return false
+      }
+
+      return true
+    } catch (error) {
+      console.error("שגיאה בסינון מועמד:", error, candidate)
+      return true // במקרה של שגיאה, נציג את המועמד
     }
-
-    // Filter by gender tab
-    if (genderTab === "male" && candidate.role !== "Male") return false
-    if (genderTab === "female" && candidate.role !== "Women") return false
-
-    // סינון לפי השלמת פרופיל
-    if (filters.profileCompletion !== "all") {
-      const profileComplete = isProfileComplete(candidate)
-      if (filters.profileCompletion === "complete" && !profileComplete) return false
-      if (filters.profileCompletion === "incomplete" && profileComplete) return false
-    }
-
-    // חיפוש טקסטואלי - מתוקן לעבוד עם שדות שיכולים להיות null
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase()
-      const firstName = (candidate.firstName || "").toLowerCase()
-      const lastName = (candidate.lastName || "").toLowerCase()
-      const city = (candidate.city || "").toLowerCase()
-      const candidateClass = (candidate.class || "").toLowerCase()
-
-      const occupation = (
-        candidate.occupation ||
-        (candidate.role === "Women" && (candidate as Women).currentOccupation) ||
-        ""
-      ).toLowerCase()
-
-      const background = (candidate.backGround || "").toLowerCase()
-
-      const matchesSearch =
-        firstName.includes(searchLower) ||
-        lastName.includes(searchLower) ||
-        city.includes(searchLower) ||
-        candidateClass.includes(searchLower) ||
-        occupation.includes(searchLower) ||
-        background.includes(searchLower)
-
-      if (!matchesSearch) return false
-    }
-
-    // סינון לפי סטטוס
-    if (filters.statusFilter !== "all") {
-      const isAvailable = filters.statusFilter === "available"
-      if (candidate.statusVacant !== isAvailable) return false
-    }
-
-    // סינון לפי מגדר
-    if (filters.genderFilter !== "all") {
-      if (candidate.role !== filters.genderFilter) return false
-    }
-
-    // סינון לפי גיל - רק אם יש ערך תקין
-    if (candidate.age && (candidate.age < filters.ageRange[0] || candidate.age > filters.ageRange[1])) return false
-
-    // סינון לפי גובה - רק אם יש ערך תקין
-    if (candidate.height && (candidate.height < filters.heightRange[0] || candidate.height > filters.heightRange[1]))
-      return false
-
-    // סינון לפי עיר - רק אם בחרו ערים
-    if (filters.cities.length > 0 && candidate.city && !filters.cities.includes(candidate.city)) return false
-
-    // סינון לפי חוג - רק אם בחרו חוגים
-    if (filters.classes.length > 0 && candidate.class && !filters.classes.includes(candidate.class)) return false
-
-    // סינון לפי עיסוק - רק אם בחרו עיסוקים
-    if (filters.occupations.length > 0) {
-      const occupation =
-        candidate.occupation || (candidate.role === "Women" ? (candidate as Women).currentOccupation : "")
-
-      if (!occupation || !filters.occupations.includes(occupation)) return false
-    }
-
-    // סינון לפי רקע - רק אם בחרו רקעים
-    if (filters.backgrounds.length > 0 && candidate.backGround && !filters.backgrounds.includes(candidate.backGround))
-      return false
-
-    return true
   })
 
   // רשימות ערכים לפילטרים - מתוקן לעבוד עם שדות שיכולים להיות null
@@ -945,8 +998,8 @@ const CandidatesPage = () => {
   // Count candidates by gender and profile completion
   const maleCount = candidates.filter((c) => c.role === "Male").length
   const femaleCount = candidates.filter((c) => c.role === "Women").length
-  const completeProfilesCount = candidates.filter(isProfileComplete).length
-  const incompleteProfilesCount = candidates.length - completeProfilesCount
+  const completeProfilesCount = filteredCandidates.filter(isProfileComplete).length
+  const incompleteProfilesCount = filteredCandidates.length - completeProfilesCount
 
   return (
     <ThemeProvider theme={theme}>
