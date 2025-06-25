@@ -71,6 +71,8 @@ import {
   Female,
   Login,
   Refresh,
+  VerifiedUser,
+  PendingActions,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note, FamilyDetails, Contact } from "../Models"
@@ -183,6 +185,15 @@ const StatusChip = styled(Chip)(({ theme, status }: { theme: any; status: boolea
   top: 10,
   left: 10,
   backgroundColor: status ? theme.palette.success.main : theme.palette.error.main,
+  color: "white",
+  zIndex: 1,
+}))
+
+const ProfileCompletionChip = styled(Chip)(({ theme, completed }: { theme: any; completed: boolean }) => ({
+  position: "absolute",
+  top: 10,
+  right: 10,
+  backgroundColor: completed ? theme.palette.primary.main : theme.palette.warning.main,
   color: "white",
   zIndex: 1,
 }))
@@ -371,7 +382,36 @@ const CandidatesPage = () => {
     classes: [] as string[],
     occupations: [] as string[],
     backgrounds: [] as string[],
+    profileCompletion: "all", // הוספת פילטר השלמת פרופיל
   })
+
+  // פונקציה לבדיקת השלמת פרופיל
+  const isProfileComplete = (candidate: Candidate): boolean => {
+    const basicFields = [
+      candidate.firstName,
+      candidate.lastName,
+      candidate.age,
+      candidate.city,
+      candidate.height,
+      candidate.email,
+      candidate.phone,
+    ]
+
+    const roleSpecificFields =
+      candidate.role === "Male"
+        ? [(candidate as MaleType).bigYeshiva, (candidate as MaleType).smallYeshiva, candidate.occupation]
+        : [(candidate as Women).seminar, (candidate as Women).highSchool, (candidate as Women).currentOccupation]
+
+    const expectationFields = [candidate.ageFrom, candidate.ageTo, candidate.club, candidate.importantTraitsInMe]
+
+    const allFields = [...basicFields, ...roleSpecificFields, ...expectationFields]
+
+    // בודק שלפחות 80% מהשדות מלאים
+    const filledFields = allFields.filter((field) => field && field.toString().trim() !== "").length
+    const completionPercentage = (filledFields / allFields.length) * 100
+
+    return completionPercentage >= 80
+  }
 
   // פונקציה לטעינת נתונים עם אימות - מציגה את כל המועמדים
   const fetchCandidates = async () => {
@@ -420,14 +460,28 @@ const CandidatesPage = () => {
       console.log("גברים:", males.length)
       console.log("נשים:", females.length)
 
-      // איחוד הנתונים - מציג את כל המועמדים ללא סינון
+      // איחוד הנתונים - מציג את כל המועמדים
       const allCandidates = [...males, ...females]
-      setCandidates(allCandidates)
 
-      console.log("סה״כ מועמדים:", allCandidates.length)
-      console.log("דוגמה למועמד:", allCandidates[0])
+      // מיון המועמדים - מועמדים עם פרופיל מלא קודם
+      const sortedCandidates = allCandidates.sort((a, b) => {
+        const aComplete = isProfileComplete(a)
+        const bComplete = isProfileComplete(b)
 
-      if (allCandidates.length === 0) {
+        if (aComplete && !bComplete) return -1
+        if (!aComplete && bComplete) return 1
+
+        // אם שניהם באותו סטטוס השלמה, מיין לפי תאריך עדכון אחרון או ID
+        return b.id - a.id
+      })
+
+      setCandidates(sortedCandidates)
+
+      console.log("סה״כ מועמדים:", sortedCandidates.length)
+      console.log("מועמדים עם פרופיל מלא:", sortedCandidates.filter(isProfileComplete).length)
+      console.log("מועמדים עם פרופיל חלקי:", sortedCandidates.filter((c) => !isProfileComplete(c)).length)
+
+      if (sortedCandidates.length === 0) {
         setError("לא נמצאו מועמדים במערכת.")
       }
     } catch (error) {
@@ -633,6 +687,7 @@ const CandidatesPage = () => {
       classes: [],
       occupations: [],
       backgrounds: [],
+      profileCompletion: "all",
     })
     setSearchQuery("")
     setGenderTab("all")
@@ -782,7 +837,7 @@ const CandidatesPage = () => {
     navigate("/login")
   }
 
-  // סינון מועמדים - מתוקן לעבוד עם כל המועמדים
+  // סינון מועמדים - מתוקן לעבוד עם כל המועמדים ללא הסתרה
   const filteredCandidates = candidates.filter((candidate) => {
     // בדיקה שיש לנו את כל השדות הנדרשים
     if (!candidate || typeof candidate.id === "undefined") {
@@ -793,6 +848,13 @@ const CandidatesPage = () => {
     // Filter by gender tab
     if (genderTab === "male" && candidate.role !== "Male") return false
     if (genderTab === "female" && candidate.role !== "Women") return false
+
+    // סינון לפי השלמת פרופיל
+    if (filters.profileCompletion !== "all") {
+      const profileComplete = isProfileComplete(candidate)
+      if (filters.profileCompletion === "complete" && !profileComplete) return false
+      if (filters.profileCompletion === "incomplete" && profileComplete) return false
+    }
 
     // חיפוש טקסטואלי - מתוקן לעבוד עם שדות שיכולים להיות null
     if (searchQuery) {
@@ -880,9 +942,11 @@ const CandidatesPage = () => {
   // הערות למועמד הנוכחי
   const candidateNotes = notes.filter((note) => note.userId === selectedCandidate?.id)
 
-  // Count candidates by gender
+  // Count candidates by gender and profile completion
   const maleCount = candidates.filter((c) => c.role === "Male").length
   const femaleCount = candidates.filter((c) => c.role === "Women").length
+  const completeProfilesCount = candidates.filter(isProfileComplete).length
+  const incompleteProfilesCount = candidates.length - completeProfilesCount
 
   return (
     <ThemeProvider theme={theme}>
@@ -893,6 +957,9 @@ const CandidatesPage = () => {
           </Typography>
           <Typography variant="subtitle1" align="center">
             סה"כ {candidates.length} מועמדים במערכת • {maleCount} גברים • {femaleCount} נשים
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ mt: 1, opacity: 0.9 }}>
+            פרופילים מלאים: {completeProfilesCount} • פרופילים חלקיים: {incompleteProfilesCount}
           </Typography>
         </CopperGradientBox>
 
@@ -962,6 +1029,7 @@ const CandidatesPage = () => {
                     disabled={
                       filters.statusFilter === "all" &&
                       filters.genderFilter === "all" &&
+                      filters.profileCompletion === "all" &&
                       filters.ageRange[0] === 18 &&
                       filters.ageRange[1] === 50 &&
                       filters.heightRange[0] === 150 &&
@@ -1004,6 +1072,22 @@ const CandidatesPage = () => {
                         <MenuItem value="all">הכל</MenuItem>
                         <MenuItem value="available">פנוי להצעות</MenuItem>
                         <MenuItem value="unavailable">לא פנוי להצעות</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6} lg={3}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel id="profile-completion-filter-label">השלמת פרופיל</InputLabel>
+                      <Select
+                        labelId="profile-completion-filter-label"
+                        value={filters.profileCompletion}
+                        label="השלמת פרופיל"
+                        onChange={(e) => handleFilterChange("profileCompletion", e.target.value)}
+                      >
+                        <MenuItem value="all">הכל</MenuItem>
+                        <MenuItem value="complete">פרופיל מלא</MenuItem>
+                        <MenuItem value="incomplete">פרופיל חלקי</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -1167,6 +1251,20 @@ const CandidatesPage = () => {
               <Typography variant="h6" color="text.secondary">
                 {filteredCandidates.length} מועמדים נמצאו
               </Typography>
+              <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                <Chip
+                  icon={<VerifiedUser />}
+                  label={`פרופילים מלאים: ${filteredCandidates.filter(isProfileComplete).length}`}
+                  color="primary"
+                  variant="outlined"
+                />
+                <Chip
+                  icon={<PendingActions />}
+                  label={`פרופילים חלקיים: ${filteredCandidates.filter((c) => !isProfileComplete(c)).length}`}
+                  color="warning"
+                  variant="outlined"
+                />
+              </Box>
             </Box>
 
             {filteredCandidates.length === 0 ? (
@@ -1181,120 +1279,138 @@ const CandidatesPage = () => {
               </Paper>
             ) : (
               <Grid container spacing={3} sx={{ mt: 2 }}>
-                {filteredCandidates.map((candidate) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
-                    <StyledCard onClick={() => handleOpenDetails(candidate)}>
-                      {/* תג סטטוס */}
-                      <StatusChip
-                        status={candidate.statusVacant}
-                        label={candidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                        size="small"
-                        theme={undefined}
-                      />
+                {filteredCandidates.map((candidate) => {
+                  const profileComplete = isProfileComplete(candidate)
 
-                      {/* תמונת פרופיל */}
-                      <Box
-                        sx={{
-                          height: 200,
-                          bgcolor:
-                            candidate.role === "Male"
-                              ? alpha(theme.palette.primary.main, 0.1)
-                              : alpha(theme.palette.primary.light, 0.2),
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          position: "relative",
-                        }}
-                      >
-                        {candidate.photoName ? (
-                          <img
-                            src={candidate.photoUrl || "/placeholder.svg"}
-                            alt={`${candidate.firstName}'s profile`}
-                            style={{
-                              width: 120,
-                              height: 120,
-                              borderRadius: "50%",
-                              objectFit: "cover",
-                              border: `3px solid ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
-                            }}
-                          />
-                        ) : candidate.role === "Male" ? (
-                          <Avatar
-                            sx={{
-                              width: 120,
-                              height: 120,
-                              bgcolor: theme.palette.primary.main,
-                              fontSize: "3rem",
-                              border: `3px solid white`,
-                            }}
-                          >
-                            {(candidate.firstName || "M").charAt(0)}
-                          </Avatar>
-                        ) : (
-                          <Avatar
-                            sx={{
-                              width: 120,
-                              height: 120,
-                              bgcolor: theme.palette.primary.light,
-                              fontSize: "3rem",
-                              border: `3px solid white`,
-                            }}
-                          >
-                            {(candidate.firstName || "W").charAt(0)}
-                          </Avatar>
-                        )}
-                      </Box>
+                  return (
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
+                      <StyledCard onClick={() => handleOpenDetails(candidate)}>
+                        {/* תג סטטוס */}
+                        <StatusChip
+                          status={candidate.statusVacant}
+                          label={candidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
+                          size="small"
+                          theme={undefined}
+                        />
 
-                      <CardContent sx={{ pt: 2, pb: 7 }}>
-                        <Typography variant="h5" component="div" align="center" gutterBottom>
-                          {candidate.firstName || "ללא שם"} {candidate.lastName || ""}
-                        </Typography>
+                        {/* תג השלמת פרופיל */}
+                        <ProfileCompletionChip
+                          completed={profileComplete}
+                          label={profileComplete ? "פרופיל מלא" : "פרופיל חלקי"}
+                          size="small"
+                          theme={undefined}
+                        />
 
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                          <CalendarMonth fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                          <Typography variant="body2">גיל: {candidate.age || "לא צוין"}</Typography>
+                        {/* תמונת פרופיל */}
+                        <Box
+                          sx={{
+                            height: 200,
+                            bgcolor:
+                              candidate.role === "Male"
+                                ? alpha(theme.palette.primary.main, 0.1)
+                                : alpha(theme.palette.primary.light, 0.2),
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            position: "relative",
+                          }}
+                        >
+                          {candidate.photoName ? (
+                            <img
+                              src={candidate.photoUrl || "/placeholder.svg"}
+                              alt={`${candidate.firstName}'s profile`}
+                              style={{
+                                width: 120,
+                                height: 120,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                                border: `3px solid ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                              }}
+                            />
+                          ) : candidate.role === "Male" ? (
+                            <Avatar
+                              sx={{
+                                width: 120,
+                                height: 120,
+                                bgcolor: theme.palette.primary.main,
+                                fontSize: "3rem",
+                                border: `3px solid white`,
+                              }}
+                            >
+                              {(candidate.firstName || "M").charAt(0)}
+                            </Avatar>
+                          ) : (
+                            <Avatar
+                              sx={{
+                                width: 120,
+                                height: 120,
+                                bgcolor: theme.palette.primary.light,
+                                fontSize: "3rem",
+                                border: `3px solid white`,
+                              }}
+                            >
+                              {(candidate.firstName || "W").charAt(0)}
+                            </Avatar>
+                          )}
                         </Box>
 
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                          <LocationOn fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                          <Typography variant="body2">עיר: {candidate.city || "לא צוין"}</Typography>
-                        </Box>
-
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                          <Height fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                          <Typography variant="body2">גובה: {candidate.height || "לא צוין"} ס"מ</Typography>
-                        </Box>
-
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                          <School fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                          <Typography variant="body2" noWrap>
-                            {candidate.role === "Male" ? "ישיבה:" : "סמינר:"}{" "}
-                            {candidate.role === "Male"
-                              ? (candidate as MaleType).bigYeshiva || "לא צוין"
-                              : (candidate as Women).seminar || "לא צוין"}
+                        <CardContent sx={{ pt: 2, pb: 7 }}>
+                          <Typography variant="h5" component="div" align="center" gutterBottom>
+                            {candidate.firstName || "ללא שם"} {candidate.lastName || ""}
                           </Typography>
-                        </Box>
 
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Work fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                          <Typography variant="body2" noWrap>
-                            עיסוק:{" "}
-                            {candidate.role === "Male"
-                              ? candidate.occupation || "לא צוין"
-                              : (candidate as Women).currentOccupation || "לא צוין"}
+                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                            <CalendarMonth fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
+                            <Typography variant="body2">גיל: {candidate.age || "לא צוין"}</Typography>
+                          </Box>
+
+                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                            <LocationOn fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
+                            <Typography variant="body2">עיר: {candidate.city || "לא צוין"}</Typography>
+                          </Box>
+
+                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                            <Height fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
+                            <Typography variant="body2">גובה: {candidate.height || "לא צוין"} ס"מ</Typography>
+                          </Box>
+
+                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                            <School fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
+                            <Typography variant="body2" noWrap>
+                              {candidate.role === "Male" ? "ישיבה:" : "סמינר:"}{" "}
+                              {candidate.role === "Male"
+                                ? (candidate as MaleType).bigYeshiva || "לא צוין"
+                                : (candidate as Women).seminar || "לא צוין"}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Work fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
+                            <Typography variant="body2" noWrap>
+                              עיסוק:{" "}
+                              {candidate.role === "Male"
+                                ? candidate.occupation || "לא צוין"
+                                : (candidate as Women).currentOccupation || "לא צוין"}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+
+                        {/* שכבת מידע נוסף בהאובר */}
+                        <CardOverlay className="card-overlay">
+                          <Typography variant="body2">חוג: {candidate.class || "לא צוין"}</Typography>
+                          <Typography variant="body2">רקע: {candidate.backGround || "לא צוין"}</Typography>
+                          <Typography variant="body2">מראה כללי: {candidate.generalAppearance || "לא צוין"}</Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: "bold", color: profileComplete ? "#4caf50" : "#ff9800" }}
+                          >
+                            {profileComplete ? "✓ פרופיל מלא" : "⚠ פרופיל חלקי"}
                           </Typography>
-                        </Box>
-                      </CardContent>
-
-                      {/* שכבת מידע נוסף בהאובר */}
-                      <CardOverlay className="card-overlay">
-                        <Typography variant="body2">חוג: {candidate.class || "לא צוין"}</Typography>
-                        <Typography variant="body2">רקע: {candidate.backGround || "לא צוין"}</Typography>
-                        <Typography variant="body2">מראה כללי: {candidate.generalAppearance || "לא צוין"}</Typography>
-                      </CardOverlay>
-                    </StyledCard>
-                  </Grid>
-                ))}
+                        </CardOverlay>
+                      </StyledCard>
+                    </Grid>
+                  )
+                })}
               </Grid>
             )}
           </>
@@ -1365,11 +1481,17 @@ const CandidatesPage = () => {
                     </Avatar>
                   )}
 
-                  <Chip
-                    label={selectedCandidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                    color={selectedCandidate.statusVacant ? "success" : "error"}
-                    sx={{ mb: 2 }}
-                  />
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                    <Chip
+                      label={selectedCandidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
+                      color={selectedCandidate.statusVacant ? "success" : "error"}
+                    />
+                    <Chip
+                      icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
+                      label={isProfileComplete(selectedCandidate) ? "פרופיל מלא" : "פרופיל חלקי"}
+                      color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
+                    />
+                  </Box>
 
                   <Box sx={{ width: "100%" }}>
                     <Tabs
@@ -1433,12 +1555,18 @@ const CandidatesPage = () => {
                     {selectedCandidate.firstName} {selectedCandidate.lastName}
                   </Typography>
 
-                  <Chip
-                    icon={selectedCandidate.statusVacant ? <CheckCircle /> : <Visibility />}
-                    label={selectedCandidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                    color={selectedCandidate.statusVacant ? "success" : "error"}
-                    sx={{ mb: 2 }}
-                  />
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "center" }}>
+                    <Chip
+                      icon={selectedCandidate.statusVacant ? <CheckCircle /> : <Visibility />}
+                      label={selectedCandidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
+                      color={selectedCandidate.statusVacant ? "success" : "error"}
+                    />
+                    <Chip
+                      icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
+                      label={isProfileComplete(selectedCandidate) ? "פרופיל מלא" : "פרופיל חלקי"}
+                      color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
+                    />
+                  </Box>
 
                   <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
                     {/* טקסט מעל הכפתור */}
