@@ -71,6 +71,7 @@ import {
   Refresh,
   VerifiedUser,
   PendingActions,
+  Download,
   Image as ImageIcon,
   Description,
 } from "@mui/icons-material"
@@ -601,93 +602,6 @@ const CandidatesPage = () => {
     setContacts([])
   }
 
-  // פונקציה לניקוי ערכי null והחלפתם בערכים ברירת מחדל
-  const cleanCandidateData = (candidate: Candidate, newStatusVacant: boolean) => {
-    const cleanData: any = {
-      // שדות בסיסיים חובה
-      id: candidate.id,
-      firstName: candidate.firstName || "",
-      lastName: candidate.lastName || "",
-      username: candidate.username || candidate.email || "",
-      password: candidate.password || "",
-      role: candidate.role,
-
-      // עדכון הסטטוס החדש
-      statusVacant: newStatusVacant,
-
-      // שדות כלליים
-      country: candidate.country || "",
-      city: candidate.city || "",
-      address: candidate.address || "",
-      tz: candidate.tz || "",
-      class: candidate.class || "",
-      anOutsider: candidate.anOutsider || false,
-      backGround: candidate.backGround || "",
-      openness: candidate.openness || "",
-      burnDate: candidate.burnDate || new Date().toISOString(),
-      age: candidate.age || 0,
-      healthCondition: candidate.healthCondition || true,
-      status: candidate.status || "",
-      pairingType: candidate.pairingType || "",
-      height: candidate.height || 0,
-      generalAppearance: candidate.generalAppearance || "",
-      facePaint: candidate.facePaint || "",
-      appearance: candidate.appearance || "",
-      phone: candidate.phone || "",
-      email: candidate.email || "",
-      fatherPhone: candidate.fatherPhone || "",
-      motherPhone: candidate.motherPhone || "",
-      moreInformation: candidate.moreInformation || "",
-
-      // שדות ציפיות
-      club: candidate.club || "",
-      ageFrom: candidate.ageFrom || 0,
-      ageTo: candidate.ageTo || 0,
-      importantTraitsInMe: candidate.importantTraitsInMe || "",
-
-      // שדות תמונות וקבצים
-      photoUrl: candidate.photoUrl || "",
-      tzFormUrl: candidate.tzFormUrl || "",
-      photoName: candidate.photoName || "",
-      tzFormName: candidate.tzFormName || "",
-    }
-
-    // שדות ספציפיים לגברים
-    if (candidate.role === "Male") {
-      const maleCandidate = candidate as MaleType
-      cleanData.driversLicense = maleCandidate.driversLicense || false
-      cleanData.smoker = maleCandidate.smoker || false
-      cleanData.beard = maleCandidate.beard || ""
-      cleanData.hot = maleCandidate.hot || ""
-      cleanData.suit = maleCandidate.suit || ""
-      cleanData.smallYeshiva = maleCandidate.smallYeshiva || ""
-      cleanData.bigYeshiva = maleCandidate.bigYeshiva || ""
-      cleanData.kibbutz = maleCandidate.kibbutz || ""
-      cleanData.occupation = maleCandidate.occupation || ""
-      cleanData.expectationsFromPartner = maleCandidate.expectationsFromPartner || ""
-      cleanData.importantTraitsIMLookingFor = maleCandidate.importantTraitsIAmLookingFor || ""
-      cleanData.preferredSeminarStyle = maleCandidate.preferredSeminarStyle || ""
-      cleanData.preferredProfessionalPath = maleCandidate.preferredProfessionalPath || ""
-    }
-
-    // שדות ספציפיים לנשים
-    if (candidate.role === "Women") {
-      const femaleCandidate = candidate as Women
-      cleanData.headCovering = femaleCandidate.headCovering || ""
-      cleanData.highSchool = femaleCandidate.highSchool || ""
-      cleanData.seminar = femaleCandidate.seminar || ""
-      cleanData.studyPath = femaleCandidate.studyPath || ""
-      cleanData.additionalEducationalInstitution = femaleCandidate.additionalEducationalInstitution || ""
-      cleanData.currentOccupation = femaleCandidate.currentOccupation || ""
-      cleanData.importantTraitsIMLookingFor = femaleCandidate.importantTraitsIMLookingFor || ""
-      cleanData.preferredSittingStyle = femaleCandidate.preferredSittingStyle || ""
-      cleanData.interestedInBoy = femaleCandidate.interestedInBoy || ""
-      cleanData.drivingLicense = femaleCandidate.drivingLicense || false
-    }
-
-    return cleanData
-  }
-
   // עדכון סטטוס מועמד - מתוקן לחלוטין
   const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
     if (!selectedCandidate || !token) return
@@ -698,7 +612,87 @@ const CandidatesPage = () => {
       console.log(`🔄 מעדכן סטטוס מועמד ${id} (${role}) ל-${isAvailable}`)
 
       // יצירת נתונים נקיים עם כל השדות הנדרשים
-      const cleanedData = cleanCandidateData(selectedCandidate, isAvailable)
+      const cleanedData: any = {
+        // שדות בסיסיים חובה
+        id: selectedCandidate.id,
+        firstName: selectedCandidate.firstName || "",
+        lastName: selectedCandidate.lastName || "",
+        username: selectedCandidate.username || selectedCandidate.email || "",
+        password: selectedCandidate.password || "",
+        role: selectedCandidate.role,
+
+        // עדכון הסטטוס החדש
+        statusVacant: isAvailable,
+
+        // שדות כלליים - החלפת null בערכי ברירת מחדל
+        country: selectedCandidate.country || "",
+        city: selectedCandidate.city || "",
+        address: selectedCandidate.address || "",
+        tz: selectedCandidate.tz || "",
+        class: selectedCandidate.class || "",
+        anOutsider: selectedCandidate.anOutsider === true,
+        backGround: selectedCandidate.backGround || "",
+        openness: selectedCandidate.openness || "",
+        burnDate: selectedCandidate.burnDate || new Date().toISOString(),
+        age: selectedCandidate.age || 0,
+        healthCondition: selectedCandidate.healthCondition === true,
+        status: selectedCandidate.status || "",
+        pairingType: selectedCandidate.pairingType || "",
+        height: selectedCandidate.height || 0,
+        generalAppearance: selectedCandidate.generalAppearance || "",
+        facePaint: selectedCandidate.facePaint || "",
+        appearance: selectedCandidate.appearance || "",
+        phone: selectedCandidate.phone || "",
+        email: selectedCandidate.email || "",
+        fatherPhone: selectedCandidate.fatherPhone || "",
+        motherPhone: selectedCandidate.motherPhone || "",
+        moreInformation: selectedCandidate.moreInformation || "",
+
+        // שדות ציפיות
+        club: selectedCandidate.club || "",
+        ageFrom: selectedCandidate.ageFrom || 0,
+        ageTo: selectedCandidate.ageTo || 0,
+        importantTraitsInMe: selectedCandidate.importantTraitsInMe || "",
+
+        // שדות תמונות וקבצים
+        photoUrl: selectedCandidate.photoUrl || "",
+        tzFormUrl: selectedCandidate.tzFormUrl || "",
+        photoName: selectedCandidate.photoName || "",
+        tzFormName: selectedCandidate.tzFormName || "",
+      }
+
+      // שדות ספציפיים לגברים
+      if (selectedCandidate.role === "Male") {
+        const maleCandidate = selectedCandidate as MaleType
+        cleanedData.driversLicense = maleCandidate.driversLicense === true
+        cleanedData.smoker = maleCandidate.smoker === true
+        cleanedData.beard = maleCandidate.beard || ""
+        cleanedData.hot = maleCandidate.hot || ""
+        cleanedData.suit = maleCandidate.suit || ""
+        cleanedData.smallYeshiva = maleCandidate.smallYeshiva || ""
+        cleanedData.bigYeshiva = maleCandidate.bigYeshiva || ""
+        cleanedData.kibbutz = maleCandidate.kibbutz || ""
+        cleanedData.occupation = maleCandidate.occupation || ""
+        cleanedData.expectationsFromPartner = maleCandidate.expectationsFromPartner || ""
+        cleanedData.importantTraitsIAmLookingFor = maleCandidate.importantTraitsIAmLookingFor || ""
+        cleanedData.preferredSeminarStyle = maleCandidate.preferredSeminarStyle || ""
+        cleanedData.preferredProfessionalPath = maleCandidate.preferredProfessionalPath || ""
+      }
+
+      // שדות ספציפיים לנשים
+      if (selectedCandidate.role === "Women") {
+        const femaleCandidate = selectedCandidate as Women
+        cleanedData.headCovering = femaleCandidate.headCovering || ""
+        cleanedData.highSchool = femaleCandidate.highSchool || ""
+        cleanedData.seminar = femaleCandidate.seminar || ""
+        cleanedData.studyPath = femaleCandidate.studyPath || ""
+        cleanedData.additionalEducationalInstitution = femaleCandidate.additionalEducationalInstitution || ""
+        cleanedData.currentOccupation = femaleCandidate.currentOccupation || ""
+        cleanedData.importantTraitsIMLookingFor = femaleCandidate.importantTraitsIMLookingFor || ""
+        cleanedData.preferredSittingStyle = femaleCandidate.preferredSittingStyle || ""
+        cleanedData.interestedInBoy = femaleCandidate.interestedInBoy || ""
+        cleanedData.drivingLicense = femaleCandidate.drivingLicense 
+      }
 
       console.log("📤 נתונים נקיים לשליחה:", JSON.stringify(cleanedData, null, 2))
 
@@ -1594,7 +1588,19 @@ const CandidatesPage = () => {
                 </DialogTitle>
                 <Box sx={{ p: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   {/* תמונת פרופיל */}
-                  {selectedCandidate.role === "Male" ? (
+                  {getImageUrl(selectedCandidate) ? (
+                    <img
+                      src={getImageUrl(selectedCandidate)! || "/placeholder.svg"}
+                      alt={`${selectedCandidate.firstName}'s profile`}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                      }}
+                    />
+                  ) : selectedCandidate.role === "Male" ? (
                     <Avatar
                       sx={{
                         width: 100,
@@ -1624,10 +1630,47 @@ const CandidatesPage = () => {
                     />
                     <Chip
                       icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
-                      label={isProfileComplete(selectedCandidate) ? "פרופיל מלא" : "פרופיל חלקי"}
-                      color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
+                      label={
+                        isProfileComplete(selectedCandidate)
+                          ? "פרופיל מלא"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "פרופיל חלקי"
+                            : "ללא פרטים"
+                      }
+                      color={
+                        isProfileComplete(selectedCandidate)
+                          ? "primary"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "warning"
+                            : "error"
+                      }
                     />
                   </Box>
+
+                  {/* כפתורי הורדה */}
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<ImageIcon />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                      >
+                        הורד תמונה
+                      </Button>
+                    )}
+                    {selectedCandidate.tzFormName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Description />}
+                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
+                      >
+                        הורד תעודת זהות
+                      </Button>
+                    )}
+                  </Box>
+
                   <Box sx={{ width: "100%" }}>
                     <Tabs
                       value={tabValue}
@@ -1686,34 +1729,6 @@ const CandidatesPage = () => {
                               טלפון: {selectedCandidate.phone || "לא צוין"}
                             </Typography>
                           </Grid>
-                          {/* הצגת קבצים */}
-                          {(selectedCandidate.photoName || selectedCandidate.tzFormName) && (
-                            <Grid item xs={12}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
-                                קבצים:
-                              </Typography>
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                {selectedCandidate.photoName && (
-                                  <Button
-                                    size="small"
-                                    startIcon={<ImageIcon />}
-                                    onClick={() => downloadFile(selectedCandidate.photoName!)}
-                                  >
-                                    תמונה
-                                  </Button>
-                                )}
-                                {selectedCandidate.tzFormName && (
-                                  <Button
-                                    size="small"
-                                    startIcon={<Description />}
-                                    onClick={() => downloadFile(selectedCandidate.tzFormName!)}
-                                  >
-                                    טופס ת.ז
-                                  </Button>
-                                )}
-                              </Box>
-                            </Grid>
-                          )}
                         </Grid>
                       </InfoSection>
                     </Box>
@@ -1881,7 +1896,20 @@ const CandidatesPage = () => {
                     <Close />
                   </IconButton>
                   {/* תמונת פרופיל */}
-                  {selectedCandidate.role === "Male" ? (
+                  {getImageUrl(selectedCandidate) ? (
+                    <img
+                      src={getImageUrl(selectedCandidate)! || "/placeholder.svg"}
+                      alt={`${selectedCandidate.firstName}'s profile`}
+                      style={{
+                        width: 150,
+                        height: 150,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                        marginBottom: theme.spacing(2),
+                      }}
+                    />
+                  ) : selectedCandidate.role === "Male" ? (
                     <ProfileAvatar sx={{ bgcolor: theme.palette.primary.main }}>
                       {(selectedCandidate.firstName || "M").charAt(0)}
                     </ProfileAvatar>
@@ -1901,10 +1929,49 @@ const CandidatesPage = () => {
                     />
                     <Chip
                       icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
-                      label={isProfileComplete(selectedCandidate) ? "פרופיל מלא" : "פרופיל חלקי"}
-                      color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
+                      label={
+                        isProfileComplete(selectedCandidate)
+                          ? "פרופיל מלא"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "פרופיל חלקי"
+                            : "ללא פרטים"
+                      }
+                      color={
+                        isProfileComplete(selectedCandidate)
+                          ? "primary"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "warning"
+                            : "error"
+                      }
                     />
                   </Box>
+
+                  {/* כפתורי הורדה */}
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                        fullWidth
+                      >
+                        הורד תמונה
+                      </Button>
+                    )}
+                    {selectedCandidate.tzFormName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
+                        fullWidth
+                      >
+                        הורד תעודת זהות
+                      </Button>
+                    )}
+                  </Box>
+
                   <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
                     {/* טקסט מעל הכפתור */}
                     <Typography
@@ -2071,34 +2138,6 @@ const CandidatesPage = () => {
                               טלפון: {selectedCandidate.phone || "לא צוין"}
                             </Typography>
                           </Grid>
-                          {/* הצגת קבצים */}
-                          {(selectedCandidate.photoName || selectedCandidate.tzFormName) && (
-                            <Grid item xs={12}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
-                                קבצים:
-                              </Typography>
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                {selectedCandidate.photoName && (
-                                  <Button
-                                    size="small"
-                                    startIcon={<ImageIcon />}
-                                    onClick={() => downloadFile(selectedCandidate.photoName!)}
-                                  >
-                                    תמונה
-                                  </Button>
-                                )}
-                                {selectedCandidate.tzFormName && (
-                                  <Button
-                                    size="small"
-                                    startIcon={<Description />}
-                                    onClick={() => downloadFile(selectedCandidate.tzFormName!)}
-                                  >
-                                    טופס ת.ז
-                                  </Button>
-                                )}
-                              </Box>
-                            </Grid>
-                          )}
                         </Grid>
                       </InfoSection>
                     </Box>
