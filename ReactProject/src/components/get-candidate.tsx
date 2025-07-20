@@ -391,18 +391,9 @@ const CandidatesPage = () => {
     try {
       if (!candidate) return false
 
-      // שדות בסיסיים חובה - בדיקה שהם קיימים ולא ריקים
-      const hasBasicInfo = !!(
-        candidate.firstName?.trim() &&
-        candidate.lastName?.trim() &&
-        candidate.age &&
-        candidate.city?.trim() &&
-        candidate.height &&
-        candidate.email?.trim() &&
-        candidate.phone?.trim()
-      )
+      // בדיקה פשוטה - אם יש שם פרטי ומשפחה, הפרופיל נחשב מלא
+      const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim())
 
-      // אם יש מידע בסיסי, הפרופיל נחשב מלא
       return hasBasicInfo
     } catch (error) {
       console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
@@ -593,10 +584,17 @@ const CandidatesPage = () => {
       const headers = getAuthHeaders()
       console.log(`מעדכן סטטוס מועמד ${id} ל-${isAvailable}`)
 
-      // יצירת אובייקט עדכון עם כל השדות הנדרשים
+      // יצירת אובייקט עדכון מינימלי
       const updateData = {
-        ...selectedCandidate,
-        statusVacant: isAvailable, // השדה שאנחנו רוצים לעדכן
+        id: selectedCandidate.id,
+        firstName: selectedCandidate.firstName || "",
+        lastName: selectedCandidate.lastName || "",
+        age: selectedCandidate.age || 0,
+        city: selectedCandidate.city || "",
+        height: selectedCandidate.height || 0,
+        email: selectedCandidate.email || "",
+        phone: selectedCandidate.phone || "",
+        statusVacant: isAvailable,
       }
 
       console.log("נשלח לשרת:", updateData)
@@ -1767,12 +1765,12 @@ const CandidatesPage = () => {
                         הורד תמונה
                       </Button>
                     )}
-                    {selectedCandidate.photoName && (
+                    {selectedCandidate.tzFormName && (
                       <Button
                         size="small"
                         variant="outlined"
                         startIcon={<Download />}
-                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
                         fullWidth
                       >
                         הורד תעודת זהות
