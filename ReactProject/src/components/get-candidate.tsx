@@ -395,7 +395,7 @@ const CandidatesPage = () => {
       const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim())
 
       // פרופיל מלא: יש שם פרטי, משפחה וגיל
-      const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0||false
+      const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0 ||false
 
       return hasDetailedInfo
     } catch (error) {
@@ -610,13 +610,14 @@ const CandidatesPage = () => {
       const headers = getAuthHeaders()
       console.log(`מעדכן סטטוס מועמד ${id} ל-${isAvailable}`)
 
-      // שליחת רק השדה שצריך להתעדכן
+      // שליחת כל הנתונים עם הסטטוס המעודכן
       const updateData = {
+        ...selectedCandidate,
         statusVacant: isAvailable,
       }
 
       console.log("נשלח לשרת:", updateData)
-      const response = await axios.patch(`${ApiUrl}/${endpoint}/${id}`, updateData, {
+      const response = await axios.put(`${ApiUrl}/${endpoint}/${id}`, updateData, {
         headers,
         timeout: 10000,
       })
@@ -1666,13 +1667,13 @@ const CandidatesPage = () => {
                             רקע השכלתי
                           </Typography>
                           <Grid container spacing={2}>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
                               <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
                                 <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
                                 תיכון: {(selectedCandidate as Women).highSchool || "לא צוין"}
                               </Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
                               <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
                                 <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
                                 סמינר: {(selectedCandidate as Women).seminar || "לא צוין"}
