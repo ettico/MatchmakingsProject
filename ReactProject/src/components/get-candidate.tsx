@@ -71,6 +71,9 @@ import {
   Refresh,
   VerifiedUser,
   PendingActions,
+  Download,
+  Image as ImageIcon,
+  Description,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note, FamilyDetails, Contact } from "../Models"
@@ -383,64 +386,31 @@ const CandidatesPage = () => {
     profileCompletion: "all",
   })
 
-  // פונקציה מתוקנת לבדיקת השלמת פרופיל - מתירנית יותר
+  // פונקציה מתוקנת לבדיקת השלמת פרופיל
   const isProfileComplete = (candidate: Candidate): boolean => {
     try {
       if (!candidate) return false
 
-      // שדות בסיסיים חובה - בדיקה שהם קיימים ולא ריקים
-      const hasBasicInfo = !!(
-        candidate.firstName?.trim() &&
-        candidate.lastName?.trim() &&
-        candidate.age &&
-        candidate.city?.trim() &&
-        candidate.height &&
-        candidate.email?.trim() &&
-        candidate.phone?.trim()
-      )
+      // פרופיל חלקי: יש שם פרטי ומשפחה
+      const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim())
 
-      // אם אין מידע בסיסי, הפרופיל לא מלא
-      if (!hasBasicInfo) {
-        return false
-      }
+      // פרופיל מלא: יש שם פרטי, משפחה וגיל
+      const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0
 
-      // שדות נוספים שמעידים על פרופיל מפורט
-      const hasDetailedInfo = !!(
-        candidate.class?.trim() ||
-        candidate.backGround?.trim() ||
-        candidate.generalAppearance?.trim() ||
-        candidate.importantTraitsInMe?.trim()
-      )
-
-      // שדות ספציפיים לפי מגדר
-      let hasRoleSpecificInfo = false
-      if (candidate.role === "Male") {
-        const maleCandidate = candidate as MaleType
-        hasRoleSpecificInfo = !!(
-          maleCandidate.bigYeshiva?.trim() ||
-          maleCandidate.smallYeshiva?.trim() ||
-          maleCandidate.occupation?.trim() ||
-          maleCandidate.kibbutz?.trim()
-        )
-      } else if (candidate.role === "Women") {
-        const femaleCandidate = candidate as Women
-        hasRoleSpecificInfo = !!(
-          femaleCandidate.seminar?.trim() ||
-          femaleCandidate.highSchool?.trim() ||
-          femaleCandidate.currentOccupation?.trim() ||
-          femaleCandidate.studyPath?.trim()
-        )
-      }
-
-      // שדות ציפיות
-      const hasExpectations = !!(candidate.ageFrom || candidate.ageTo || candidate.club?.trim())
-
-      // פרופיל נחשב מלא אם יש מידע בסיסי ולפחות אחד מהקטגוריות האחרות
-      const isComplete = hasBasicInfo && (hasDetailedInfo || hasRoleSpecificInfo || hasExpectations)
-
-      return isComplete
+      return hasDetailedInfo
     } catch (error) {
       console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
+      return false
+    }
+  }
+
+  // פונקציה לבדיקה אם יש פרופיל חלקי
+  const hasPartialProfile = (candidate: Candidate): boolean => {
+    try {
+      if (!candidate) return false
+      return !!(candidate.firstName?.trim() && candidate.lastName?.trim())
+    } catch (error) {
+      console.error("שגיאה בבדיקת פרופיל חלקי:", error, candidate)
       return false
     }
   }
@@ -449,13 +419,11 @@ const CandidatesPage = () => {
   const fetchCandidates = async () => {
     setLoading(true)
     setError(null)
-
     if (!token) {
       setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
       setLoading(false)
       return
     }
-
     try {
       console.log("מנסה להתחבר לשרת עם טוקן:", token.substring(0, 20) + "...")
       const headers = getAuthHeaders()
@@ -490,14 +458,22 @@ const CandidatesPage = () => {
       // איחוד הנתונים - מציג את כל המועמדים
       const allCandidates = [...males, ...females]
 
-      // מיון המועמדים - מועמדים עם פרופיל מלא קודם, אחר כך לפי ID
+      // מיון המועמדים - מועמדים עם פרופיל מלא קודם, אחר כך חלקי, אחר כך לפי ID
       const sortedCandidates = allCandidates.sort((a, b) => {
         const aComplete = isProfileComplete(a)
         const bComplete = isProfileComplete(b)
+        const aPartial = hasPartialProfile(a)
+        const bPartial = hasPartialProfile(b)
 
         // מועמדים עם פרופיל מלא קודם
         if (aComplete && !bComplete) return -1
         if (!aComplete && bComplete) return 1
+
+        // אם שניהם לא מלאים, בדוק חלקי
+        if (!aComplete && !bComplete) {
+          if (aPartial && !bPartial) return -1
+          if (!aPartial && bPartial) return 1
+        }
 
         // אם שניהם באותו סטטוס השלמה, מיין לפי ID (החדשים קודם)
         return b.id - a.id
@@ -505,12 +481,12 @@ const CandidatesPage = () => {
 
       setCandidates(sortedCandidates)
       console.log("סה״כ מועמדים:", sortedCandidates.length)
-
       const completeProfiles = sortedCandidates.filter(isProfileComplete)
-      const incompleteProfiles = sortedCandidates.filter((c) => !isProfileComplete(c))
-
+      const partialProfiles = sortedCandidates.filter((c) => hasPartialProfile(c) && !isProfileComplete(c))
+      const incompleteProfiles = sortedCandidates.filter((c) => !hasPartialProfile(c))
       console.log("מועמדים עם פרופיל מלא:", completeProfiles.length)
-      console.log("מועמדים עם פרופיל חלקי:", incompleteProfiles.length)
+      console.log("מועמדים עם פרופיל חלקי:", partialProfiles.length)
+      console.log("מועמדים ללא פרטים:", incompleteProfiles.length)
 
       if (sortedCandidates.length === 0) {
         setError("לא נמצאו מועמדים במערכת.")
@@ -626,58 +602,127 @@ const CandidatesPage = () => {
     setContacts([])
   }
 
-  // החלף את הפונקציה updateCandidateStatus בקוד הבא:
-
-  // עדכון סטטוס מועמד - פשוט ויעיל
+  // עדכון סטטוס מועמד - מתוקן לחלוטין
+  // עדכון סטטוס מועמד - גישה מינימליסטית
   const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
     if (!selectedCandidate || !token) return
-
     try {
       const endpoint = role === "Male" ? "Male" : "Women"
       const headers = getAuthHeaders()
-
       console.log(`🔄 מעדכן סטטוס מועמד ${id} (${role}) ל-${isAvailable}`)
 
-      // יצירת אובייקט עדכון בסיסי עם כל השדות הנדרשים
-      const updateData = {
-        ...selectedCandidate,
-        statusVacant: isAvailable,
+      // ננסה כמה גישות שונות
+      let success = false
+      let lastError = null
+
+      // גישה 1: PATCH עם רק השדות הנדרשים
+      try {
+        console.log("🔄 מנסה PATCH...")
+        const patchData = {
+          id: id,
+          statusVacant: isAvailable,
+        }
+
+        const patchResponse = await axios.patch(`${ApiUrl}/${endpoint}/${id}`, patchData, {
+          headers,
+          timeout: 15000,
+        })
+        console.log("✅ PATCH הצליח:", patchResponse.status)
+        success = true
+      } catch (patchError) {
+        console.log("❌ PATCH נכשל:", patchError)
+        lastError = patchError
       }
 
-      // הסרת שדות שאינם נדרשים או עלולים לגרום לבעיות
-      delete updateData.photoUrl
-      delete updateData.tzFormUrl
-      delete updateData.photoName
-      delete updateData.tzFormName
+      // גישה 2: PUT עם נתונים מינימליים
+      if (!success) {
+        try {
+          console.log("🔄 מנסה PUT מינימלי...")
+          const minimalData = {
+            id: selectedCandidate.id,
+            firstName: selectedCandidate.firstName || "",
+            lastName: selectedCandidate.lastName || "",
+            username: selectedCandidate.username || selectedCandidate.email || "",
+            role: selectedCandidate.role,
+            statusVacant: isAvailable,
+            // שדות בסיסיים נוספים שעלולים להיות נדרשים
+            age: selectedCandidate.age || null,
+            city: selectedCandidate.city || null,
+            email: selectedCandidate.email || null,
+            phone: selectedCandidate.phone || null,
+          }
 
-      console.log("📤 נתונים לשליחה:", JSON.stringify(updateData, null, 2))
-
-      const response = await axios.put(`${ApiUrl}/${endpoint}/${id}`, updateData, {
-        headers,
-        timeout: 15000,
-      })
-
-      console.log("✅ תגובת השרת:", response.status, response.data)
-
-      // עדכון ברשימה המקומית
-      setCandidates((prev) =>
-        prev.map((candidate) =>
-          candidate.id === id && candidate.role === role ? { ...candidate, statusVacant: isAvailable } : candidate,
-        ),
-      )
-
-      // עדכון המועמד הנבחר
-      if (selectedCandidate.id === id && selectedCandidate.role === role) {
-        setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable })
+          const putResponse = await axios.put(`${ApiUrl}/${endpoint}/${id}`, minimalData, {
+            headers,
+            timeout: 15000,
+          })
+          console.log("✅ PUT מינימלי הצליח:", putResponse.status)
+          success = true
+        } catch (putError) {
+          console.log("❌ PUT מינימלי נכשל:", putError)
+          lastError = putError
+        }
       }
 
-      console.log("🎉 סטטוס עודכן בהצלחה!")
-      setError(null)
+      // גישה 3: POST לendpoint מיוחד
+      if (!success) {
+        try {
+          console.log("🔄 מנסה POST לendpoint מיוחד...")
+          const statusData = {
+            id: id,
+            statusVacant: isAvailable,
+          }
+
+          const postResponse = await axios.post(`${ApiUrl}/${endpoint}/status`, statusData, {
+            headers,
+            timeout: 15000,
+          })
+          console.log("✅ POST לendpoint מיוחד הצליח:", postResponse.status)
+          success = true
+        } catch (postError) {
+          console.log("❌ POST לendpoint מיוחד נכשל:", postError)
+          lastError = postError
+        }
+      }
+
+      // גישה 4: GET עם פרמטרים
+      if (!success) {
+        try {
+          console.log("🔄 מנסה GET עם פרמטרים...")
+          const getResponse = await axios.get(`${ApiUrl}/${endpoint}/updateStatus/${id}/${isAvailable}`, {
+            headers,
+            timeout: 15000,
+          })
+          console.log("✅ GET עם פרמטרים הצליח:", getResponse.status)
+          success = true
+        } catch (getError) {
+          console.log("❌ GET עם פרמטרים נכשל:", getError)
+          lastError = getError
+        }
+      }
+
+      if (success) {
+        // עדכון ברשימה המקומית
+        setCandidates((prev) =>
+          prev.map((candidate) =>
+            candidate.id === id && candidate.role === role ? { ...candidate, statusVacant: isAvailable } : candidate,
+          ),
+        )
+
+        // עדכון המועמד הנבחר
+        if (selectedCandidate.id === id && selectedCandidate.role === role) {
+          setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable })
+        }
+
+        console.log("🎉 סטטוס עודכן בהצלחה!")
+        setError(null)
+      } else {
+        throw lastError
+      }
     } catch (error) {
-      console.error("❌ שגיאה בעדכון סטטוס:", error)
-
+      console.error("❌ כל הגישות נכשלו:", error)
       if (axios.isAxiosError(error)) {
-        console.error("📋 פרטי השגיאה המלאים:", {
+        console.error("📋 פרטי השגיאה האחרונה:", {
           status: error.response?.status,
           statusText: error.response?.statusText,
           data: error.response?.data,
@@ -696,6 +741,8 @@ const CandidatesPage = () => {
               errorMessages.push(`${field}: ${errorData.errors[field].join(", ")}`)
             }
             errorMessage += `פרטי השגיאות: ${errorMessages.join("; ")}`
+          } else if (errorData?.title) {
+            errorMessage += errorData.title
           } else if (errorData?.message) {
             errorMessage += errorData.message
           } else {
@@ -704,7 +751,9 @@ const CandidatesPage = () => {
 
           setError(errorMessage)
         } else if (error.response?.status === 404) {
-          setError("המועמד לא נמצא במערכת.")
+          setError("המועמד לא נמצא במערכת או הendpoint לא קיים.")
+        } else if (error.response?.status === 405) {
+          setError("השרת לא תומך בעדכון סטטוס. נא לפנות למפתח המערכת.")
         } else if (error.response?.status === 500) {
           setError("שגיאת שרת פנימית. נא לנסות שוב מאוחר יותר.")
         } else {
@@ -714,6 +763,24 @@ const CandidatesPage = () => {
         setError("שגיאה לא צפויה בעדכון הסטטוס.")
       }
     }
+  }
+
+  // פונקציה להורדת קובץ
+  const downloadFile = (fileName: string) => {
+    if (!fileName) return
+    const downloadUrl = `${ApiUrl}/files/download/${fileName}`
+    window.open(downloadUrl, "_blank")
+  }
+
+  // פונקציה לקבלת URL של תמונה
+  const getImageUrl = (candidate: Candidate) => {
+    // נסה כמה אפשרויות שונות לשדה התמונה
+    if (candidate.photoUrl) return candidate.photoUrl
+    if (candidate.photoName) return `${ApiUrl}/files/${candidate.photoName}`
+    if ((candidate as any).photo) return (candidate as any).photo
+    if ((candidate as any).image) return (candidate as any).image
+    if ((candidate as any).profileImage) return (candidate as any).profileImage
+    return null
   }
 
   // החלפת לשוניות בדיאלוג פרטים
@@ -886,7 +953,6 @@ const CandidatesPage = () => {
         console.log("מועמד לא תקין:", candidate)
         return false
       }
-
       // Filter by gender tab
       if (genderTab === "male" && candidate.role !== "Male") return false
       if (genderTab === "female" && candidate.role !== "Women") return false
@@ -894,8 +960,10 @@ const CandidatesPage = () => {
       // סינון לפי השלמת פרופיל
       if (filters.profileCompletion !== "all") {
         const profileComplete = isProfileComplete(candidate)
+        const profilePartial = hasPartialProfile(candidate)
+
         if (filters.profileCompletion === "complete" && !profileComplete) return false
-        if (filters.profileCompletion === "incomplete" && profileComplete) return false
+        if (filters.profileCompletion === "incomplete" && (!profilePartial || profileComplete)) return false
       }
 
       // חיפוש טקסטואלי
@@ -909,18 +977,15 @@ const CandidatesPage = () => {
           candidate.occupation || "",
           candidate.backGround || "",
         ]
-
         if (candidate.role === "Women") {
           searchFields.push((candidate as Women).currentOccupation || "")
           searchFields.push((candidate as Women).seminar || "")
           searchFields.push((candidate as Women).highSchool || "")
         }
-
         if (candidate.role === "Male") {
           searchFields.push((candidate as MaleType).bigYeshiva || "")
           searchFields.push((candidate as MaleType).smallYeshiva || "")
         }
-
         const matchesSearch = searchFields.some((field) => field.toLowerCase().includes(searchLower))
         if (!matchesSearch) return false
       }
@@ -999,7 +1064,7 @@ const CandidatesPage = () => {
   const maleCount = candidates.filter((c) => c.role === "Male").length
   const femaleCount = candidates.filter((c) => c.role === "Women").length
   const completeProfilesCount = filteredCandidates.filter(isProfileComplete).length
-  const incompleteProfilesCount = filteredCandidates.length - completeProfilesCount
+  const partialProfilesCount = filteredCandidates.filter((c) => hasPartialProfile(c) && !isProfileComplete(c)).length
 
   return (
     <ThemeProvider theme={theme}>
@@ -1013,7 +1078,8 @@ const CandidatesPage = () => {
           </Typography>
           <Typography variant="body2" align="center" sx={{ mt: 1, opacity: 0.9 }}>
             פרופילים מלאים: {candidates.filter(isProfileComplete).length} • פרופילים חלקיים:{" "}
-            {candidates.length - candidates.filter(isProfileComplete).length}
+            {candidates.filter((c) => hasPartialProfile(c) && !isProfileComplete(c)).length} • ללא פרטים:{" "}
+            {candidates.filter((c) => !hasPartialProfile(c)).length}
           </Typography>
         </CopperGradientBox>
 
@@ -1307,13 +1373,12 @@ const CandidatesPage = () => {
                 />
                 <Chip
                   icon={<PendingActions />}
-                  label={`פרופילים חלקיים: ${incompleteProfilesCount}`}
+                  label={`פרופילים חלקיים: ${partialProfilesCount}`}
                   color="warning"
                   variant="outlined"
                 />
               </Box>
             </Box>
-
             {filteredCandidates.length === 0 ? (
               <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
                 <Typography variant="h6">לא נמצאו מועמדים מתאימים</Typography>
@@ -1328,6 +1393,9 @@ const CandidatesPage = () => {
               <Grid container spacing={3} sx={{ mt: 2 }}>
                 {filteredCandidates.map((candidate) => {
                   const profileComplete = isProfileComplete(candidate)
+                  const profilePartial = hasPartialProfile(candidate)
+                  const imageUrl = getImageUrl(candidate)
+
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
                       <StyledCard onClick={() => handleOpenDetails(candidate)}>
@@ -1341,7 +1409,7 @@ const CandidatesPage = () => {
                         {/* תג השלמת פרופיל */}
                         <ProfileCompletionChip
                           completed={profileComplete}
-                          label={profileComplete ? "פרופיל מלא" : "פרופיל חלקי"}
+                          label={profileComplete ? "פרופיל מלא" : profilePartial ? "פרופיל חלקי" : "ללא פרטים"}
                           size="small"
                           theme={undefined}
                         />
@@ -1359,9 +1427,9 @@ const CandidatesPage = () => {
                             position: "relative",
                           }}
                         >
-                          {candidate.photoName ? (
+                          {imageUrl ? (
                             <img
-                              src={candidate.photoUrl || "/placeholder.svg"}
+                              src={imageUrl || "/placeholder.svg"}
                               alt={`${candidate.firstName}'s profile`}
                               style={{
                                 width: 120,
@@ -1369,6 +1437,34 @@ const CandidatesPage = () => {
                                 borderRadius: "50%",
                                 objectFit: "cover",
                                 border: `3px solid ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                              }}
+                              onError={(e) => {
+                                // אם התמונה לא נטענת, הצג אווטר
+                                const target = e.target as HTMLImageElement
+                                target.style.display = "none"
+                                // הוסף אווטר במקום
+                                const parent = target.parentElement
+                                if (parent && !parent.querySelector(".fallback-avatar")) {
+                                  const avatar = document.createElement("div")
+                                  avatar.className = "fallback-avatar"
+                                  avatar.style.cssText = `
+                                    width: 120px;
+                                    height: 120px;
+                                    border-radius: 50%;
+                                    background-color: ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light};
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: white;
+                                    font-size: 3rem;
+                                    font-weight: bold;
+                                    border: 3px solid white;
+                                  `
+                                  avatar.textContent = (
+                                    candidate.firstName || (candidate.role === "Male" ? "M" : "W")
+                                  ).charAt(0)
+                                  parent.appendChild(avatar)
+                                }
                               }}
                             />
                           ) : candidate.role === "Male" ? (
@@ -1439,9 +1535,12 @@ const CandidatesPage = () => {
                           <Typography variant="body2">מראה כללי: {candidate.generalAppearance || "לא צוין"}</Typography>
                           <Typography
                             variant="body2"
-                            sx={{ fontWeight: "bold", color: profileComplete ? "#4caf50" : "#ff9800" }}
+                            sx={{
+                              fontWeight: "bold",
+                              color: profileComplete ? "#4caf50" : profilePartial ? "#ff9800" : "#f44336",
+                            }}
                           >
-                            {profileComplete ? "✓ פרופיל מלא" : "⚠ פרופיל חלקי"}
+                            {profileComplete ? "✓ פרופיל מלא" : profilePartial ? "⚠ פרופיל חלקי" : "✗ ללא פרטים"}
                           </Typography>
                         </CardOverlay>
                       </StyledCard>
@@ -1493,7 +1592,19 @@ const CandidatesPage = () => {
                 </DialogTitle>
                 <Box sx={{ p: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   {/* תמונת פרופיל */}
-                  {selectedCandidate.role === "Male" ? (
+                  {getImageUrl(selectedCandidate) ? (
+                    <img
+                      src={getImageUrl(selectedCandidate)! || "/placeholder.svg"}
+                      alt={`${selectedCandidate.firstName}'s profile`}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                      }}
+                    />
+                  ) : selectedCandidate.role === "Male" ? (
                     <Avatar
                       sx={{
                         width: 100,
@@ -1523,10 +1634,47 @@ const CandidatesPage = () => {
                     />
                     <Chip
                       icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
-                      label={isProfileComplete(selectedCandidate) ? "פרופיל מלא" : "פרופיל חלקי"}
-                      color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
+                      label={
+                        isProfileComplete(selectedCandidate)
+                          ? "פרופיל מלא"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "פרופיל חלקי"
+                            : "ללא פרטים"
+                      }
+                      color={
+                        isProfileComplete(selectedCandidate)
+                          ? "primary"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "warning"
+                            : "error"
+                      }
                     />
                   </Box>
+
+                  {/* כפתורי הורדה */}
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<ImageIcon />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                      >
+                        הורד תמונה
+                      </Button>
+                    )}
+                    {selectedCandidate.tzFormName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Description />}
+                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
+                      >
+                        הורד תעודת זהות
+                      </Button>
+                    )}
+                  </Box>
+
                   <Box sx={{ width: "100%" }}>
                     <Tabs
                       value={tabValue}
@@ -1631,13 +1779,13 @@ const CandidatesPage = () => {
                             רקע השכלתי
                           </Typography>
                           <Grid container spacing={2}>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
                               <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
                                 <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
                                 תיכון: {(selectedCandidate as Women).highSchool || "לא צוין"}
                               </Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={6}>
                               <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
                                 <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
                                 סמינר: {(selectedCandidate as Women).seminar || "לא צוין"}
@@ -1752,7 +1900,20 @@ const CandidatesPage = () => {
                     <Close />
                   </IconButton>
                   {/* תמונת פרופיל */}
-                  {selectedCandidate.role === "Male" ? (
+                  {getImageUrl(selectedCandidate) ? (
+                    <img
+                      src={getImageUrl(selectedCandidate)! || "/placeholder.svg"}
+                      alt={`${selectedCandidate.firstName}'s profile`}
+                      style={{
+                        width: 150,
+                        height: 150,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                        marginBottom: theme.spacing(2),
+                      }}
+                    />
+                  ) : selectedCandidate.role === "Male" ? (
                     <ProfileAvatar sx={{ bgcolor: theme.palette.primary.main }}>
                       {(selectedCandidate.firstName || "M").charAt(0)}
                     </ProfileAvatar>
@@ -1772,10 +1933,49 @@ const CandidatesPage = () => {
                     />
                     <Chip
                       icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
-                      label={isProfileComplete(selectedCandidate) ? "פרופיל מלא" : "פרופיל חלקי"}
-                      color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
+                      label={
+                        isProfileComplete(selectedCandidate)
+                          ? "פרופיל מלא"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "פרופיל חלקי"
+                            : "ללא פרטים"
+                      }
+                      color={
+                        isProfileComplete(selectedCandidate)
+                          ? "primary"
+                          : hasPartialProfile(selectedCandidate)
+                            ? "warning"
+                            : "error"
+                      }
                     />
                   </Box>
+
+                  {/* כפתורי הורדה */}
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                        fullWidth
+                      >
+                        הורד תמונה
+                      </Button>
+                    )}
+                    {selectedCandidate.tzFormName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
+                        fullWidth
+                      >
+                        הורד תעודת זהות
+                      </Button>
+                    )}
+                  </Box>
+
                   <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
                     {/* טקסט מעל הכפתור */}
                     <Typography
