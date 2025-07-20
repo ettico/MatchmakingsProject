@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import {
@@ -12,12 +11,9 @@ import {
   Checkbox,
   MenuItem,
   Box,
-  // Divider,
   CircularProgress,
   Snackbar,
   Alert,
-  // IconButton,
-  // Tooltip,
   Container,
   FormControl,
   InputLabel,
@@ -35,12 +31,11 @@ import { userContext } from "./UserContext"
 import PersonIcon from "@mui/icons-material/Person"
 import WorkIcon from "@mui/icons-material/Work"
 import SaveIcon from "@mui/icons-material/Save"
-// import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import LocationOnIcon from "@mui/icons-material/LocationOn"
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
 import NoteIcon from "@mui/icons-material/Note"
 
-// הגדרת סכמת ולידציה באמצעות Yup - עדכון עם שדות לא חובה
+// הגדרת סכמת ולידציה באמצעות Yup
 const schema = yup.object().shape({
   matchmakerName: yup.string().required("שם הוא שדה חובה"),
   idNumber: yup.string().required("מספר זהות הוא שדה חובה"),
@@ -97,14 +92,15 @@ const AnimatedButton = styled(motion.div)(({ theme }) => ({
 }))
 
 const MatchMakerForm = () => {
-  const navigate = useNavigate() // נוספה ניווט
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [, setInitialDataLoaded] = useState(false)
-  const [serverPassword, setServerPassword] = useState<string | null>(null) // לשמירת הסיסמא מהשרת
-  
-  // שימוש ב-useContext במקום localStorage
+  const [isNewMatchmaker, setIsNewMatchmaker] = useState(false)
+  const [serverPassword, setServerPassword] = useState<string | null>(null)
+
+  // שימוש ב-useContext
   const { user, token } = useContext(userContext)
 
   const {
@@ -141,7 +137,20 @@ const MatchMakerForm = () => {
     },
   })
 
-  const ApiUrl = process.env.REACT_APP_API_URL 
+  // API URL - תיקון הכתובת
+  const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
+
+  // פונקציה לקבלת headers עם אימות
+  const getAuthHeaders = () => {
+    if (!token) {
+      throw new Error("אין טוקן אימות")
+    }
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }
+  }
 
   // טעינת נתוני המשתמש הבסיסיים מה-context
   const loadInitialUserData = () => {
@@ -169,27 +178,22 @@ const MatchMakerForm = () => {
     fetchMatchmakerData()
   }
 
-  // פונקציה לטעינת נתוני השדכנית מהשרת
+  // פונקציה לטעינת נתוני השדכנית מהשרת - מתוקנת
   const fetchMatchmakerData = async () => {
     if (!user?.id || !token) {
       console.error("חסרים פרטי משתמש או טוקן לטעינת נתונים")
       setError("חסרים פרטי משתמש או טוקן. אנא התחבר מחדש.")
-      setInitialDataLoaded(true) // מאפשר לטופס לעבוד גם בלי נתונים מהשרת
+      setInitialLoading(false)
       return
     }
 
-    setLoading(true)
     try {
       console.log("מנסה לטעון נתוני שדכנית עם ID:", user.id)
+      const headers = getAuthHeaders()
 
-      const response = await axios({
-        method: "get",
-        url: `${ApiUrl}/MatchMaker/${user.id}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 10000,
+      const response = await axios.get(`${ApiUrl}/MatchMaker/${user.id}`, {
+        headers,
+        timeout: 15000,
       })
 
       console.log("נתוני שדכנית שהתקבלו מהשרת:", response.data)
@@ -197,6 +201,7 @@ const MatchMakerForm = () => {
       // מילוי הטופס עם הנתונים שהתקבלו מהשרת
       if (response.data) {
         const serverData = response.data
+        setIsNewMatchmaker(false)
 
         // שמירת הסיסמא מהשרת
         if (serverData.password) {
@@ -204,11 +209,23 @@ const MatchMakerForm = () => {
           console.log("נשמרה סיסמא מהשרת")
         }
 
+        // המרת תאריך לפורמט נכון
+        let formattedBirthDate = ""
+        if (serverData.birthDate) {
+          try {
+            const date = new Date(serverData.birthDate)
+            formattedBirthDate = date.toISOString().split("T")[0]
+          } catch (dateError) {
+            console.warn("שגיאה בהמרת תאריך:", dateError)
+            formattedBirthDate = ""
+          }
+        }
+
         // איפוס הטופס עם הנתונים החדשים
         const formData = {
-          matchmakerName: serverData.matchmakerName || "",
+          matchmakerName: serverData.matchmakerName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
           idNumber: serverData.idNumber || "",
-          birthDate: serverData.birthDate || "",
+          birthDate: formattedBirthDate,
           email: serverData.email || user.username || "",
           gender: serverData.gender || "female",
           city: serverData.city || "",
@@ -220,39 +237,67 @@ const MatchMakerForm = () => {
           community: serverData.community || "",
           occupation: serverData.occupation || "",
           previousWorkplaces: serverData.previousWorkplaces || "",
-          isSeminarGraduate: serverData.isSeminarGraduate || false,
-          hasChildrenInShidduchim: serverData.hasChildrenInShidduchim || false,
+          isSeminarGraduate: Boolean(serverData.isSeminarGraduate),
+          hasChildrenInShidduchim: Boolean(serverData.hasChildrenInShidduchim),
           experienceInShidduchim: serverData.experienceInShidduchim || "",
           lifeSkills: serverData.lifeSkills || "",
-          yearsInShidduchim: serverData.yearsInShidduchim || 0,
-          isInternalMatchmaker: serverData.isInternalMatchmaker || false,
+          yearsInShidduchim: Number(serverData.yearsInShidduchim) || 0,
+          isInternalMatchmaker: Boolean(serverData.isInternalMatchmaker),
           printingNotes: serverData.printingNotes || "",
         }
 
         reset(formData)
-        setInitialDataLoaded(true)
         console.log("טעינת נתונים הושלמה בהצלחה")
       }
     } catch (apiError: any) {
       console.error("שגיאת API בטעינת נתוני שדכנית:", apiError)
 
-      // אם לא נמצאה שדכנית, זה בסדר - זה יכול להיות משתמש חדש
+      // אם לא נמצאה שדכנית (404), זה משתמש חדש
       if (apiError.response?.status === 404) {
-        console.log("לא נמצאו נתוני שדכנית - ייתכן שזה משתמש חדש")
-        setInitialDataLoaded(true)
+        console.log("לא נמצאו נתוני שדכנית - זה משתמש חדש")
+        setIsNewMatchmaker(true)
+
+        // מילוי פרטים בסיסיים למשתמש חדש
+        const basicData = {
+          matchmakerName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+          email: user.username || "",
+          gender: "female",
+          idNumber: "",
+          birthDate: "",
+          city: "",
+          address: "",
+          mobilePhone: "",
+          landlinePhone: "",
+          phoneType: "",
+          personalClub: "",
+          community: "",
+          occupation: "",
+          previousWorkplaces: "",
+          isSeminarGraduate: false,
+          hasChildrenInShidduchim: false,
+          experienceInShidduchim: "",
+          lifeSkills: "",
+          yearsInShidduchim: 0,
+          isInternalMatchmaker: false,
+          printingNotes: "",
+        }
+
+        reset(basicData)
       } else if (apiError.response?.status === 401) {
         setError("אין הרשאה לגשת לנתונים. אנא התחבר מחדש.")
-        setInitialDataLoaded(true)
+      } else if (apiError.code === "ECONNABORTED") {
+        setError("תם הזמן הקצוב לחיבור. אנא נסה שוב.")
+      } else if (apiError.code === "ERR_NETWORK") {
+        setError("שגיאת רשת. אנא בדוק את החיבור לאינטרנט.")
       } else {
-        setError("שגיאה בטעינת נתונים. אנא נסה שוב.")
-        setInitialDataLoaded(true)
+        setError(`שגיאה בטעינת נתונים: ${apiError.response?.status || apiError.code} - ${apiError.message}`)
       }
     } finally {
-      setLoading(false)
+      setInitialLoading(false)
     }
   }
 
-  // שליחת הטופס
+  // שליחת הטופס - מתוקנת
   const onSubmit = async (data: any) => {
     console.log("מתחיל שליחת נתוני שדכנית", data)
 
@@ -266,6 +311,8 @@ const MatchMakerForm = () => {
     setError(null)
 
     try {
+      const headers = getAuthHeaders()
+
       // הכנת הנתונים לשליחה
       const dataToSend = {
         id: user.id,
@@ -283,43 +330,49 @@ const MatchMakerForm = () => {
         community: data.community || "",
         occupation: data.occupation || "",
         previousWorkplaces: data.previousWorkplaces || "",
-        isSeminarGraduate: data.isSeminarGraduate || false,
-        hasChildrenInShidduchim: data.hasChildrenInShidduchim || false,
+        isSeminarGraduate: Boolean(data.isSeminarGraduate),
+        hasChildrenInShidduchim: Boolean(data.hasChildrenInShidduchim),
         experienceInShidduchim: data.experienceInShidduchim || "",
         lifeSkills: data.lifeSkills || "",
         yearsInShidduchim: Number(data.yearsInShidduchim) || 0,
-        isInternalMatchmaker: data.isInternalMatchmaker || false,
+        isInternalMatchmaker: Boolean(data.isInternalMatchmaker),
         printingNotes: data.printingNotes || "",
-        // שדות נוספים
+        // שדות נוספים נדרשים
         Role: user.role || "MatchMaker",
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
         Username: user.username || data.email || "",
-        Password: serverPassword || "", // שימוש בסיסמא מהשרת
+        Password: serverPassword  || "", // שימוש בסיסמא מהשרת או מהמשתמש
       }
 
       console.log("שולח נתוני שדכנית:", dataToSend)
 
-      const response = await axios({
-        method: "put",
-        url: `${ApiUrl}/MatchMaker/${user.id}`,
-        data: dataToSend,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        timeout: 15000,
-      })
+      let response
+      if (isNewMatchmaker) {
+        // יצירת שדכנית חדשה
+        console.log("יוצר שדכנית חדשה")
+        response = await axios.post(`${ApiUrl}/MatchMaker`, dataToSend, {
+          headers,
+          timeout: 15000,
+        })
+      } else {
+        // עדכון שדכנית קיימת
+        console.log("מעדכן שדכנית קיימת")
+        response = await axios.put(`${ApiUrl}/MatchMaker/${user.id}`, dataToSend, {
+          headers,
+          timeout: 15000,
+        })
+      }
 
       console.log("נתונים נשמרו בהצלחה:", response.data)
       setSuccess(true)
+      setIsNewMatchmaker(false)
 
-      // הסתרת הודעת ההצלחה אחרי 2 שניות ומעבר לעמוד השדכניות
+      // הסתרת הודעת ההצלחה אחרי 3 שניות ומעבר לעמוד השדכניות
       setTimeout(() => {
         setSuccess(false)
-        navigate("/matchmakers") // מעבר לעמוד השדכניות הכללי
-      }, 2000)
-
+        navigate("/matchmakers")
+      }, 3000)
     } catch (apiError: any) {
       console.error("שגיאת API בשליחת נתוני שדכנית:", apiError)
 
@@ -333,6 +386,14 @@ const MatchMakerForm = () => {
         errorMessage = `שגיאות ולידציה: ${errorMessages.join("; ")}`
       } else if (apiError.response?.data?.message) {
         errorMessage = apiError.response.data.message
+      } else if (apiError.response?.status === 401) {
+        errorMessage = "אין הרשאה לבצע פעולה זו. אנא התחבר מחדש."
+      } else if (apiError.response?.status === 400) {
+        errorMessage = "נתונים לא תקינים. אנא בדוק את הפרטים ונסה שוב."
+      } else if (apiError.code === "ECONNABORTED") {
+        errorMessage = "תם הזמן הקצוב לחיבור. אנא נסה שוב."
+      } else if (apiError.code === "ERR_NETWORK") {
+        errorMessage = "שגיאת רשת. אנא בדוק את החיבור לאינטרנט."
       } else if (apiError.message) {
         errorMessage = apiError.message
       }
@@ -356,7 +417,7 @@ const MatchMakerForm = () => {
     if (user && token) {
       loadInitialUserData()
     } else {
-      setInitialDataLoaded(true) // מאפשר לטופס לעבוד גם בלי משתמש
+      setInitialLoading(false)
     }
   }, [user, token])
 
@@ -364,22 +425,30 @@ const MatchMakerForm = () => {
   if (!user || !token) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="warning">
-          אנא התחבר למערכת כדי לגשת לטופס השדכנית
-        </Alert>
+        <Alert severity="warning">אנא התחבר למערכת כדי לגשת לטופס השדכנית</Alert>
+      </Container>
+    )
+  }
+
+  // אם עדיין טוען נתונים ראשוניים
+  if (initialLoading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+          <CircularProgress size={60} sx={{ color: "#b87333" }} />
+          <Typography variant="h6" color="text.secondary">
+            טוען נתוני שדכנית...
+          </Typography>
+        </Box>
       </Container>
     )
   }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: "center", mb: 4, color: "#333" }}>
-          טופס פרטי שדכנית
+          {isNewMatchmaker ? "טופס רישום שדכנית חדשה" : "עדכון פרטי שדכנית"}
         </Typography>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -552,13 +621,7 @@ const MatchMakerForm = () => {
                   name="landlinePhone"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="טלפון קווי"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
+                    <TextField {...field} label="טלפון קווי" fullWidth variant="outlined" sx={{ mb: 2 }} />
                   )}
                 />
               </Grid>
@@ -567,13 +630,7 @@ const MatchMakerForm = () => {
                   name="phoneType"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="סוג טלפון"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
+                    <TextField {...field} label="סוג טלפון" fullWidth variant="outlined" sx={{ mb: 2 }} />
                   )}
                 />
               </Grid>
@@ -592,13 +649,7 @@ const MatchMakerForm = () => {
                   name="personalClub"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="מועדון אישי"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
+                    <TextField {...field} label="מועדון אישי" fullWidth variant="outlined" sx={{ mb: 2 }} />
                   )}
                 />
               </Grid>
@@ -607,13 +658,7 @@ const MatchMakerForm = () => {
                   name="community"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="קהילה"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
+                    <TextField {...field} label="קהילה" fullWidth variant="outlined" sx={{ mb: 2 }} />
                   )}
                 />
               </Grid>
@@ -622,10 +667,7 @@ const MatchMakerForm = () => {
                   name="isSeminarGraduate"
                   control={control}
                   render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="בוגרת סמינר"
-                    />
+                    <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label="בוגרת סמינר" />
                   )}
                 />
               </Grid>
@@ -646,10 +688,7 @@ const MatchMakerForm = () => {
                   name="isInternalMatchmaker"
                   control={control}
                   render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="שדכנית פנימית"
-                    />
+                    <FormControlLabel control={<Checkbox {...field} checked={field.value} />} label="שדכנית פנימית" />
                   )}
                 />
               </Grid>
@@ -668,13 +707,7 @@ const MatchMakerForm = () => {
                   name="occupation"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="מקצוע"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
+                    <TextField {...field} label="מקצוע" fullWidth variant="outlined" sx={{ mb: 2 }} />
                   )}
                 />
               </Grid>
@@ -683,13 +716,7 @@ const MatchMakerForm = () => {
                   name="previousWorkplaces"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="מקומות עבודה קודמים"
-                      fullWidth
-                      variant="outlined"
-                      sx={{ mb: 2 }}
-                    />
+                    <TextField {...field} label="מקומות עבודה קודמים" fullWidth variant="outlined" sx={{ mb: 2 }} />
                   )}
                 />
               </Grid>
@@ -714,6 +741,7 @@ const MatchMakerForm = () => {
                       type="number"
                       fullWidth
                       variant="outlined"
+                      inputProps={{ min: 0 }}
                       sx={{ mb: 2 }}
                     />
                   )}
@@ -785,10 +813,7 @@ const MatchMakerForm = () => {
 
           {/* כפתור שמירה */}
           <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-            <AnimatedButton
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <AnimatedButton whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 type="submit"
                 variant="contained"
@@ -806,16 +831,18 @@ const MatchMakerForm = () => {
                   },
                 }}
               >
-                {loading ? "שומר..." : "שמור פרטים"}
+                {loading ? "שומר..." : isNewMatchmaker ? "צור פרופיל שדכנית" : "עדכן פרטים"}
               </Button>
             </AnimatedButton>
           </Box>
         </form>
 
         {/* הודעת הצלחה */}
-        <Snackbar open={success} autoHideDuration={2000} onClose={handleCloseSuccess}>
+        <Snackbar open={success} autoHideDuration={3000} onClose={handleCloseSuccess}>
           <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: "100%" }}>
-            הפרטים נשמרו בהצלחה! מעביר לעמוד השדכניות...
+            {isNewMatchmaker
+              ? "פרופיל השדכנית נוצר בהצלחה! מעביר לעמוד השדכניות..."
+              : "הפרטים נשמרו בהצלחה! מעביר לעמוד השדכניות..."}
           </Alert>
         </Snackbar>
 
