@@ -626,7 +626,7 @@ const CandidatesPage = () => {
     setContacts([])
   }
 
-  // עדכון סטטוס מועמד - מתוקן לשלוח רק את השדות הנדרשים
+  // עדכון סטטוס מועמד - מתוקן לחלוטין
   const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
     if (!selectedCandidate || !token) return
 
@@ -636,8 +636,8 @@ const CandidatesPage = () => {
 
       console.log(`מעדכן סטטוס מועמד ${id} ל-${isAvailable}`)
 
-      // יצירת אובייקט עדכון עם השדות הנדרשים בלבד
-      const updateData = {
+      // יצירת אובייקט עדכון נקי עם רק השדות הנדרשים
+      let updateData: any = {
         id: selectedCandidate.id,
         firstName: selectedCandidate.firstName || "",
         lastName: selectedCandidate.lastName || "",
@@ -646,7 +646,7 @@ const CandidatesPage = () => {
         height: selectedCandidate.height || 0,
         email: selectedCandidate.email || "",
         phone: selectedCandidate.phone || "",
-        statusVacant: isAvailable, // השדה שאנחנו רוצים לעדכן
+        statusVacant: isAvailable,
         class: selectedCandidate.class || "",
         backGround: selectedCandidate.backGround || "",
         generalAppearance: selectedCandidate.generalAppearance || "",
@@ -661,27 +661,34 @@ const CandidatesPage = () => {
       // הוספת שדות ספציפיים לפי מגדר
       if (role === "Male") {
         const maleCandidate = selectedCandidate as MaleType
-        Object.assign(updateData, {
+        updateData = {
+          ...updateData,
           bigYeshiva: maleCandidate.bigYeshiva || "",
           smallYeshiva: maleCandidate.smallYeshiva || "",
           kibbutz: maleCandidate.kibbutz || "",
           occupation: maleCandidate.occupation || "",
           importantTraitsIAmLookingFor: maleCandidate.importantTraitsIAmLookingFor || "",
-        })
+        }
       } else {
         const femaleCandidate = selectedCandidate as Women
-        Object.assign(updateData, {
+        updateData = {
+          ...updateData,
           highSchool: femaleCandidate.highSchool || "",
           seminar: femaleCandidate.seminar || "",
           studyPath: femaleCandidate.studyPath || "",
           currentOccupation: femaleCandidate.currentOccupation || "",
           importantTraitsIMLookingFor: femaleCandidate.importantTraitsIMLookingFor || "",
-        })
+        }
       }
 
-      console.log("נשלח לשרת:", updateData)
+      // הסרת שדות null או undefined
+      const cleanedData = Object.fromEntries(
+        Object.entries(updateData).filter(([, value]) => value !== null && value !== undefined),
+      )
 
-      const response = await axios.put(`${ApiUrl}/${endpoint}/${id}`, updateData, {
+      console.log("נשלח לשרת (נקי):", cleanedData)
+
+      const response = await axios.put(`${ApiUrl}/${endpoint}/${id}`, cleanedData, {
         headers,
         timeout: 10000,
       })
