@@ -1,7 +1,5 @@
 "use client"
-
 import type React from "react"
-
 import {
   Container,
   Button,
@@ -14,13 +12,12 @@ import {
   CardContent,
   Avatar,
   Grid,
-  Divider,
   useMediaQuery,
   useTheme,
   Tooltip,
 } from "@mui/material"
 import { useContext, useEffect, useState } from "react"
-import { Outlet, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import { userContext } from "./UserContext"
 import { motion } from "framer-motion"
 import LoginIcon from "@mui/icons-material/Login"
@@ -50,7 +47,8 @@ const MatchmakerAuth = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const navigate = useNavigate()
-  const { user,logout } = useContext(userContext)
+  const location = useLocation()
+  const { user, logout } = useContext(userContext)
   const [userName, setUserName] = useState("")
   const [stats, setStats] = useState({
     totalMatches: 0,
@@ -58,14 +56,15 @@ const MatchmakerAuth = () => {
     pendingMatches: 0,
   })
 
+  // בדיקה אם אנחנו בעמוד הבית או בעמוד אחר
+  const isHomePage = location.pathname === "/" || location.pathname === ""
+
   useEffect(() => {
     if (user?.firstName) {
       setUserName(user.firstName)
     } else if (user?.firstName) {
       setUserName(user.firstName)
     }
-
-
     // Simulate loading stats
     if (user?.id) {
       setStats({
@@ -83,9 +82,9 @@ const MatchmakerAuth = () => {
     { name: "שרה גולדברג", matches: 35, avatar: "ש" },
   ]
 
-    function handleLogout(): void {
-       logout();
-    }
+  function handleLogout(): void {
+    logout()
+  }
 
   return (
     <Container
@@ -163,11 +162,11 @@ const MatchmakerAuth = () => {
               בשורה טובה
             </Typography>
             <br />
-           <Tooltip title="ליציאה מהאתר" arrow>
-      <Button onClick={() => handleLogout()} startIcon={<Logout />} sx={{ color: colors.primary }}>
-        {/* אפשר להוסיף טקסט נוסף כאן אם רוצים */}
-      </Button>
-    </Tooltip>
+            <Tooltip title="ליציאה מהאתר" arrow>
+              <Button onClick={() => handleLogout()} startIcon={<Logout />} sx={{ color: colors.primary }}>
+                {/* אפשר להוסיף טקסט נוסף כאן אם רוצים */}
+              </Button>
+            </Tooltip>
           </Box>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {user?.role != "MatchMaker" && (
@@ -205,200 +204,227 @@ const MatchmakerAuth = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Main Content */}
-      <Box
-        sx={{
-          mt: 15,
-          mb: 5,
-          px: 3,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+      {/* Main Content - מוצג רק בעמוד הבית */}
+      {isHomePage && (
+        <Box
+          sx={{
+            mt: 15,
+            mb: 5,
+            px: 3,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                backgroundColor: "rgba(30, 30, 30, 0.7)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "16px",
+                border: `1px solid ${colors.primary}40`,
+                maxWidth: 1200,
+                mx: "auto",
+              }}
+            >
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: "bold",
+                  mb: 3,
+                  color: colors.primary,
+                  textShadow: `0 0 10px ${colors.primary}40`,
+                  textAlign: "center",
+                }}
+              >
+                {userName ? `שלום לך ${userName}` : "שלום לך"}
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: colors.primaryLight,
+                  mb: 4,
+                  fontStyle: "italic",
+                  textAlign: "center",
+                }}
+              >
+                ברוכים הבאים למערכת השדכנים של "בשורה טובה"
+              </Typography>
+              {user?.role === "MatchMaker" ? (
+                <Box>
+                  {/* Matchmaker Dashboard */}
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid item xs={12} md={4}>
+                      <StatCard
+                        title="סה״כ שידוכים"
+                        value={stats.totalMatches}
+                        icon={<PeopleIcon sx={{ fontSize: 40, color: colors.primary }} />}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <StatCard
+                        title="שידוכים מוצלחים"
+                        value={stats.successfulMatches}
+                        icon={<VerifiedIcon sx={{ fontSize: 40, color: colors.primary }} />}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <StatCard
+                        title="שידוכים בתהליך"
+                        value={stats.pendingMatches}
+                        icon={<FavoriteIcon sx={{ fontSize: 40, color: colors.primary }} />}
+                      />
+                    </Grid>
+                  </Grid>
+                  {/* Recent Activity */}
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      mb: 4,
+                      backgroundColor: "rgba(40, 40, 40, 0.7)",
+                      borderRadius: 3,
+                      border: `1px solid ${colors.primary}30`,
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ color: colors.primary, mb: 2 }}>
+                      פעילות אחרונה
+                    </Typography>
+                    <Box>
+                      {[1, 2, 3].map((item) => (
+                        <Box
+                          key={item}
+                          sx={{ mb: 2, pb: 2, borderBottom: item < 3 ? `1px solid ${colors.primary}30` : "none" }}
+                        >
+                          <Typography variant="body1" sx={{ color: colors.text }}>
+                            הצעת שידוך חדשה נשלחה למועמד #{Math.floor(Math.random() * 1000) + 100}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: colors.primaryLight }}>
+                            לפני {Math.floor(Math.random() * 24) + 1} שעות
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Paper>
+                </Box>
+              ) : (
+                <Box>
+                  {/* Content for non-logged in users */}
+                  <Box sx={{ textAlign: "center", mb: 5 }}>
+                    <Typography variant="h5" sx={{ color: colors.primary, mb: 3 }}>
+                      הצטרפו למערכת השדכנים שלנו
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: colors.text, mb: 4, maxWidth: 700, mx: "auto" }}>
+                      כשדכנים במערכת "בשורה טובה", תוכלו לעזור לזוגות רבים למצוא את השידוך המושלם. המערכת שלנו מספקת
+                      כלים מתקדמים לניהול מועמדים, התאמות, ומעקב אחר התקדמות השידוכים.
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap" }}>
+                      <StyledButton
+                        onClick={() => navigate("signup/matchmaker")}
+                        startIcon={<PersonAddIcon />}
+                        sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
+                      >
+                        הרשמה כשדכן/ית
+                      </StyledButton>
+                      <StyledButton
+                        onClick={() => navigate("login/matchmaker")}
+                        startIcon={<LoginIcon />}
+                        sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
+                      >
+                        כניסה למערכת
+                      </StyledButton>
+                    </Box>
+                  </Box>
+                  {/* Top Matchmakers */}
+                  <Box sx={{ mt: 6 }}>
+                    <Typography variant="h5" sx={{ color: colors.primary, mb: 4, textAlign: "center" }}>
+                      השדכנים המובילים שלנו
+                    </Typography>
+                    <Grid container spacing={3} justifyContent="center">
+                      {topMatchmakers.map((matchmaker, index) => (
+                        <Grid item key={index} xs={12} sm={6} md={4}>
+                          <Card
+                            sx={{
+                              backgroundColor: "rgba(40, 40, 40, 0.7)",
+                              color: colors.text,
+                              border: `1px solid ${colors.primary}30`,
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                transform: "translateY(-8px)",
+                                boxShadow: `0 10px 20px rgba(184, 115, 51, 0.3)`,
+                                border: `1px solid ${colors.primary}`,
+                              },
+                            }}
+                          >
+                            <CardContent sx={{ textAlign: "center" }}>
+                              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                                <Avatar
+                                  sx={{
+                                    width: 80,
+                                    height: 80,
+                                    backgroundColor: colors.primary,
+                                    fontSize: "2rem",
+                                    mb: 2,
+                                  }}
+                                >
+                                  {matchmaker.avatar}
+                                </Avatar>
+                              </Box>
+                              <Typography variant="h6" sx={{ color: colors.primary }}>
+                                {matchmaker.name}
+                              </Typography>
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mt: 1 }}>
+                                <EmojiEventsIcon sx={{ color: colors.primaryLight, mr: 1 }} />
+                                <Typography variant="body1">{matchmaker.matches} שידוכים מוצלחים</Typography>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </Box>
+              )}
+            </Paper>
+          </motion.div>
+        </Box>
+      )}
+
+      {/* Outlet Container - מוצג בעמודים אחרים */}
+      {!isHomePage && (
+        <Box
+          sx={{
+            mt: 12, // מרווח מהheader
+            minHeight: "calc(100vh - 96px)", // גובה מלא פחות הheader
+            position: "relative",
+            zIndex: 1,
+            px: 2,
+            py: 3,
+          }}
+        >
           <Paper
             elevation={0}
             sx={{
-              p: 4,
-              backgroundColor: "rgba(30, 30, 30, 0.7)",
+              backgroundColor: "rgba(30, 30, 30, 0.9)",
               backdropFilter: "blur(10px)",
               borderRadius: "16px",
               border: `1px solid ${colors.primary}40`,
-              maxWidth: 1200,
-              mx: "auto",
+              minHeight: "calc(100vh - 150px)",
+              p: 3,
             }}
           >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: "bold",
-                mb: 3,
-                color: colors.primary,
-                textShadow: `0 0 10px ${colors.primary}40`,
-                textAlign: "center",
-              }}
-            >
-              {userName ? `שלום לך ${userName}` : "שלום לך"}
-            </Typography>
-
-            <Typography
-              variant="h6"
-              sx={{
-                color: colors.primaryLight,
-                mb: 4,
-                fontStyle: "italic",
-                textAlign: "center",
-              }}
-            >
-              ברוכים הבאים למערכת השדכנים של "בשורה טובה"
-            </Typography>
-
-            {user?.role === "MatchMaker" ? (
-              <Box>
-                {/* Matchmaker Dashboard */}
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <Grid item xs={12} md={4}>
-                    <StatCard
-                      title="סה״כ שידוכים"
-                      value={stats.totalMatches}
-                      icon={<PeopleIcon sx={{ fontSize: 40, color: colors.primary }} />}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <StatCard
-                      title="שידוכים מוצלחים"
-                      value={stats.successfulMatches}
-                      icon={<VerifiedIcon sx={{ fontSize: 40, color: colors.primary }} />}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <StatCard
-                      title="שידוכים בתהליך"
-                      value={stats.pendingMatches}
-                      icon={<FavoriteIcon sx={{ fontSize: 40, color: colors.primary }} />}
-                    />
-                  </Grid>
-                </Grid>
-
-                {/* Recent Activity */}
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 3,
-                    mb: 4,
-                    backgroundColor: "rgba(40, 40, 40, 0.7)",
-                    borderRadius: 3,
-                    border: `1px solid ${colors.primary}30`,
-                  }}
-                >
-                  <Typography variant="h6" sx={{ color: colors.primary, mb: 2 }}>
-                    פעילות אחרונה
-                  </Typography>
-                  <Box>
-                    {[1, 2, 3].map((item) => (
-                      <Box
-                        key={item}
-                        sx={{ mb: 2, pb: 2, borderBottom: item < 3 ? `1px solid ${colors.primary}30` : "none" }}
-                      >
-                        <Typography variant="body1" sx={{ color: colors.text }}>
-                          הצעת שידוך חדשה נשלחה למועמד #{Math.floor(Math.random() * 1000) + 100}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: colors.primaryLight }}>
-                          לפני {Math.floor(Math.random() * 24) + 1} שעות
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </Paper>
-              </Box>
-            ) : (
-              <Box>
-                {/* Content for non-logged in users */}
-                <Box sx={{ textAlign: "center", mb: 5 }}>
-                  <Typography variant="h5" sx={{ color: colors.primary, mb: 3 }}>
-                    הצטרפו למערכת השדכנים שלנו
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: colors.text, mb: 4, maxWidth: 700, mx: "auto" }}>
-                    כשדכנים במערכת "בשורה טובה", תוכלו לעזור לזוגות רבים למצוא את השידוך המושלם. המערכת שלנו מספקת כלים
-                    מתקדמים לניהול מועמדים, התאמות, ומעקב אחר התקדמות השידוכים.
-                  </Typography>
-
-                  <Box sx={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap" }}>
-                    <StyledButton
-                      onClick={() => navigate("signup/matchmaker")}
-                      startIcon={<PersonAddIcon />}
-                      sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
-                    >
-                      הרשמה כשדכן/ית
-                    </StyledButton>
-                    <StyledButton
-                      onClick={() => navigate("login/matchmaker")}
-                      startIcon={<LoginIcon />}
-                      sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
-                    >
-                      כניסה למערכת
-                    </StyledButton>
-                  </Box>
-                </Box>
-
-                {/* Top Matchmakers */}
-                <Box sx={{ mt: 6 }}>
-                  <Typography variant="h5" sx={{ color: colors.primary, mb: 4, textAlign: "center" }}>
-                    השדכנים המובילים שלנו
-                  </Typography>
-
-                  <Grid container spacing={3} justifyContent="center">
-                    {topMatchmakers.map((matchmaker, index) => (
-                      <Grid item key={index} xs={12} sm={6} md={4}>
-                        <Card
-                          sx={{
-                            backgroundColor: "rgba(40, 40, 40, 0.7)",
-                            color: colors.text,
-                            border: `1px solid ${colors.primary}30`,
-                            transition: "all 0.3s ease",
-                            "&:hover": {
-                              transform: "translateY(-8px)",
-                              boxShadow: `0 10px 20px rgba(184, 115, 51, 0.3)`,
-                              border: `1px solid ${colors.primary}`,
-                            },
-                          }}
-                        >
-                          <CardContent sx={{ textAlign: "center" }}>
-                            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-                              <Avatar
-                                sx={{
-                                  width: 80,
-                                  height: 80,
-                                  backgroundColor: colors.primary,
-                                  fontSize: "2rem",
-                                  mb: 2,
-                                }}
-                              >
-                                {matchmaker.avatar}
-                              </Avatar>
-                            </Box>
-                            <Typography variant="h6" sx={{ color: colors.primary }}>
-                              {matchmaker.name}
-                            </Typography>
-                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mt: 1 }}>
-                              <EmojiEventsIcon sx={{ color: colors.primaryLight, mr: 1 }} />
-                              <Typography variant="body1">{matchmaker.matches} שידוכים מוצלחים</Typography>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              </Box>
-            )}
-
-            <Divider sx={{ my: 4, backgroundColor: colors.primary, opacity: 0.3 }} />
-
             <Outlet />
           </Paper>
-        </motion.div>
-      </Box>
+        </Box>
+      )}
+
+      {/* Outlet עבור עמוד הבית - אם יש צורך */}
+      {isHomePage && (
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <Outlet />
+        </Box>
+      )}
     </Container>
   )
 }

@@ -137,8 +137,14 @@ const MatchMakerForm = () => {
     },
   })
 
-  // API URL - תיקון הכתובת
-  const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
+  // API URL - תיקון מלא
+  const API_BASE_URL = "https://matchmakingsprojectserver.onrender.com/api"
+
+  // יצירת axios instance נפרד כדי למנוע התנגשויות
+  const apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 15000,
+  })
 
   // פונקציה לקבלת headers עם אימות
   const getAuthHeaders = () => {
@@ -162,7 +168,7 @@ const MatchMakerForm = () => {
     }
 
     console.log("מנסה לטעון נתוני שדכנית עם ID:", user.id)
-    console.log("API URL:", ApiUrl)
+    console.log("API URL:", API_BASE_URL)
     console.log("טוקן:", token.substring(0, 20) + "...")
 
     try {
@@ -170,14 +176,13 @@ const MatchMakerForm = () => {
       console.log("Headers:", headers)
 
       // וידוא שה-URL נכון
-      const fullUrl = `${ApiUrl}/MatchMaker/${user.id}`
+      const fullUrl = `${API_BASE_URL}/MatchMaker/${user.id}`
       console.log("כתובת מלאה:", fullUrl)
 
       // ניסיון ראשון - טעינה מ-MatchMaker endpoint
       console.log("מנסה לטעון מ-MatchMaker endpoint...")
-      const response = await axios.get(fullUrl, {
+      const response = await apiClient.get(`/MatchMaker/${user.id}`, {
         headers,
-        timeout: 15000,
       })
 
       console.log("✅ נתוני שדכנית נטענו בהצלחה:", response.data)
@@ -311,7 +316,7 @@ const MatchMakerForm = () => {
   // שליחת הטופס - מתוקנת
   const onSubmit = async (data: any) => {
     console.log("🚀 מתחיל שליחת נתוני שדכנית", data)
-    console.log("API URL:", ApiUrl)
+    console.log("API URL:", API_BASE_URL)
 
     if (!user?.id || !token) {
       setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
@@ -353,7 +358,7 @@ const MatchMakerForm = () => {
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
         Username: user.username || data.email || "",
-        Password: existingData?.password  || "defaultPassword123", // סיסמא זמנית
+        Password: existingData?.password || "defaultPassword123", // סיסמא זמנית
       }
 
       console.log("📤 שולח נתוני שדכנית:", dataToSend)
@@ -362,19 +367,17 @@ const MatchMakerForm = () => {
       let fullUrl
       if (isNewMatchmaker) {
         console.log("🆕 יוצר שדכנית חדשה")
-        fullUrl = `${ApiUrl}/MatchMaker`
+        fullUrl = `${API_BASE_URL}/MatchMaker`
         console.log("כתובת יצירה:", fullUrl)
-        response = await axios.post(fullUrl, dataToSend, {
+        response = await apiClient.post(`/MatchMaker`, dataToSend, {
           headers,
-          timeout: 20000,
         })
       } else {
         console.log("🔄 מעדכן שדכנית קיימת")
-        fullUrl = `${ApiUrl}/MatchMaker/${user.id}`
+        fullUrl = `${API_BASE_URL}/MatchMaker/${user.id}`
         console.log("כתובת עדכון:", fullUrl)
-        response = await axios.put(fullUrl, dataToSend, {
+        response = await apiClient.put(`/MatchMaker/${user.id}`, dataToSend, {
           headers,
-          timeout: 20000,
         })
       }
 
