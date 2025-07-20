@@ -8,30 +8,13 @@ import { CheckCircle, InsertDriveFile, Image as ImageIcon } from "@mui/icons-mat
 
 interface FileUploaderProps {
   onUploadSuccess: (data: { fileUrl: string; fileName: string }) => void
-  acceptedFileTypes?: string
-  showPreview?: boolean
-  label?: string
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({
-  onUploadSuccess,
-  acceptedFileTypes = ".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif",
-  showPreview = true,
-  label = "בחר קובץ",
-}) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
   const [file, setFile] = useState<File | null>(null)
   const [progress, setProgress] = useState(0)
   const [uploading, setUploading] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{ fileUrl: string; fileName: string } | null>(null)
-
-  // API URL מתוקן
-  const API_BASE_URL = "https://matchmakingsprojectserver.onrender.com/api"
-
-  // יצירת axios instance נפרד כדי למנוע התנגשויות
-  const apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 30000,
-  })
 
   // פונקציה לבדיקה אם הקובץ הוא תמונה
   const isImageFile = (fileName: string): boolean => {
@@ -53,66 +36,37 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       setFile(e.target.files[0])
       setProgress(0)
       setUploadedFile(null) // איפוס קובץ קודם
-      console.log("קובץ נבחר:", e.target.files[0].name, "גודל:", e.target.files[0].size)
     }
   }
 
-  const handleUpload = async () => {
-    if (!file) {
-      console.error("לא נבחר קובץ")
-      return
-    }
+  const ApiUrl = process.env.REACT_APP_API_URL
 
-    console.log("מתחיל העלאת קובץ:", file.name)
-    console.log("API URL:", API_BASE_URL)
+  const handleUpload = async () => {
+    if (!file) return
 
     setUploading(true)
-    setProgress(0)
 
     try {
-      // שלב 1: קבלת presigned URL
-      console.log("מבקש presigned URL...")
-      const presignedResponse = await apiClient.get("/files/presigned-url", {
+      const response = await axios.get(`${ApiUrl}/files/presigned-url`, {
         params: {
           fileName: file.name,
           contentType: file.type,
         },
       })
 
-      console.log("תגובת presigned URL:", presignedResponse.data)
-      const presignedUrl = presignedResponse.data.url
-
-      if (!presignedUrl) {
-        throw new Error("לא התקבל presigned URL מהשרת")
-      }
-
-      // חילוץ URL הקובץ הסופי (ללא query parameters)
+      const presignedUrl = response.data.url
       const fileUrl = presignedUrl.split("?")[0]
-      console.log("URL קובץ סופי:", fileUrl)
 
-      // שלב 2: העלאת הקובץ ל-S3
-      console.log("מעלה קובץ ל-S3...")
       await axios.put(presignedUrl, file, {
         headers: {
           "Content-Type": file.type,
+          Authorization: undefined, // לא נשלח ב-S3
         },
-        // הסרת Authorization header עבור S3
-        transformRequest: [
-          (data, headers) => {
-            delete headers.Authorization
-            return data
-          },
-        ],
         onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            setProgress(percent)
-            console.log(`התקדמות העלאה: ${percent}%`)
-          }
+          const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
+          setProgress(percent)
         },
       })
-
-      console.log("קובץ הועלה בהצלחה!")
 
       // שמירת פרטי הקובץ שהועלה
       const uploadedFileData = {
@@ -128,35 +82,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       // איפוס הטופס
       setFile(null)
       setProgress(0)
+
+      alert("הקובץ הועלה בהצלחה!")
     } catch (error: any) {
-      console.error("שגיאה בהעלאת קובץ:", error)
-
-      let errorMessage = "אירעה שגיאה בהעלאת הקובץ"
-
-      if (axios.isAxiosError(error)) {
-        console.error("פרטי שגיאה:", {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message,
-          url: error.config?.url,
-        })
-
-        if (error.response?.status === 404) {
-          errorMessage = "שירות העלאת קבצים לא נמצא. אנא פנה למנהל המערכת."
-        } else if (error.response?.status === 401) {
-          errorMessage = "אין הרשאה להעלות קבצים. אנא התחבר מחדש."
-        } else if (error.response?.status === 413) {
-          errorMessage = "הקובץ גדול מדי. אנא בחר קובץ קטן יותר."
-        } else if (error.response?.status === 400) {
-          errorMessage = "סוג קובץ לא נתמך או שם קובץ לא תקין."
-        } else if (error.code === "ECONNABORTED") {
-          errorMessage = "תם הזמן הקצוב להעלאה. אנא נסה שוב."
-        } else if (error.code === "ERR_NETWORK") {
-          errorMessage = "שגיאת רשת. אנא בדוק את החיבור לאינטרנט."
-        }
-      }
-
-      alert(errorMessage)
+      console.error("שגיאה בהעלאה:", error)
+      alert("אירעה שגיאה בהעלאת הקובץ")
     } finally {
       setUploading(false)
     }
@@ -170,7 +100,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   return (
     <Box>
-      {/* כפתור בחירת קובץ */}
+      {/* כפתור בחירת קובץ - מוצג רק אם לא הועלה קובץ */}
       {!uploadedFile && (
         <Button
           variant="outlined"
@@ -185,26 +115,24 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             },
           }}
         >
-          {label}
-          <input type="file" hidden onChange={handleFileChange} accept={acceptedFileTypes} />
+          בחר קובץ
+          <input type="file" hidden onChange={handleFileChange} />
         </Button>
       )}
 
       {/* הצגת קובץ נבחר */}
       {file && !uploadedFile && (
         <Box mt={2}>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            קובץ נבחר: {file.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+          <Typography variant="body2">קובץ נבחר: {file.name}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
             גודל: {(file.size / 1024 / 1024).toFixed(2)} MB
           </Typography>
-
           <Button
             variant="contained"
             onClick={handleUpload}
             disabled={uploading}
             sx={{
+              mt: 1,
               backgroundColor: "#000000",
               color: "#B87333",
               "&:hover": {
@@ -248,7 +176,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           {/* Chip עם סימן וי */}
           <Chip
             icon={<CheckCircle />}
-            label={`הועלה: ${uploadedFile.fileName}`}
+            label={`הועלה בהצלחה: ${uploadedFile.fileName}`}
             color="success"
             variant="outlined"
             sx={{
@@ -263,8 +191,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           />
 
           {/* הצגת תמונה אם זה קובץ תמונה */}
-          {showPreview && isImageFile(uploadedFile.fileName) && (
-            <Card sx={{ maxWidth: 300, mb: 2 }}>
+          {isImageFile(uploadedFile.fileName) && (
+            <Card sx={{ maxWidth: 300, mb: 2, boxShadow: 3 }}>
               <CardMedia
                 component="img"
                 height="200"
@@ -276,16 +204,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                 }}
                 onError={(e) => {
                   console.error("שגיאה בטעינת תמונה:", e)
-                  // אם יש שגיאה בטעינת התמונה, הצג placeholder
+                  // אם יש שגיאה בטעינת התמונה, הצג הודעה
                   const target = e.target as HTMLImageElement
-                  target.src = "/placeholder.svg?height=200&width=300&text=שגיאה בטעינת תמונה"
+                  target.style.display = "none"
                 }}
               />
             </Card>
           )}
 
           {/* הצגת אייקון לקבצים שאינם תמונות */}
-          {showPreview && !isImageFile(uploadedFile.fileName) && (
+          {!isImageFile(uploadedFile.fileName) && (
             <Box
               sx={{
                 display: "flex",
