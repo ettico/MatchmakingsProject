@@ -97,8 +97,8 @@ const MatchMakerForm = () => {
   const [initialLoading, setInitialLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isNewMatchmaker, setIsNewMatchmaker] = useState(false)
-  const [serverPassword, setServerPassword] = useState<string | null>(null)
+  const [isNewMatchmaker, setIsNewMatchmaker] = useState(true) // ברירת מחדל - משתמש חדש
+  const [existingData, setExistingData] = useState<any>(null)
 
   // שימוש ב-useContext
   const { user, token } = useContext(userContext)
@@ -106,7 +106,7 @@ const MatchMakerForm = () => {
   const {
     handleSubmit,
     control,
-    setValue,
+    // setValue,
     reset,
     formState: { errors },
   } = useForm({
@@ -137,7 +137,7 @@ const MatchMakerForm = () => {
     },
   })
 
-  // API URL - תיקון הכתובת
+  // API URL
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
 
   // פונקציה לקבלת headers עם אימות
@@ -152,157 +152,161 @@ const MatchMakerForm = () => {
     }
   }
 
-  // טעינת נתוני המשתמש הבסיסיים מה-context
-  const loadInitialUserData = () => {
-    if (!user) {
-      console.error("לא נמצא משתמש בcontext")
-      setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
-      return
-    }
-
-    console.log("טוען נתוני משתמש מהcontext:", user)
-
-    // מילוי הפרטים הבסיסיים מה-context
-    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim()
-    if (fullName) {
-      setValue("matchmakerName", fullName)
-      console.log("הוגדר שדה matchmakerName:", fullName)
-    }
-
-    if (user.username) {
-      setValue("email", user.username)
-      console.log("הוגדר שדה email:", user.username)
-    }
-
-    // טעינת נתוני השדכנית מהשרת
-    fetchMatchmakerData()
-  }
-
-  // פונקציה לטעינת נתוני השדכנית מהשרת - מתוקנת
+  // פונקציה לטעינת נתוני השדכנית מהשרת - מתוקנת לחלוטין
   const fetchMatchmakerData = async () => {
     if (!user?.id || !token) {
-      console.error("חסרים פרטי משתמש או טוקן לטעינת נתונים")
-      setError("חסרים פרטי משתמש או טוקן. אנא התחבר מחדש.")
+      console.log("חסרים פרטי משתמש או טוקן - מתחיל כמשתמש חדש")
+      loadBasicUserData()
       setInitialLoading(false)
       return
     }
 
-    try {
-      console.log("מנסה לטעון נתוני שדכנית עם ID:", user.id)
-      const headers = getAuthHeaders()
+    console.log("מנסה לטעון נתוני שדכנית עם ID:", user.id)
+    console.log("טוקן:", token.substring(0, 20) + "...")
 
+    try {
+      const headers = getAuthHeaders()
+      console.log("Headers:", headers)
+
+      // ניסיון ראשון - טעינה מ-MatchMaker endpoint
+      console.log("מנסה לטעון מ-MatchMaker endpoint...")
       const response = await axios.get(`${ApiUrl}/MatchMaker/${user.id}`, {
         headers,
         timeout: 15000,
       })
 
-      console.log("נתוני שדכנית שהתקבלו מהשרת:", response.data)
+      console.log("✅ נתוני שדכנית נטענו בהצלחה:", response.data)
 
-      // מילוי הטופס עם הנתונים שהתקבלו מהשרת
       if (response.data) {
-        const serverData = response.data
         setIsNewMatchmaker(false)
-
-        // שמירת הסיסמא מהשרת
-        if (serverData.password) {
-          setServerPassword(serverData.password)
-          console.log("נשמרה סיסמא מהשרת")
-        }
-
-        // המרת תאריך לפורמט נכון
-        let formattedBirthDate = ""
-        if (serverData.birthDate) {
-          try {
-            const date = new Date(serverData.birthDate)
-            formattedBirthDate = date.toISOString().split("T")[0]
-          } catch (dateError) {
-            console.warn("שגיאה בהמרת תאריך:", dateError)
-            formattedBirthDate = ""
-          }
-        }
-
-        // איפוס הטופס עם הנתונים החדשים
-        const formData = {
-          matchmakerName: serverData.matchmakerName || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-          idNumber: serverData.idNumber || "",
-          birthDate: formattedBirthDate,
-          email: serverData.email || user.username || "",
-          gender: serverData.gender || "female",
-          city: serverData.city || "",
-          address: serverData.address || "",
-          mobilePhone: serverData.mobilePhone || "",
-          landlinePhone: serverData.landlinePhone || "",
-          phoneType: serverData.phoneType || "",
-          personalClub: serverData.personalClub || "",
-          community: serverData.community || "",
-          occupation: serverData.occupation || "",
-          previousWorkplaces: serverData.previousWorkplaces || "",
-          isSeminarGraduate: Boolean(serverData.isSeminarGraduate),
-          hasChildrenInShidduchim: Boolean(serverData.hasChildrenInShidduchim),
-          experienceInShidduchim: serverData.experienceInShidduchim || "",
-          lifeSkills: serverData.lifeSkills || "",
-          yearsInShidduchim: Number(serverData.yearsInShidduchim) || 0,
-          isInternalMatchmaker: Boolean(serverData.isInternalMatchmaker),
-          printingNotes: serverData.printingNotes || "",
-        }
-
-        reset(formData)
-        console.log("טעינת נתונים הושלמה בהצלחה")
-      }
-    } catch (apiError: any) {
-      console.error("שגיאת API בטעינת נתוני שדכנית:", apiError)
-
-      // אם לא נמצאה שדכנית (404), זה משתמש חדש
-      if (apiError.response?.status === 404) {
-        console.log("לא נמצאו נתוני שדכנית - זה משתמש חדש")
-        setIsNewMatchmaker(true)
-
-        // מילוי פרטים בסיסיים למשתמש חדש
-        const basicData = {
-          matchmakerName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
-          email: user.username || "",
-          gender: "female",
-          idNumber: "",
-          birthDate: "",
-          city: "",
-          address: "",
-          mobilePhone: "",
-          landlinePhone: "",
-          phoneType: "",
-          personalClub: "",
-          community: "",
-          occupation: "",
-          previousWorkplaces: "",
-          isSeminarGraduate: false,
-          hasChildrenInShidduchim: false,
-          experienceInShidduchim: "",
-          lifeSkills: "",
-          yearsInShidduchim: 0,
-          isInternalMatchmaker: false,
-          printingNotes: "",
-        }
-
-        reset(basicData)
-      } else if (apiError.response?.status === 401) {
-        setError("אין הרשאה לגשת לנתונים. אנא התחבר מחדש.")
-      } else if (apiError.code === "ECONNABORTED") {
-        setError("תם הזמן הקצוב לחיבור. אנא נסה שוב.")
-      } else if (apiError.code === "ERR_NETWORK") {
-        setError("שגיאת רשת. אנא בדוק את החיבור לאינטרנט.")
+        setExistingData(response.data)
+        await populateFormWithData(response.data)
+        console.log("✅ טופס מולא בנתונים קיימים")
       } else {
-        setError(`שגיאה בטעינת נתונים: ${apiError.response?.status || apiError.code} - ${apiError.message}`)
+        console.log("⚠️ לא התקבלו נתונים מהשרת")
+        loadBasicUserData()
+      }
+    } catch (error: any) {
+      console.log("❌ שגיאה בטעינת נתוני שדכנית:", error)
+
+      if (axios.isAxiosError(error)) {
+        console.log("סטטוס שגיאה:", error.response?.status)
+        console.log("הודעת שגיאה:", error.response?.data)
+
+        if (error.response?.status === 404) {
+          console.log("✅ שדכנית לא נמצאה - זה משתמש חדש")
+          setIsNewMatchmaker(true)
+          loadBasicUserData()
+        } else if (error.response?.status === 401) {
+          console.log("❌ שגיאת הרשאה")
+          setError("אין הרשאה לגשת לנתונים. אנא התחבר מחדש.")
+          loadBasicUserData()
+        } else {
+          console.log("❌ שגיאה אחרת:", error.response?.status)
+          setError(`שגיאה בטעינת נתונים: ${error.response?.status}`)
+          loadBasicUserData()
+        }
+      } else {
+        console.log("❌ שגיאה כללית:", error.message)
+        setError("שגיאה בחיבור לשרת")
+        loadBasicUserData()
       }
     } finally {
       setInitialLoading(false)
     }
   }
 
+  // פונקציה למילוי הטופס עם נתונים קיימים
+  const populateFormWithData = async (serverData: any) => {
+    console.log("ממלא טופס עם נתונים:", serverData)
+
+    // המרת תאריך לפורמט נכון
+    let formattedBirthDate = ""
+    if (serverData.birthDate) {
+      try {
+        const date = new Date(serverData.birthDate)
+        if (!isNaN(date.getTime())) {
+          formattedBirthDate = date.toISOString().split("T")[0]
+        }
+      } catch (dateError) {
+        console.warn("שגיאה בהמרת תאריך:", dateError)
+      }
+    }
+
+    // הכנת נתונים לטופס
+    const formData = {
+      matchmakerName:
+        serverData.matchmakerName ||
+        serverData.MatchmakerName ||
+        `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+      idNumber: serverData.idNumber || serverData.IdNumber || "",
+      birthDate: formattedBirthDate,
+      email: serverData.email || serverData.Email || user?.username || "",
+      gender: serverData.gender || serverData.Gender || "female",
+      city: serverData.city || serverData.City || "",
+      address: serverData.address || serverData.Address || "",
+      mobilePhone: serverData.mobilePhone || serverData.MobilePhone || "",
+      landlinePhone: serverData.landlinePhone || serverData.LandlinePhone || "",
+      phoneType: serverData.phoneType || serverData.PhoneType || "",
+      personalClub: serverData.personalClub || serverData.PersonalClub || "",
+      community: serverData.community || serverData.Community || "",
+      occupation: serverData.occupation || serverData.Occupation || "",
+      previousWorkplaces: serverData.previousWorkplaces || serverData.PreviousWorkplaces || "",
+      isSeminarGraduate: Boolean(serverData.isSeminarGraduate || serverData.IsSeminarGraduate),
+      hasChildrenInShidduchim: Boolean(serverData.hasChildrenInShidduchim || serverData.HasChildrenInShidduchim),
+      experienceInShidduchim: serverData.experienceInShidduchim || serverData.ExperienceInShidduchim || "",
+      lifeSkills: serverData.lifeSkills || serverData.LifeSkills || "",
+      yearsInShidduchim: Number(serverData.yearsInShidduchim || serverData.YearsInShidduchim) || 0,
+      isInternalMatchmaker: Boolean(serverData.isInternalMatchmaker || serverData.IsInternalMatchmaker),
+      printingNotes: serverData.printingNotes || serverData.PrintingNotes || "",
+    }
+
+    console.log("נתוני טופס מוכנים:", formData)
+    reset(formData)
+  }
+
+  // פונקציה לטעינת נתונים בסיסיים מה-context
+  const loadBasicUserData = () => {
+    console.log("טוען נתונים בסיסיים מה-context:", user)
+
+    if (!user) {
+      console.log("אין נתוני משתמש ב-context")
+      return
+    }
+
+    const basicData = {
+      matchmakerName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      email: user.username || "",
+      gender: "female",
+      idNumber: "",
+      birthDate: "",
+      city: "",
+      address: "",
+      mobilePhone: "",
+      landlinePhone: "",
+      phoneType: "",
+      personalClub: "",
+      community: "",
+      occupation: "",
+      previousWorkplaces: "",
+      isSeminarGraduate: false,
+      hasChildrenInShidduchim: false,
+      experienceInShidduchim: "",
+      lifeSkills: "",
+      yearsInShidduchim: 0,
+      isInternalMatchmaker: false,
+      printingNotes: "",
+    }
+
+    console.log("נתונים בסיסיים:", basicData)
+    reset(basicData)
+  }
+
   // שליחת הטופס - מתוקנת
   const onSubmit = async (data: any) => {
-    console.log("מתחיל שליחת נתוני שדכנית", data)
+    console.log("🚀 מתחיל שליחת נתוני שדכנית", data)
 
     if (!user?.id || !token) {
-      console.error("חסרים פרטי משתמש או טוקן לשליחת נתונים")
       setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
       return
     }
@@ -342,31 +346,30 @@ const MatchMakerForm = () => {
         FirstName: user.firstName || "",
         LastName: user.lastName || "",
         Username: user.username || data.email || "",
-        Password: serverPassword  || "", // שימוש בסיסמא מהשרת או מהמשתמש
+        Password: existingData?.password  || "defaultPassword123", // סיסמא זמנית
       }
 
-      console.log("שולח נתוני שדכנית:", dataToSend)
+      console.log("📤 שולח נתוני שדכנית:", dataToSend)
 
       let response
       if (isNewMatchmaker) {
-        // יצירת שדכנית חדשה
-        console.log("יוצר שדכנית חדשה")
+        console.log("🆕 יוצר שדכנית חדשה")
         response = await axios.post(`${ApiUrl}/MatchMaker`, dataToSend, {
           headers,
-          timeout: 15000,
+          timeout: 20000,
         })
       } else {
-        // עדכון שדכנית קיימת
-        console.log("מעדכן שדכנית קיימת")
+        console.log("🔄 מעדכן שדכנית קיימת")
         response = await axios.put(`${ApiUrl}/MatchMaker/${user.id}`, dataToSend, {
           headers,
-          timeout: 15000,
+          timeout: 20000,
         })
       }
 
-      console.log("נתונים נשמרו בהצלחה:", response.data)
+      console.log("✅ נתונים נשמרו בהצלחה:", response.data)
       setSuccess(true)
       setIsNewMatchmaker(false)
+      setExistingData(response.data)
 
       // הסתרת הודעת ההצלחה אחרי 3 שניות ומעבר לעמוד השדכניות
       setTimeout(() => {
@@ -374,28 +377,36 @@ const MatchMakerForm = () => {
         navigate("/matchmakers")
       }, 3000)
     } catch (apiError: any) {
-      console.error("שגיאת API בשליחת נתוני שדכנית:", apiError)
+      console.error("❌ שגיאת API בשליחת נתוני שדכנית:", apiError)
 
       let errorMessage = "שגיאה בעדכון נתונים. אנא נסה שנית."
 
-      if (apiError.response?.data?.errors) {
-        const errorMessages = []
-        for (const field in apiError.response.data.errors) {
-          errorMessages.push(`${field}: ${apiError.response.data.errors[field].join(", ")}`)
+      if (axios.isAxiosError(apiError)) {
+        console.log("פרטי שגיאה:", {
+          status: apiError.response?.status,
+          data: apiError.response?.data,
+          message: apiError.message,
+        })
+
+        if (apiError.response?.data?.errors) {
+          const errorMessages = []
+          for (const field in apiError.response.data.errors) {
+            errorMessages.push(`${field}: ${apiError.response.data.errors[field].join(", ")}`)
+          }
+          errorMessage = `שגיאות ולידציה: ${errorMessages.join("; ")}`
+        } else if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message
+        } else if (apiError.response?.status === 401) {
+          errorMessage = "אין הרשאה לבצע פעולה זו. אנא התחבר מחדש."
+        } else if (apiError.response?.status === 400) {
+          errorMessage = "נתונים לא תקינים. אנא בדוק את הפרטים ונסה שוב."
+        } else if (apiError.response?.status === 500) {
+          errorMessage = "שגיאת שרת פנימית. אנא נסה שוב מאוחר יותר."
+        } else if (apiError.code === "ECONNABORTED") {
+          errorMessage = "תם הזמן הקצוב לחיבור. אנא נסה שוב."
+        } else if (apiError.code === "ERR_NETWORK") {
+          errorMessage = "שגיאת רשת. אנא בדוק את החיבור לאינטרנט."
         }
-        errorMessage = `שגיאות ולידציה: ${errorMessages.join("; ")}`
-      } else if (apiError.response?.data?.message) {
-        errorMessage = apiError.response.data.message
-      } else if (apiError.response?.status === 401) {
-        errorMessage = "אין הרשאה לבצע פעולה זו. אנא התחבר מחדש."
-      } else if (apiError.response?.status === 400) {
-        errorMessage = "נתונים לא תקינים. אנא בדוק את הפרטים ונסה שוב."
-      } else if (apiError.code === "ECONNABORTED") {
-        errorMessage = "תם הזמן הקצוב לחיבור. אנא נסה שוב."
-      } else if (apiError.code === "ERR_NETWORK") {
-        errorMessage = "שגיאת רשת. אנא בדוק את החיבור לאינטרנט."
-      } else if (apiError.message) {
-        errorMessage = apiError.message
       }
 
       setError(errorMessage)
@@ -414,9 +425,13 @@ const MatchMakerForm = () => {
 
   // useEffect לטעינת נתונים כשהמשתמש או הטוקן משתנים
   useEffect(() => {
+    console.log("🔄 useEffect - user:", user?.id, "token:", !!token)
+
     if (user && token) {
-      loadInitialUserData()
+      fetchMatchmakerData()
     } else {
+      console.log("⚠️ אין משתמש או טוקן - טוען נתונים בסיסיים")
+      loadBasicUserData()
       setInitialLoading(false)
     }
   }, [user, token])
@@ -450,6 +465,15 @@ const MatchMakerForm = () => {
         <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: "center", mb: 4, color: "#333" }}>
           {isNewMatchmaker ? "טופס רישום שדכנית חדשה" : "עדכון פרטי שדכנית"}
         </Typography>
+
+        {/* הודעת מצב */}
+        <Box sx={{ mb: 3, textAlign: "center" }}>
+          <Alert severity={isNewMatchmaker ? "info" : "success"} sx={{ display: "inline-flex" }}>
+            {isNewMatchmaker
+              ? "🆕 זהו פרופיל חדש - אנא מלא את כל הפרטים הנדרשים"
+              : "✅ נטענו פרטים קיימים - ניתן לעדכן לפי הצורך"}
+          </Alert>
+        </Box>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* פרטים אישיים */}
@@ -847,7 +871,7 @@ const MatchMakerForm = () => {
         </Snackbar>
 
         {/* הודעת שגיאה */}
-        <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError}>
+        <Snackbar open={!!error} autoHideDuration={8000} onClose={handleCloseError}>
           <Alert onClose={handleCloseError} severity="error" sx={{ width: "100%" }}>
             {error}
           </Alert>
