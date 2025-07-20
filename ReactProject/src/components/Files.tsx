@@ -105,7 +105,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {/* הצגת קובץ שהועלה - למעלה */}
+      {/* הצגת קובץ שהועלה - למעלה באמצע */}
       {uploadedFile && (
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
           {/* Chip עם סימן וי */}
@@ -207,6 +207,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
                 color: "#8c5319",
               },
               cursor: "pointer",
+              border: "none",
+              background: "none",
+              padding: 0,
             }}
           >
             {uploadedFile.fileName}
