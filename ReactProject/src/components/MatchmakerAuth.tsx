@@ -57,8 +57,8 @@ const MatchmakerAuth = () => {
     pendingMatches: 0,
   })
 
-  // בדיקה אם אנחנו בעמוד הבית או בעמוד אחר
-  const isHomePage = location.pathname === "/" || location.pathname === ""
+  // בדיקה אם יש route פעיל (לא עמוד הבית)
+  const hasActiveRoute = location.pathname !== "/" && location.pathname !== "" && location.pathname !== "/matchmaker"
 
   useEffect(() => {
     if (user?.firstName) {
@@ -206,7 +206,7 @@ const MatchmakerAuth = () => {
       </AppBar>
 
       {/* Outlet Container - מוצג מעל התוכן כשיש route פעיל */}
-      {!isHomePage && (
+      {hasActiveRoute && (
         <Box
           sx={{
             position: "fixed",
@@ -364,7 +364,8 @@ const MatchmakerAuth = () => {
                     </StyledButton>
                     <StyledButton
                       onClick={() => navigate("login/matchmaker")}
-                      startIcon={<LoginIcon />}
+                      start
+                      Icon={<LoginIcon />}
                       sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
                     >
                       כניסה למערכת
@@ -421,10 +422,11 @@ const MatchmakerAuth = () => {
                 </Box>
               </Box>
             )}
+
             <Divider sx={{ my: 4, backgroundColor: colors.primary, opacity: 0.3 }} />
 
-            {/* Outlet עבור עמוד הבית - אם יש צורך */}
-            {isHomePage && <Outlet />}
+            {/* Outlet עבור עמוד הבית - רק אם אין route פעיל */}
+            {!hasActiveRoute && <Outlet />}
           </Paper>
         </motion.div>
       </Box>

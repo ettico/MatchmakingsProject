@@ -71,6 +71,9 @@ import {
   Refresh,
   VerifiedUser,
   PendingActions,
+  Download,
+  Image as ImageIcon,
+  Description,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note, FamilyDetails, Contact } from "../Models"
@@ -383,7 +386,7 @@ const CandidatesPage = () => {
     profileCompletion: "all",
   })
 
-  // פונקציה מתוקנת לבדיקת השלמת פרופיל - מתירנית יותר
+  // פונקציה מתוקנת לבדיקת השלמת פרופיל - פחות מחמירה
   const isProfileComplete = (candidate: Candidate): boolean => {
     try {
       if (!candidate) return false
@@ -399,46 +402,8 @@ const CandidatesPage = () => {
         candidate.phone?.trim()
       )
 
-      // אם אין מידע בסיסי, הפרופיל לא מלא
-      if (!hasBasicInfo) {
-        return false
-      }
-
-      // שדות נוספים שמעידים על פרופיל מפורט
-      const hasDetailedInfo = !!(
-        candidate.class?.trim() ||
-        candidate.backGround?.trim() ||
-        candidate.generalAppearance?.trim() ||
-        candidate.importantTraitsInMe?.trim()
-      )
-
-      // שדות ספציפיים לפי מגדר
-      let hasRoleSpecificInfo = false
-      if (candidate.role === "Male") {
-        const maleCandidate = candidate as MaleType
-        hasRoleSpecificInfo = !!(
-          maleCandidate.bigYeshiva?.trim() ||
-          maleCandidate.smallYeshiva?.trim() ||
-          maleCandidate.occupation?.trim() ||
-          maleCandidate.kibbutz?.trim()
-        )
-      } else if (candidate.role === "Women") {
-        const femaleCandidate = candidate as Women
-        hasRoleSpecificInfo = !!(
-          femaleCandidate.seminar?.trim() ||
-          femaleCandidate.highSchool?.trim() ||
-          femaleCandidate.currentOccupation?.trim() ||
-          femaleCandidate.studyPath?.trim()
-        )
-      }
-
-      // שדות ציפיות
-      const hasExpectations = !!(candidate.ageFrom || candidate.ageTo || candidate.club?.trim())
-
-      // פרופיל נחשב מלא אם יש מידע בסיסי ולפחות אחד מהקטגוריות האחרות
-      const isComplete = hasBasicInfo && (hasDetailedInfo || hasRoleSpecificInfo || hasExpectations)
-
-      return isComplete
+      // אם יש מידע בסיסי, הפרופיל נחשב מלא
+      return hasBasicInfo
     } catch (error) {
       console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
       return false
@@ -449,13 +414,11 @@ const CandidatesPage = () => {
   const fetchCandidates = async () => {
     setLoading(true)
     setError(null)
-
     if (!token) {
       setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
       setLoading(false)
       return
     }
-
     try {
       console.log("מנסה להתחבר לשרת עם טוקן:", token.substring(0, 20) + "...")
       const headers = getAuthHeaders()
@@ -494,21 +457,17 @@ const CandidatesPage = () => {
       const sortedCandidates = allCandidates.sort((a, b) => {
         const aComplete = isProfileComplete(a)
         const bComplete = isProfileComplete(b)
-
         // מועמדים עם פרופיל מלא קודם
         if (aComplete && !bComplete) return -1
         if (!aComplete && bComplete) return 1
-
         // אם שניהם באותו סטטוס השלמה, מיין לפי ID (החדשים קודם)
         return b.id - a.id
       })
 
       setCandidates(sortedCandidates)
       console.log("סה״כ מועמדים:", sortedCandidates.length)
-
       const completeProfiles = sortedCandidates.filter(isProfileComplete)
       const incompleteProfiles = sortedCandidates.filter((c) => !isProfileComplete(c))
-
       console.log("מועמדים עם פרופיל מלא:", completeProfiles.length)
       console.log("מועמדים עם פרופיל חלקי:", incompleteProfiles.length)
 
@@ -626,66 +585,25 @@ const CandidatesPage = () => {
     setContacts([])
   }
 
-  // עדכון סטטוס מועמד - מתוקן לשלוח רק את השדות הנדרשים
+  // עדכון סטטוס מועמד - מתוקן
   const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
     if (!selectedCandidate || !token) return
-
     try {
       const endpoint = role === "Male" ? "Male" : "Women"
       const headers = getAuthHeaders()
-
       console.log(`מעדכן סטטוס מועמד ${id} ל-${isAvailable}`)
 
-      // יצירת אובייקט עדכון עם השדות הנדרשים בלבד
+      // יצירת אובייקט עדכון עם כל השדות הנדרשים
       const updateData = {
-        id: selectedCandidate.id,
-        firstName: selectedCandidate.firstName || "",
-        lastName: selectedCandidate.lastName || "",
-        age: selectedCandidate.age || 0,
-        city: selectedCandidate.city || "",
-        height: selectedCandidate.height || 0,
-        email: selectedCandidate.email || "",
-        phone: selectedCandidate.phone || "",
+        ...selectedCandidate,
         statusVacant: isAvailable, // השדה שאנחנו רוצים לעדכן
-        class: selectedCandidate.class || "",
-        backGround: selectedCandidate.backGround || "",
-        generalAppearance: selectedCandidate.generalAppearance || "",
-        importantTraitsInMe: selectedCandidate.importantTraitsInMe || "",
-        ageFrom: selectedCandidate.ageFrom || 0,
-        ageTo: selectedCandidate.ageTo || 0,
-        club: selectedCandidate.club || "",
-        country: selectedCandidate.country || "",
-        address: selectedCandidate.address || "",
-      }
-
-      // הוספת שדות ספציפיים לפי מגדר
-      if (role === "Male") {
-        const maleCandidate = selectedCandidate as MaleType
-        Object.assign(updateData, {
-          bigYeshiva: maleCandidate.bigYeshiva || "",
-          smallYeshiva: maleCandidate.smallYeshiva || "",
-          kibbutz: maleCandidate.kibbutz || "",
-          occupation: maleCandidate.occupation || "",
-          importantTraitsIAmLookingFor: maleCandidate.importantTraitsIAmLookingFor || "",
-        })
-      } else {
-        const femaleCandidate = selectedCandidate as Women
-        Object.assign(updateData, {
-          highSchool: femaleCandidate.highSchool || "",
-          seminar: femaleCandidate.seminar || "",
-          studyPath: femaleCandidate.studyPath || "",
-          currentOccupation: femaleCandidate.currentOccupation || "",
-          importantTraitsIMLookingFor: femaleCandidate.importantTraitsIMLookingFor || "",
-        })
       }
 
       console.log("נשלח לשרת:", updateData)
-
       const response = await axios.put(`${ApiUrl}/${endpoint}/${id}`, updateData, {
         headers,
         timeout: 10000,
       })
-
       console.log("תגובת השרת:", response.status, response.data)
 
       // עדכון ברשימה המקומית
@@ -716,6 +634,13 @@ const CandidatesPage = () => {
         }
       }
     }
+  }
+
+  // פונקציה להורדת קובץ
+  const downloadFile = (fileName: string) => {
+    if (!fileName) return
+    const downloadUrl = `${ApiUrl}/files/download/${fileName}`
+    window.open(downloadUrl, "_blank")
   }
 
   // החלפת לשוניות בדיאלוג פרטים
@@ -888,7 +813,6 @@ const CandidatesPage = () => {
         console.log("מועמד לא תקין:", candidate)
         return false
       }
-
       // Filter by gender tab
       if (genderTab === "male" && candidate.role !== "Male") return false
       if (genderTab === "female" && candidate.role !== "Women") return false
@@ -911,18 +835,15 @@ const CandidatesPage = () => {
           candidate.occupation || "",
           candidate.backGround || "",
         ]
-
         if (candidate.role === "Women") {
           searchFields.push((candidate as Women).currentOccupation || "")
           searchFields.push((candidate as Women).seminar || "")
           searchFields.push((candidate as Women).highSchool || "")
         }
-
         if (candidate.role === "Male") {
           searchFields.push((candidate as MaleType).bigYeshiva || "")
           searchFields.push((candidate as MaleType).smallYeshiva || "")
         }
-
         const matchesSearch = searchFields.some((field) => field.toLowerCase().includes(searchLower))
         if (!matchesSearch) return false
       }
@@ -1315,7 +1236,6 @@ const CandidatesPage = () => {
                 />
               </Box>
             </Box>
-
             {filteredCandidates.length === 0 ? (
               <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
                 <Typography variant="h6">לא נמצאו מועמדים מתאימים</Typography>
@@ -1361,7 +1281,7 @@ const CandidatesPage = () => {
                             position: "relative",
                           }}
                         >
-                          {candidate.photoName ? (
+                          {candidate.photoName && candidate.photoUrl ? (
                             <img
                               src={candidate.photoUrl || "/placeholder.svg"}
                               alt={`${candidate.firstName}'s profile`}
@@ -1371,6 +1291,11 @@ const CandidatesPage = () => {
                                 borderRadius: "50%",
                                 objectFit: "cover",
                                 border: `3px solid ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                              }}
+                              onError={(e) => {
+                                // אם התמונה לא נטענת, הצג אווטר
+                                const target = e.target as HTMLImageElement
+                                target.style.display = "none"
                               }}
                             />
                           ) : candidate.role === "Male" ? (
@@ -1495,7 +1420,19 @@ const CandidatesPage = () => {
                 </DialogTitle>
                 <Box sx={{ p: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   {/* תמונת פרופיל */}
-                  {selectedCandidate.role === "Male" ? (
+                  {selectedCandidate.photoName && selectedCandidate.photoUrl ? (
+                    <img
+                      src={selectedCandidate.photoUrl || "/placeholder.svg"}
+                      alt={`${selectedCandidate.firstName}'s profile`}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                      }}
+                    />
+                  ) : selectedCandidate.role === "Male" ? (
                     <Avatar
                       sx={{
                         width: 100,
@@ -1529,6 +1466,31 @@ const CandidatesPage = () => {
                       color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
                     />
                   </Box>
+
+                  {/* כפתורי הורדה */}
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<ImageIcon />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                      >
+                        הורד תמונה
+                      </Button>
+                    )}
+                    {selectedCandidate.tzFormName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Description />}
+                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
+                      >
+                        הורד תעודת זהות
+                      </Button>
+                    )}
+                  </Box>
+
                   <Box sx={{ width: "100%" }}>
                     <Tabs
                       value={tabValue}
@@ -1754,7 +1716,20 @@ const CandidatesPage = () => {
                     <Close />
                   </IconButton>
                   {/* תמונת פרופיל */}
-                  {selectedCandidate.role === "Male" ? (
+                  {selectedCandidate.photoName && selectedCandidate.photoUrl ? (
+                    <img
+                      src={selectedCandidate.photoUrl || "/placeholder.svg"}
+                      alt={`${selectedCandidate.firstName}'s profile`}
+                      style={{
+                        width: 150,
+                        height: 150,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
+                        marginBottom: theme.spacing(2),
+                      }}
+                    />
+                  ) : selectedCandidate.role === "Male" ? (
                     <ProfileAvatar sx={{ bgcolor: theme.palette.primary.main }}>
                       {(selectedCandidate.firstName || "M").charAt(0)}
                     </ProfileAvatar>
@@ -1778,6 +1753,33 @@ const CandidatesPage = () => {
                       color={isProfileComplete(selectedCandidate) ? "primary" : "warning"}
                     />
                   </Box>
+
+                  {/* כפתורי הורדה */}
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                        fullWidth
+                      >
+                        הורד תמונה
+                      </Button>
+                    )}
+                    {selectedCandidate.photoName && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => downloadFile(selectedCandidate.photoName!)}
+                        fullWidth
+                      >
+                        הורד תעודת זהות
+                      </Button>
+                    )}
+                  </Box>
+
                   <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
                     {/* טקסט מעל הכפתור */}
                     <Typography
