@@ -137,7 +137,7 @@ const MatchMakerForm = () => {
     },
   })
 
-  // API URL
+  // API URL - תיקון הכתובת
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
 
   // פונקציה לקבלת headers עם אימות
@@ -162,15 +162,20 @@ const MatchMakerForm = () => {
     }
 
     console.log("מנסה לטעון נתוני שדכנית עם ID:", user.id)
+    console.log("API URL:", ApiUrl)
     console.log("טוקן:", token.substring(0, 20) + "...")
 
     try {
       const headers = getAuthHeaders()
       console.log("Headers:", headers)
 
+      // וידוא שה-URL נכון
+      const fullUrl = `${ApiUrl}/MatchMaker/${user.id}`
+      console.log("כתובת מלאה:", fullUrl)
+
       // ניסיון ראשון - טעינה מ-MatchMaker endpoint
       console.log("מנסה לטעון מ-MatchMaker endpoint...")
-      const response = await axios.get(`${ApiUrl}/MatchMaker/${user.id}`, {
+      const response = await axios.get(fullUrl, {
         headers,
         timeout: 15000,
       })
@@ -192,6 +197,7 @@ const MatchMakerForm = () => {
       if (axios.isAxiosError(error)) {
         console.log("סטטוס שגיאה:", error.response?.status)
         console.log("הודעת שגיאה:", error.response?.data)
+        console.log("כתובת שנשלחה:", error.config?.url)
 
         if (error.response?.status === 404) {
           console.log("✅ שדכנית לא נמצאה - זה משתמש חדש")
@@ -305,6 +311,7 @@ const MatchMakerForm = () => {
   // שליחת הטופס - מתוקנת
   const onSubmit = async (data: any) => {
     console.log("🚀 מתחיל שליחת נתוני שדכנית", data)
+    console.log("API URL:", ApiUrl)
 
     if (!user?.id || !token) {
       setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
@@ -352,15 +359,20 @@ const MatchMakerForm = () => {
       console.log("📤 שולח נתוני שדכנית:", dataToSend)
 
       let response
+      let fullUrl
       if (isNewMatchmaker) {
         console.log("🆕 יוצר שדכנית חדשה")
-        response = await axios.post(`${ApiUrl}/MatchMaker`, dataToSend, {
+        fullUrl = `${ApiUrl}/MatchMaker`
+        console.log("כתובת יצירה:", fullUrl)
+        response = await axios.post(fullUrl, dataToSend, {
           headers,
           timeout: 20000,
         })
       } else {
         console.log("🔄 מעדכן שדכנית קיימת")
-        response = await axios.put(`${ApiUrl}/MatchMaker/${user.id}`, dataToSend, {
+        fullUrl = `${ApiUrl}/MatchMaker/${user.id}`
+        console.log("כתובת עדכון:", fullUrl)
+        response = await axios.put(fullUrl, dataToSend, {
           headers,
           timeout: 20000,
         })
@@ -378,6 +390,7 @@ const MatchMakerForm = () => {
       }, 3000)
     } catch (apiError: any) {
       console.error("❌ שגיאת API בשליחת נתוני שדכנית:", apiError)
+      console.log("כתובת שנשלחה:", apiError.config?.url)
 
       let errorMessage = "שגיאה בעדכון נתונים. אנא נסה שנית."
 
@@ -386,6 +399,7 @@ const MatchMakerForm = () => {
           status: apiError.response?.status,
           data: apiError.response?.data,
           message: apiError.message,
+          url: apiError.config?.url,
         })
 
         if (apiError.response?.data?.errors) {
