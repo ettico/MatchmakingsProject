@@ -68,7 +68,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess }) => {
     try {
       // שלב 1: קבלת presigned URL
       console.log("מבקש presigned URL...")
-      const response = await apiClient.get("/files/presigned-url", {
+      const response = await apiClient.get(`${API_BASE_URL}/files/presigned-url`, {
         params: {
           fileName: file.name,
           contentType: file.type,
