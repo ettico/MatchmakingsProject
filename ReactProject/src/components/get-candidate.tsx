@@ -398,8 +398,10 @@ const CandidatesPage = () => {
       const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0||false
 
       return hasDetailedInfo
-    } catch (error) {
+    } catch (error:any) {
       console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
+      console.log(error.response.data);
+      
       return false
     }
   }
