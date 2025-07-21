@@ -98,25 +98,37 @@ namespace ApiMatchMaker.Controllers
                 return Conflict("User is not valid");
             }
 
-            var modelD = _mapper.Map<BaseUserDTO>(model);
-            //modelD.UserType=model.Role;
-            var existingUser = await _userService.AddUserAsync(modelD);
-            if (existingUser == null)
-                return BadRequest("User could not be created.");
-
-            // Check if the role exists
-            int roleId = await _roleRpository.GetIdByRoleAsync(model.Role);
-            if (roleId == -1)
+            try
             {
-                return BadRequest("Role not found.");
-            }
+                // כאן אנחנו קוראים ל-RegisterUser שיוצר את היורש בהתאם
+                var newUser = await _authService.RegisterUser(model);
+                if (newUser == null)
+                    return BadRequest("User could not be created.");
 
-            var userRole = await _userRoleService.AddAsync(model.Role, existingUser.Id);
-            if (userRole == null)
-                return BadRequest("Error assigning role to user.");
-            //existingUser.Role = model.RoleName;
-            var token = _authService.GenerateToken(modelD);
-            return Ok(new { Token = token, User = existingUser });
+                // משיגים את מזהה התפקיד לפי שם
+                int roleId = await _roleRpository.GetIdByRoleAsync(model.Role);
+                if (roleId == -1)
+                {
+                    return BadRequest("Role not found.");
+                }
+
+                // מוסיפים את התפקיד למשתמש
+                var userRole = await _userRoleService.AddAsync(model.Role, newUser.Id);
+                if (userRole == null)
+                    return BadRequest("Error assigning role to user.");
+
+                // ממפים ל-DTO לצורך יצירת טוקן
+                var userDto = _mapper.Map<BaseUserDTO>(newUser);
+
+                // מייצרים טוקן עם היורש הנכון
+                var token = _authService.GenerateToken(userDto);
+
+                return Ok(new { Token = token, User = newUser });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
     }
