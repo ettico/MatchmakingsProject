@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect, useContext } from "react"
 import { useForm } from "react-hook-form"
 import {
@@ -20,8 +19,6 @@ import {
   FormHelperText,
   Avatar,
   Divider,
-//   useMediaQuery,
-//   useTheme,
   Stepper,
   Step,
   StepLabel,
@@ -62,16 +59,13 @@ type FormValues = {
 }
 
 export default function SignIn() {
-//   const theme = useTheme()
-//   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-  const {  login } = useContext(userContext)
+  const { login } = useContext(userContext)
   const { userType } = useParams()
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     setValue,
-    // watch,
   } = useForm<FormValues>({
     mode: "onChange",
   })
@@ -82,9 +76,8 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [activeStep] = useState(0)
 
-    const ApiUrl=process.env.REACT_APP_API_URL|| "https://matchmakingsprojectserver.onrender.com/api"
+  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
-//   const selectedRole = watch("role")
   const steps = ["פרטים אישיים", "אימות", "סיום"]
 
   useEffect(() => {
@@ -96,30 +89,70 @@ export default function SignIn() {
   const onSubmit = async (data: FormValues) => {
     setLoading(true)
     setError("")
+    setSuccessMessage("")
 
     try {
-      const response = await axios.post(`${ApiUrl}/Auth/register`, data)
-      console.log("תגובת הרשמה:", response.data)
+      console.log("שולח נתוני הרשמה:", data)
 
-      // שמירת נתוני המשתמש בלוקל סטורג'
-      localStorage.setItem("user", JSON.stringify(response.data))
+      // שלב 1: הרשמה
+      const registerResponse = await axios.post(`${ApiUrl}/Auth/register`, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: 10000, // 10 שניות timeout
+      })
 
-      // התחברות אוטומטית לאחר הרשמה
-      await login(data.username, data.password)
+      console.log("תגובת הרשמה:", registerResponse.data)
 
-      setSuccessMessage("הנתונים נשמרו בהצלחה✔️")
+      // שלב 2: התחברות אוטומטית
+      console.log("מנסה התחברות אוטומטית...")
 
-      // הפניה לדף המתאים לאחר 2 שניות
-      setTimeout(() => {
-        if (data.role === "MatchMaker") {
-          navigate("/matchmaker-auth/post-details-matchmaker")
-        } else {
-          navigate("/candidate-auth/post-details-auth")
-        }
-      }, 2000)
-    } catch (err) {
+      try {
+        await login(data.username, data.password)
+        console.log("התחברות אוטומטית הצליחה")
+
+        setSuccessMessage("הרשמה והתחברות הושלמו בהצלחה! ✅")
+
+        // הפניה לדף המתאים לאחר 1.5 שניות
+        setTimeout(() => {
+          if (data.role === "MatchMaker") {
+            navigate("/matchmaker-auth/post-details-matchmaker")
+          } else {
+            navigate("/candidate-auth/post-details-auth")
+          }
+        }, 1500)
+      } catch (loginError) {
+        console.error("שגיאה בהתחברות אוטומטית:", loginError)
+        setSuccessMessage("ההרשמה הושלמה בהצלחה! ✅")
+
+        // אם ההתחברות האוטומטית נכשלה, הפנה לדף התחברות
+        setTimeout(() => {
+          if (data.role === "MatchMaker") {
+            navigate("/matchmaker-auth/login/matchmaker")
+          } else {
+            navigate("/candidate-auth/login/candidate")
+          }
+        }, 2000)
+      }
+    } catch (err: any) {
       console.error("שגיאה בהרשמה:", err)
-      setError("שגיאה בהרשמה. אנא נסו שנית או פנו לתמיכה.")
+
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 400) {
+          const errorMessage = err.response?.data?.message || err.response?.data || "נתונים לא תקינים"
+          setError(`שגיאה בהרשמה: ${errorMessage}`)
+        } else if (err.response?.status === 409) {
+          setError("משתמש עם כתובת מייל זו כבר קיים במערכת")
+        } else if (err.response?.status === 500) {
+          setError("שגיאת שרת. אנא נסו שוב מאוחר יותר")
+        } else if (err.code === "ECONNABORTED") {
+          setError("תם הזמן הקצוב לחיבור. אנא נסו שוב")
+        } else {
+          setError(`שגיאה בהרשמה: ${err.response?.status || err.code}`)
+        }
+      } else {
+        setError("שגיאה לא צפויה. אנא נסו שוב או פנו לתמיכה")
+      }
     } finally {
       setLoading(false)
     }
@@ -143,17 +176,7 @@ export default function SignIn() {
       }}
     >
       {/* Background Animation */}
-      <Box
-        // sx={{
-        //   position: "absolute",
-        //   top: 0,
-        //   left: 0,
-        //   right: 0,
-        //   bottom: 0,
-        //   overflow: "hidden",
-        //   zIndex: 0,
-        // }}
-      >
+      <Box>
         {Array.from({ length: 30 }).map((_, index) => (
           <Box
             key={index}
@@ -345,7 +368,13 @@ export default function SignIn() {
               />
 
               <TextField
-                {...register("username", { required: "שם משתמש הוא שדה חובה" })}
+                {...register("username", {
+                  required: "מייל הוא שדה חובה",
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "כתובת מייל לא תקינה",
+                  },
+                })}
                 label="מייל"
                 type="email"
                 error={!!errors.username}
@@ -387,7 +416,13 @@ export default function SignIn() {
               />
 
               <TextField
-                {...register("password", { required: "סיסמה היא שדה חובה" })}
+                {...register("password", {
+                  required: "סיסמה היא שדה חובה",
+                  minLength: {
+                    value: 6,
+                    message: "סיסמה חייבת להכיל לפחות 6 תווים",
+                  },
+                })}
                 label="סיסמא"
                 type={showPassword ? "text" : "password"}
                 error={!!errors.password}
@@ -501,7 +536,7 @@ export default function SignIn() {
                   variant="contained"
                   fullWidth
                   disabled={loading || !isValid}
-                  startIcon={<HowToReg />}
+                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <HowToReg />}
                   sx={{
                     mt: 2,
                     py: 1.5,
@@ -521,16 +556,10 @@ export default function SignIn() {
                     },
                   }}
                 >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : "שמירה"}
+                  {loading ? "מעבד..." : "הרשמה"}
                 </Button>
               </motion.div>
             </form>
-
-            {loading && (
-              <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-                <CircularProgress sx={{ color: colors.primary }} />
-              </Box>
-            )}
 
             {error && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
