@@ -35,6 +35,9 @@ import {
   Divider,
   Tooltip,
   Badge,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material"
 import { styled, useTheme, alpha } from "@mui/material/styles"
 import {
@@ -64,6 +67,8 @@ import {
   Share,
   Favorite,
   FavoriteBorder,
+  SmartToy,
+  Comment,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note } from "../Models"
@@ -276,6 +281,8 @@ const CandidatesPage = () => {
   const [menuCandidate, setMenuCandidate] = useState<Candidate | null>(null)
   const [favorites, setFavorites] = useState<number[]>([])
   const [aiSearchLoading, setAiSearchLoading] = useState(false)
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState<number | null>(null)
+  const [candidateNotesDialog, setCandidateNotesDialog] = useState<Candidate | null>(null)
 
   // API URL
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
@@ -490,7 +497,7 @@ const CandidatesPage = () => {
     setGenderTab("all")
   }
 
-  // חיפוש AI
+  // חיפוש AI כללי
   const handleAISearch = async () => {
     if (!searchQuery.trim()) return
 
@@ -516,27 +523,58 @@ const CandidatesPage = () => {
     }
   }
 
-  // עדכון סטטוס מועמד
+  // חיפוש AI למועמד ספציפי
+  const handleCandidateAISearch = (candidate: Candidate) => {
+    // ניווט לקומפוננטה של חיפוש AI עם פרטי המועמד
+    navigate("/ai-match-search", {
+      state: {
+        candidate: candidate,
+        searchType: "match",
+      },
+    })
+  }
+
+  // עדכון סטטוס מועמד - תיקון
   const updateCandidateStatus = async (candidateId: number, newStatus: boolean) => {
+    setStatusUpdateLoading(candidateId)
     try {
       const headers = getAuthHeaders()
       const candidate = candidates.find((c) => c.id === candidateId)
-      if (!candidate) return
+      if (!candidate) {
+        throw new Error("מועמד לא נמצא")
+      }
 
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
-      await axios.put(
-        `${ApiUrl}/${endpoint}/${candidateId}`,
-        { ...candidate, statusVacant: newStatus },
-        { headers, timeout: 10000 },
-      )
+      const updateData = { ...candidate, statusVacant: newStatus }
+
+      console.log(`מעדכן סטטוס מועמד ${candidateId} ל-${newStatus}`)
+
+      const response = await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, { headers, timeout: 15000 })
+
+      console.log("תגובת עדכון סטטוס:", response.data)
 
       // עדכון המועמד ברשימה
       setCandidates((prev) => prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c)))
 
-      setAnchorEl(null)
+      // הודעת הצלחה
+      setError(null)
+      alert(`סטטוס המועמד עודכן בהצלחה ל${newStatus ? "פנוי" : "לא פנוי"}`)
     } catch (error) {
       console.error("שגיאה בעדכון סטטוס:", error)
-      setError("שגיאה בעדכון סטטוס המועמד")
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          handle401Error()
+        } else if (error.response?.status === 404) {
+          setError("מועמד לא נמצא במערכת")
+        } else {
+          setError(`שגיאה בעדכון סטטוס: ${error.response?.data?.message || error.message}`)
+        }
+      } else {
+        setError("שגיאה לא צפויה בעדכון סטטוס")
+      }
+    } finally {
+      setStatusUpdateLoading(null)
+      setAnchorEl(null)
     }
   }
 
@@ -703,6 +741,15 @@ const CandidatesPage = () => {
     handleMenuClose()
   }
 
+  // פתיחת דיאלוג הערות למועמד ספציפי
+  const openCandidateNotes = (candidate: Candidate) => {
+    setCandidateNotesDialog(candidate)
+    if (!notes.length) {
+      fetchNotes()
+    }
+    handleMenuClose()
+  }
+
   // סינון מועמדים - פשוט יותר ללא סינון פרופילים
   const filteredCandidates = candidates.filter((candidate) => {
     try {
@@ -808,6 +855,9 @@ const CandidatesPage = () => {
 
   // הערות למועמד הנוכחי
   const candidateNotes = notes.filter((note) => note.userId === selectedCandidate?.id)
+  const specificCandidateNotes = candidateNotesDialog
+    ? notes.filter((note) => note.userId === candidateNotesDialog.id)
+    : []
 
   // Count candidates by gender
   const maleCount = candidates.filter((c) => c.role === "Male").length
@@ -1137,17 +1187,39 @@ const CandidatesPage = () => {
                             </IconButton>
                           </Tooltip>
 
+                          <Tooltip title="חיפוש AI למועמד זה">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleCandidateAISearch(candidate)
+                              }}
+                              sx={{
+                                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+                              }}
+                            >
+                              <SmartToy sx={{ color: theme.palette.primary.main }} />
+                            </IconButton>
+                          </Tooltip>
+
                           {candidateNoteCount > 0 && (
                             <Badge badgeContent={candidateNoteCount} color="primary">
-                              <IconButton
-                                size="small"
-                                sx={{
-                                  backgroundColor: "rgba(255, 255, 255, 0.9)",
-                                  "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
-                                }}
-                              >
-                                <NotesIcon sx={{ color: theme.palette.primary.main }} />
-                              </IconButton>
+                              <Tooltip title="הערות על המועמד">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openCandidateNotes(candidate)
+                                  }}
+                                  sx={{
+                                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+                                  }}
+                                >
+                                  <NotesIcon sx={{ color: theme.palette.primary.main }} />
+                                </IconButton>
+                              </Tooltip>
                             </Badge>
                           )}
 
@@ -1313,22 +1385,84 @@ const CandidatesPage = () => {
             <ListItemText>שתף</ListItemText>
           </MenuItem>
 
+          <MenuItem onClick={() => openCandidateNotes(menuCandidate!)}>
+            <ListItemIcon>
+              <Comment fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>הערות על המועמד</ListItemText>
+          </MenuItem>
+
           <Divider />
 
-          <MenuItem onClick={() => updateCandidateStatus(menuCandidate!.id, true)}>
+          <MenuItem
+            onClick={() => updateCandidateStatus(menuCandidate!.id, true)}
+            disabled={statusUpdateLoading === menuCandidate?.id}
+          >
             <ListItemIcon>
-              <CheckCircle fontSize="small" sx={{ color: "success.main" }} />
+              {statusUpdateLoading === menuCandidate?.id ? (
+                <CircularProgress size={16} />
+              ) : (
+                <CheckCircle fontSize="small" sx={{ color: "success.main" }} />
+              )}
             </ListItemIcon>
             <ListItemText>סמן כפנוי</ListItemText>
           </MenuItem>
 
-          <MenuItem onClick={() => updateCandidateStatus(menuCandidate!.id, false)}>
+          <MenuItem
+            onClick={() => updateCandidateStatus(menuCandidate!.id, false)}
+            disabled={statusUpdateLoading === menuCandidate?.id}
+          >
             <ListItemIcon>
-              <Cancel fontSize="small" sx={{ color: "error.main" }} />
+              {statusUpdateLoading === menuCandidate?.id ? (
+                <CircularProgress size={16} />
+              ) : (
+                <Cancel fontSize="small" sx={{ color: "error.main" }} />
+              )}
             </ListItemIcon>
             <ListItemText>סמן כלא פנוי</ListItemText>
           </MenuItem>
         </Menu>
+
+        {/* דיאלוג הערות למועמד ספציפי */}
+        <Dialog
+          open={Boolean(candidateNotesDialog)}
+          onClose={() => setCandidateNotesDialog(null)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            הערות על {candidateNotesDialog?.firstName} {candidateNotesDialog?.lastName}
+          </DialogTitle>
+          <DialogContent>
+            {specificCandidateNotes.length > 0 ? (
+              <Box sx={{ mt: 2 }}>
+                {specificCandidateNotes.map((note) => (
+                  <NoteItem key={note.id} elevation={1}>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                      {note.content}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(note.createdAt).toLocaleDateString("he-IL", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Typography>
+                  </NoteItem>
+                ))}
+              </Box>
+            ) : (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                אין הערות על מועמד זה
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCandidateNotesDialog(null)}>סגור</Button>
+          </DialogActions>
+        </Dialog>
 
         {/* דיאלוג פרטים מלאים עם הקומפוננטה החדשה */}
         <Dialog
