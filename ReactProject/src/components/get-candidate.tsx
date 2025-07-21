@@ -395,7 +395,7 @@ const CandidatesPage = () => {
       const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim())
 
       // פרופיל מלא: יש שם פרטי, משפחה וגיל
-      const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0||false
+      const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0||true
 
       return hasDetailedInfo
     } catch (error:any) {
