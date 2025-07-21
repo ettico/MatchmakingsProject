@@ -75,6 +75,7 @@ export default function SignIn() {
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [activeStep] = useState(0)
+  const [loadingMessage, setLoadingMessage] = useState("")
 
   const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
 
@@ -91,21 +92,41 @@ export default function SignIn() {
     setError("")
     setSuccessMessage("")
 
+    // פונקציה לניסיון חוזר
+    const attemptRegister = async (retryCount = 0) => {
+      try {
+        setLoadingMessage(`מבצע הרשמה... (ניסיון ${retryCount + 1}/3)`)
+        console.log(`ניסיון הרשמה ${retryCount + 1}/3:`, data)
+
+        const registerResponse = await axios.post(`${ApiUrl}/Auth/register`, data, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 30000,
+        })
+
+        console.log("תגובת הרשמה:", registerResponse.data)
+        return registerResponse
+      } catch (err: any) {
+        console.error(`ניסיון ${retryCount + 1} נכשל:`, err)
+
+        if (err.code === "ECONNABORTED" && retryCount < 2) {
+          setLoadingMessage(`ניסיון ${retryCount + 1} נכשל, מנסה שוב...`)
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+          return attemptRegister(retryCount + 1)
+        }
+
+        throw err
+      }
+    }
+
     try {
-      console.log("שולח נתוני הרשמה:", data)
-
-      // שלב 1: הרשמה
-      const registerResponse = await axios.post(`${ApiUrl}/Auth/register`, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        timeout: 10000, // 10 שניות timeout
-      })
-
-      console.log("תגובת הרשמה:", registerResponse.data)
+      // ניסיון הרשמה עם retry
+      // const registerResponse = await attemptRegister()
 
       // שלב 2: התחברות אוטומטית
       console.log("מנסה התחברות אוטומטית...")
+      setLoadingMessage("מתחבר אוטומטית...")
 
       try {
         await login(data.username, data.password)
@@ -123,7 +144,7 @@ export default function SignIn() {
         }, 1500)
       } catch (loginError) {
         console.error("שגיאה בהתחברות אוטומטית:", loginError)
-        setSuccessMessage("ההרשמה הושלמה בהצלחה! ✅")
+        setSuccessMessage("ההרשמה הושלמה בהצלחה! מעביר לדף התחברות...")
 
         // אם ההתחברות האוטומטית נכשלה, הפנה לדף התחברות
         setTimeout(() => {
@@ -138,15 +159,15 @@ export default function SignIn() {
       console.error("שגיאה בהרשמה:", err)
 
       if (axios.isAxiosError(err)) {
-        if (err.response?.status === 400) {
+        if (err.code === "ECONNABORTED") {
+          setError("החיבור לשרת נכשל. אנא בדוק את החיבור לאינטרנט ונסה שוב")
+        } else if (err.response?.status === 400) {
           const errorMessage = err.response?.data?.message || err.response?.data || "נתונים לא תקינים"
           setError(`שגיאה בהרשמה: ${errorMessage}`)
         } else if (err.response?.status === 409) {
           setError("משתמש עם כתובת מייל זו כבר קיים במערכת")
         } else if (err.response?.status === 500) {
           setError("שגיאת שרת. אנא נסו שוב מאוחר יותר")
-        } else if (err.code === "ECONNABORTED") {
-          setError("תם הזמן הקצוב לחיבור. אנא נסו שוב")
         } else {
           setError(`שגיאה בהרשמה: ${err.response?.status || err.code}`)
         }
@@ -155,6 +176,7 @@ export default function SignIn() {
       }
     } finally {
       setLoading(false)
+      setLoadingMessage("")
     }
   }
 
@@ -556,7 +578,7 @@ export default function SignIn() {
                     },
                   }}
                 >
-                  {loading ? "מעבד..." : "הרשמה"}
+                  {loading ? loadingMessage || "מעבד..." : "הרשמה"}
                 </Button>
               </motion.div>
             </form>
