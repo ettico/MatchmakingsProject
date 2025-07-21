@@ -1,5 +1,5 @@
 "use client"
-import type React from "react"
+// import type React from "react"
 import { useState, useEffect, useContext } from "react"
 import axios from "axios"
 import {
@@ -10,21 +10,14 @@ import {
   Box,
   Chip,
   Dialog,
-  DialogContent,
-  DialogTitle,
   IconButton,
   FormControl,
   Select,
   MenuItem,
   InputLabel,
   Paper,
-  Divider,
-  Fade,
-  Backdrop,
   CircularProgress,
   useMediaQuery,
-  Tabs,
-  Tab,
   TextField,
   Slider,
   Autocomplete,
@@ -46,8 +39,6 @@ import {
   Work,
   CalendarMonth,
   Height,
-  Visibility,
-  CheckCircle,
   Search,
   FilterAltOutlined,
   ClearAll,
@@ -55,29 +46,15 @@ import {
   Delete,
   Save,
   Notes as NotesIcon,
-  PersonOutline,
-  Cake,
-  HomeOutlined,
-  SchoolOutlined,
-  WorkOutlined,
-  FavoriteOutlined,
-  FamilyRestroomOutlined,
-  Email,
-  Phone,
-  ContactPhone,
   Male,
   Female,
   Login,
   Refresh,
-  VerifiedUser,
-  PendingActions,
-  Download,
-  Image as ImageIcon,
-  Description,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
-import type { Candidate, Male as MaleType, Women, Note, FamilyDetails, Contact } from "../Models"
+import type { Candidate, Male as MaleType, Women, Note } from "../Models"
 import { Outlet, useNavigate } from "react-router-dom"
+import UserProfile from "./Candidateprofile" // ייבוא הקומפוננטה החדשה
 
 // Custom theme with copper colors
 const theme = createTheme({
@@ -190,62 +167,6 @@ const StatusChip = styled(Chip)(({ theme, status }: { theme: any; status: boolea
   zIndex: 1,
 }))
 
-const ProfileCompletionChip = styled(Chip)(({ theme, completed }: { theme: any; completed: boolean }) => ({
-  position: "absolute",
-  top: 10,
-  right: 10,
-  backgroundColor: completed ? theme.palette.primary.main : theme.palette.warning.main,
-  color: "white",
-  zIndex: 1,
-}))
-
-const DetailDialog = styled(Dialog)(({}) => ({
-  "& .MuiDialog-paper": {
-    width: "100%",
-    maxWidth: 1000,
-    maxHeight: "90vh",
-    display: "flex",
-    flexDirection: "row",
-    margin: 0,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-}))
-
-const DetailSidebar = styled(Box)(({ theme }) => ({
-  width: 300,
-  backgroundColor: alpha(theme.palette.primary.light, 0.1),
-  padding: theme.spacing(3),
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: theme.spacing(2),
-}))
-
-const DetailContent = styled(Box)(({ theme }) => ({
-  flex: 1,
-  padding: theme.spacing(3),
-  overflowY: "auto",
-}))
-
-const InfoSection = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(2),
-  borderRadius: 12,
-  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-  position: "relative",
-  overflow: "hidden",
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "4px",
-    height: "100%",
-    backgroundColor: theme.palette.primary.main,
-  },
-}))
-
 const SearchTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
     borderRadius: 30,
@@ -295,25 +216,6 @@ const NoteActions = styled(Box)(({}) => ({
   transition: "opacity 0.2s ease",
 }))
 
-const ProfileAvatar = styled(Avatar)(({ theme }) => ({
-  width: 150,
-  height: 150,
-  backgroundColor: theme.palette.primary.light,
-  fontSize: "3rem",
-  marginBottom: theme.spacing(2),
-}))
-
-const GenderTab = styled(Tab)(({ theme }) => ({
-  fontWeight: "bold",
-  fontSize: "1rem",
-  padding: "12px 24px",
-  transition: "all 0.3s ease",
-  "&.Mui-selected": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-    borderRadius: "8px 8px 0 0",
-  },
-}))
-
 const CopperGradientBox = styled(Box)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
   color: "white",
@@ -329,7 +231,6 @@ const CandidatesPage = () => {
   const [loading, setLoading] = useState(true)
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null)
   const [openDialog, setOpenDialog] = useState(false)
-  const [tabValue, setTabValue] = useState(0)
   const [expandedFilters, setExpandedFilters] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [notesDrawerOpen, setNotesDrawerOpen] = useState(false)
@@ -338,10 +239,8 @@ const CandidatesPage = () => {
   const [newNoteText, setNewNoteText] = useState("")
   const { user, token, logout } = useContext(userContext)
   const [error, setError] = useState<string | null>(null)
-  const [familyDetails, setFamilyDetails] = useState<FamilyDetails | null>(null)
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [, setOpen] = useState(false)
-  const [, setModalType] = useState("")
+  // const [, setOpen] = useState(false)
+  // const [, setModalType] = useState("")
   const navigate = useNavigate()
   const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all")
 
@@ -367,13 +266,13 @@ const CandidatesPage = () => {
     navigate("/login")
   }
 
-  const handleNavigate = (path: string, type: string) => {
-    navigate(path)
-    setModalType(type)
-    setOpen(true)
-  }
+  // const handleNavigate = (path: string, type: string) => {
+  //   navigate(path)
+  //   setModalType(type)
+  //   setOpen(true)
+  // }
 
-  // פילטרים
+  // פילטרים פשוטים יותר - ללא סינון פרופילים
   const [filters, setFilters] = useState({
     statusFilter: "all",
     genderFilter: "all",
@@ -383,83 +282,7 @@ const CandidatesPage = () => {
     classes: [] as string[],
     occupations: [] as string[],
     backgrounds: [] as string[],
-    profileCompletion: "all",
   })
-
-  // פונקציה מתוקנת ומקיפה לבדיקת השלמת פרופיל
-  const isProfileComplete = (candidate: Candidate): boolean => {
-    try {
-      if (!candidate) return false
-
-      // בדיקת שדות בסיסיים חובה
-      const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim() && candidate.email?.trim())
-
-      if (!hasBasicInfo) return false
-
-      // בדיקת שדות מפורטים
-      const hasDetailedInfo = !!(
-        typeof candidate.age === "number" &&
-        candidate.age > 0 &&
-        candidate.city?.trim() &&
-        typeof candidate.height === "number" &&
-        candidate.height > 0 &&
-        candidate.phone?.trim() &&
-        candidate.class?.trim() &&
-        candidate.backGround?.trim()
-      )
-
-      if (!hasDetailedInfo) return false
-
-      // בדיקות ספציפיות לפי מגדר
-      if (candidate.role === "Male") {
-        const maleCandidate = candidate as MaleType
-        return !!(
-          maleCandidate.bigYeshiva?.trim() &&
-          maleCandidate.occupation?.trim() &&
-          maleCandidate.expectationsFromPartner?.trim()
-        )
-      } else if (candidate.role === "Women") {
-        const femaleCandidate = candidate as Women
-        return !!(
-          femaleCandidate.seminar?.trim() &&
-          femaleCandidate.currentOccupation?.trim() &&
-          femaleCandidate.importantTraitsIMLookingFor?.trim()
-        )
-      }
-
-      return false
-    } catch (error) {
-      console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
-      return false
-    }
-  }
-
-  // פונקציה מתוקנת לבדיקה אם יש פרופיל חלקי
-  const hasPartialProfile = (candidate: Candidate): boolean => {
-    try {
-      if (!candidate) return false
-
-      // פרופיל חלקי = יש שם פרטי ושם משפחה אבל לא פרופיל מלא
-      const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim())
-      const isComplete = isProfileComplete(candidate)
-
-      return hasBasicInfo && !isComplete
-    } catch (error) {
-      console.error("שגיאה בבדיקת פרופיל חלקי:", error, candidate)
-      return false
-    }
-  }
-
-  // פונקציה לבדיקה אם אין פרטים כלל
-  const hasNoProfile = (candidate: Candidate): boolean => {
-    try {
-      if (!candidate) return true
-      return !(candidate.firstName?.trim() && candidate.lastName?.trim())
-    } catch (error) {
-      console.error("שגיאה בבדיקת חוסר פרופיל:", error, candidate)
-      return true
-    }
-  }
 
   // פונקציה לטעינת נתונים עם אימות - מציגה את כל המועמדים
   const fetchCandidates = async () => {
@@ -501,51 +324,14 @@ const CandidatesPage = () => {
       console.log("גברים:", males.length)
       console.log("נשים:", females.length)
 
-      // איחוד הנתונים - מציג את כל המועמדים
+      // איחוד הנתונים - מציג את כל המועמדים ללא סינון
       const allCandidates = [...males, ...females]
 
-      // מיון המועמדים - מועמדים עם פרופיל מלא קודם, אחר כך חלקי, אחר כך לפי ID
-      const sortedCandidates = allCandidates.sort((a, b) => {
-        const aComplete = isProfileComplete(a)
-        const bComplete = isProfileComplete(b)
-        const aPartial = hasPartialProfile(a)
-        const bPartial = hasPartialProfile(b)
-
-        // מועמדים עם פרופיל מלא קודם
-        if (aComplete && !bComplete) return -1
-        if (!aComplete && bComplete) return 1
-
-        // אם שניהם לא מלאים, בדוק חלקי
-        if (!aComplete && !bComplete) {
-          if (aPartial && !bPartial) return -1
-          if (!aPartial && bPartial) return 1
-        }
-
-        // אם שניהם באותו סטטוס השלמה, מיין לפי ID (החדשים קודם)
-        return b.id - a.id
-      })
+      // מיון פשוט לפי ID (החדשים קודם)
+      const sortedCandidates = allCandidates.sort((a, b) => b.id - a.id)
 
       setCandidates(sortedCandidates)
       console.log("סה״כ מועמדים:", sortedCandidates.length)
-
-      const completeProfiles = sortedCandidates.filter(isProfileComplete)
-      const partialProfiles = sortedCandidates.filter(hasPartialProfile)
-      const noProfiles = sortedCandidates.filter(hasNoProfile)
-
-      console.log("מועמדים עם פרופיל מלא:", completeProfiles.length)
-      console.log("מועמדים עם פרופיל חלקי:", partialProfiles.length)
-      console.log("מועמדים ללא פרטים:", noProfiles.length)
-
-      // הדפסת פרטי המועמדים עם פרופיל מלא לבדיקה
-      console.log(
-        "מועמדים עם פרופיל מלא:",
-        completeProfiles.map((c) => ({
-          id: c.id,
-          name: `${c.firstName} ${c.lastName}`,
-          role: c.role,
-          complete: isProfileComplete(c),
-        })),
-      )
 
       if (sortedCandidates.length === 0) {
         setError("לא נמצאו מועמדים במערכת.")
@@ -585,52 +371,6 @@ const CandidatesPage = () => {
     }
   }
 
-  // פונקציה לטעינת פרטי משפחה
-  const fetchFamilyDetails = async (candidateId: number, role: string) => {
-    if (!token) return
-    try {
-      const headers = getAuthHeaders()
-      const response = await axios.get<FamilyDetails[]>(`${ApiUrl}/FamilyDetails`, {
-        headers,
-        timeout: 10000,
-      })
-      const details = response.data.find(
-        (detail) =>
-          (role === "Male" && detail.maleId === candidateId) || (role === "Women" && detail.womenId === candidateId),
-      )
-      setFamilyDetails(details || null)
-    } catch (error) {
-      console.error("שגיאה בטעינת פרטי משפחה:", error)
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        handle401Error()
-      }
-      setFamilyDetails(null)
-    }
-  }
-
-  // פונקציה לטעינת פרטי התקשרות
-  const fetchContacts = async (candidateId: number, role: string) => {
-    if (!token) return
-    try {
-      const headers = getAuthHeaders()
-      const response = await axios.get<Contact[]>(`${ApiUrl}/Contact`, {
-        headers,
-        timeout: 10000,
-      })
-      const candidateContacts = response.data.filter(
-        (contact) =>
-          (role === "Male" && contact.maleId === candidateId) || (role === "Women" && contact.womenId === candidateId),
-      )
-      setContacts(candidateContacts)
-    } catch (error) {
-      console.error("שגיאה בטעינת פרטי התקשרות:", error)
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        handle401Error()
-      }
-      setContacts([])
-    }
-  }
-
   useEffect(() => {
     if (token) {
       fetchCandidates()
@@ -646,193 +386,33 @@ const CandidatesPage = () => {
     }
   }, [notesDrawerOpen, user?.id, token])
 
-  // פתיחת דיאלוג פרטים
+  // פתיחת דיאלוג פרטים - עכשיו עם הקומפוננטה החדשה
   const handleOpenDetails = (candidate: Candidate) => {
     setSelectedCandidate(candidate)
     setOpenDialog(true)
-    fetchFamilyDetails(candidate.id, candidate.role)
-    fetchContacts(candidate.id, candidate.role)
   }
 
   // סגירת דיאלוג
   const handleCloseDetails = () => {
     setOpenDialog(false)
-    setFamilyDetails(null)
-    setContacts([])
+    setSelectedCandidate(null)
   }
 
-  // עדכון סטטוס מועמד - מתוקן לחלוטין
-  const updateCandidateStatus = async (id: number, role: string, isAvailable: boolean) => {
-    if (!selectedCandidate || !token) return
-    try {
-      const endpoint = role === "Male" ? "Male" : "Women"
-      const headers = getAuthHeaders()
-      console.log(`🔄 מעדכן סטטוס מועמד ${id} (${role}) ל-${isAvailable}`)
-
-      // יצירת נתונים נקיים עם כל השדות הנדרשים
-      const cleanedData: any = {
-        // שדות בסיסיים חובה
-        id: selectedCandidate.id,
-        firstName: selectedCandidate.firstName || "",
-        lastName: selectedCandidate.lastName || "",
-        username: selectedCandidate.username || selectedCandidate.email || "",
-        password: selectedCandidate.password || "",
-        role: selectedCandidate.role,
-        // עדכון הסטטוס החדש
-        statusVacant: isAvailable,
-        // שדות כלליים - החלפת null בערכי ברירת מחדל
-        country: selectedCandidate.country || "",
-        city: selectedCandidate.city || "",
-        address: selectedCandidate.address || "",
-        tz: selectedCandidate.tz || "",
-        class: selectedCandidate.class || "",
-        anOutsider: selectedCandidate.anOutsider === true,
-        backGround: selectedCandidate.backGround || "",
-        openness: selectedCandidate.openness || "",
-        burnDate: selectedCandidate.burnDate || new Date().toISOString(),
-        age: selectedCandidate.age || 0,
-        healthCondition: selectedCandidate.healthCondition === true,
-        status: selectedCandidate.status || "",
-        pairingType: selectedCandidate.pairingType || "",
-        height: selectedCandidate.height || 0,
-        generalAppearance: selectedCandidate.generalAppearance || "",
-        facePaint: selectedCandidate.facePaint || "",
-        appearance: selectedCandidate.appearance || "",
-        phone: selectedCandidate.phone || "",
-        email: selectedCandidate.email || "",
-        fatherPhone: selectedCandidate.fatherPhone || "",
-        motherPhone: selectedCandidate.motherPhone || "",
-        moreInformation: selectedCandidate.moreInformation || "",
-        // שדות ציפיות
-        club: selectedCandidate.club || "",
-        ageFrom: selectedCandidate.ageFrom || 0,
-        ageTo: selectedCandidate.ageTo || 0,
-        importantTraitsInMe: selectedCandidate.importantTraitsInMe || "",
-        // שדות תמונות וקבצים
-        photoUrl: selectedCandidate.photoUrl || "",
-        tzFormUrl: selectedCandidate.tzFormUrl || "",
-        photoName: selectedCandidate.photoName || "",
-        tzFormName: selectedCandidate.tzFormName || "",
-      }
-
-      // שדות ספציפיים לגברים
-      if (selectedCandidate.role === "Male") {
-        const maleCandidate = selectedCandidate as MaleType
-        cleanedData.driversLicense = maleCandidate.driversLicense === true
-        cleanedData.smoker = maleCandidate.smoker === true
-        cleanedData.beard = maleCandidate.beard || ""
-        cleanedData.hot = maleCandidate.hot || ""
-        cleanedData.suit = maleCandidate.suit || ""
-        cleanedData.smallYeshiva = maleCandidate.smallYeshiva || ""
-        cleanedData.bigYeshiva = maleCandidate.bigYeshiva || ""
-        cleanedData.kibbutz = maleCandidate.kibbutz || ""
-        cleanedData.occupation = maleCandidate.occupation || ""
-        cleanedData.expectationsFromPartner = maleCandidate.expectationsFromPartner || ""
-        cleanedData.importantTraitsIAmLookingFor = maleCandidate.importantTraitsIAmLookingFor || ""
-        cleanedData.preferredSeminarStyle = maleCandidate.preferredSeminarStyle || ""
-        cleanedData.preferredProfessionalPath = maleCandidate.preferredProfessionalPath || ""
-      }
-
-      // שדות ספציפיים לנשים
-      if (selectedCandidate.role === "Women") {
-        const femaleCandidate = selectedCandidate as Women
-        cleanedData.headCovering = femaleCandidate.headCovering || ""
-        cleanedData.highSchool = femaleCandidate.highSchool || ""
-        cleanedData.seminar = femaleCandidate.seminar || ""
-        cleanedData.studyPath = femaleCandidate.studyPath || ""
-        cleanedData.additionalEducationalInstitution = femaleCandidate.additionalEducationalInstitution || ""
-        cleanedData.currentOccupation = femaleCandidate.currentOccupation || ""
-        cleanedData.importantTraitsIMLookingFor = femaleCandidate.importantTraitsIMLookingFor || ""
-        cleanedData.preferredSittingStyle = femaleCandidate.preferredSittingStyle || ""
-        cleanedData.interestedInBoy = femaleCandidate.interestedInBoy || ""
-        cleanedData.drivingLicense = femaleCandidate.drivingLicense
-      }
-
-      console.log("📤 נתונים נקיים לשליחה:", JSON.stringify(cleanedData, null, 2))
-
-      const response = await axios.put(`${ApiUrl}/${endpoint}/${id}`, cleanedData, {
-        headers,
-        timeout: 15000,
-      })
-
-      console.log("✅ תגובת השרת:", response.status, response.data)
-
-      // עדכון ברשימה המקומית
-      setCandidates((prev) =>
-        prev.map((candidate) =>
-          candidate.id === id && candidate.role === role ? { ...candidate, statusVacant: isAvailable } : candidate,
-        ),
-      )
-
-      // עדכון המועמד הנבחר
-      if (selectedCandidate.id === id && selectedCandidate.role === role) {
-        setSelectedCandidate({ ...selectedCandidate, statusVacant: isAvailable })
-      }
-
-      console.log("🎉 סטטוס עודכן בהצלחה!")
-      setError(null)
-    } catch (error) {
-      console.error("❌ שגיאה בעדכון סטטוס:", error)
-      if (axios.isAxiosError(error)) {
-        console.error("📋 פרטי השגיאה המלאים:", {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          message: error.message,
-        })
-        if (error.response?.status === 401) {
-          handle401Error()
-        } else if (error.response?.status === 400) {
-          const errorData = error.response.data
-          let errorMessage = "שגיאה בעדכון הנתונים. "
-          if (errorData?.errors) {
-            const errorMessages = []
-            for (const field in errorData.errors) {
-              errorMessages.push(`${field}: ${errorData.errors[field].join(", ")}`)
-            }
-            errorMessage += `פרטי השגיאות: ${errorMessages.join("; ")}`
-          } else if (errorData?.title) {
-            errorMessage += errorData.title
-          } else if (errorData?.message) {
-            errorMessage += errorData.message
-          } else {
-            errorMessage += "נתונים לא תקינים."
-          }
-          setError(errorMessage)
-        } else if (error.response?.status === 404) {
-          setError("המועמד לא נמצא במערכת.")
-        } else if (error.response?.status === 500) {
-          setError("שגיאת שרת פנימית. נא לנסות שוב מאוחר יותר.")
-        } else {
-          setError(`שגיאה בעדכון סטטוס: ${error.response?.status} - ${error.response?.statusText}`)
-        }
-      } else {
-        setError("שגיאה לא צפויה בעדכון הסטטוס.")
-      }
-    }
-  }
-
-  // פונקציה להורדת קובץ
-  const downloadFile = (fileName: string) => {
-    if (!fileName) return
-    const downloadUrl = `${ApiUrl}/files/download/${fileName}`
-    window.open(downloadUrl, "_blank")
-  }
+  // // פונקציה להורדת קובץ
+  // const downloadFile = (fileName: string) => {
+  //   if (!fileName) return
+  //   const downloadUrl = `${ApiUrl}/files/download/${fileName}`
+  //   window.open(downloadUrl, "_blank")
+  // }
 
   // פונקציה לקבלת URL של תמונה
   const getImageUrl = (candidate: Candidate) => {
-    // נסה כמה אפשרויות שונות לשדה התמונה
     if (candidate.photoUrl) return candidate.photoUrl
     if (candidate.photoName) return `${ApiUrl}/files/${candidate.photoName}`
     if ((candidate as any).photo) return (candidate as any).photo
     if ((candidate as any).image) return (candidate as any).image
     if ((candidate as any).profileImage) return (candidate as any).profileImage
     return null
-  }
-
-  // החלפת לשוניות בדיאלוג פרטים
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue)
   }
 
   // עדכון פילטרים
@@ -854,7 +434,6 @@ const CandidatesPage = () => {
       classes: [],
       occupations: [],
       backgrounds: [],
-      profileCompletion: "all",
     })
     setSearchQuery("")
     setGenderTab("all")
@@ -975,10 +554,10 @@ const CandidatesPage = () => {
     }
   }
 
-  // Handle gender tab change
-  const handleGenderTabChange = (_event: React.SyntheticEvent, newValue: "all" | "male" | "female") => {
-    setGenderTab(newValue)
-  }
+  // // Handle gender tab change
+  // const handleGenderTabChange = (_event: React.SyntheticEvent, newValue: "all" | "male" | "female") => {
+  //   setGenderTab(newValue)
+  // }
 
   // פונקציה לטיפול בניסיון חוזר
   const handleRetry = () => {
@@ -993,7 +572,7 @@ const CandidatesPage = () => {
     navigate("/login")
   }
 
-  // סינון מועמדים - מתוקן לעבוד עם כל המועמדים
+  // סינון מועמדים - פשוט יותר ללא סינון פרופילים
   const filteredCandidates = candidates.filter((candidate) => {
     try {
       if (!candidate || typeof candidate.id === "undefined") {
@@ -1004,17 +583,6 @@ const CandidatesPage = () => {
       // Filter by gender tab
       if (genderTab === "male" && candidate.role !== "Male") return false
       if (genderTab === "female" && candidate.role !== "Women") return false
-
-      // סינון לפי השלמת פרופיל - לוגיקה מתוקנת
-      if (filters.profileCompletion !== "all") {
-        const profileComplete = isProfileComplete(candidate)
-        const profilePartial = hasPartialProfile(candidate)
-        const noProfile = hasNoProfile(candidate)
-
-        if (filters.profileCompletion === "complete" && !profileComplete) return false
-        if (filters.profileCompletion === "incomplete" && !profilePartial) return false
-        if (filters.profileCompletion === "none" && !noProfile) return false
-      }
 
       // חיפוש טקסטואלי
       if (searchQuery && searchQuery.trim()) {
@@ -1110,11 +678,9 @@ const CandidatesPage = () => {
   // הערות למועמד הנוכחי
   const candidateNotes = notes.filter((note) => note.userId === selectedCandidate?.id)
 
-  // Count candidates by gender and profile completion
+  // Count candidates by gender
   const maleCount = candidates.filter((c) => c.role === "Male").length
   const femaleCount = candidates.filter((c) => c.role === "Women").length
-  const completeProfilesCount = filteredCandidates.filter(isProfileComplete).length
-  const partialProfilesCount = filteredCandidates.filter(hasPartialProfile).length
 
   return (
     <ThemeProvider theme={theme}>
@@ -1125,10 +691,6 @@ const CandidatesPage = () => {
           </Typography>
           <Typography variant="subtitle1" align="center">
             סה"כ {candidates.length} מועמדים במערכת • {maleCount} גברים • {femaleCount} נשים
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 1, opacity: 0.9 }}>
-            פרופילים מלאים: {candidates.filter(isProfileComplete).length} • פרופילים חלקיים:{" "}
-            {candidates.filter(hasPartialProfile).length} • ללא פרטים: {candidates.filter(hasNoProfile).length}
           </Typography>
         </CopperGradientBox>
 
@@ -1198,7 +760,6 @@ const CandidatesPage = () => {
                     disabled={
                       filters.statusFilter === "all" &&
                       filters.genderFilter === "all" &&
-                      filters.profileCompletion === "all" &&
                       filters.ageRange[0] === 18 &&
                       filters.ageRange[1] === 50 &&
                       filters.heightRange[0] === 150 &&
@@ -1241,22 +802,6 @@ const CandidatesPage = () => {
                         <MenuItem value="all">הכל</MenuItem>
                         <MenuItem value="available">פנוי להצעות</MenuItem>
                         <MenuItem value="unavailable">לא פנוי להצעות</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={6} lg={3}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel id="profile-completion-filter-label">השלמת פרופיל</InputLabel>
-                      <Select
-                        labelId="profile-completion-filter-label"
-                        value={filters.profileCompletion}
-                        label="השלמת פרופיל"
-                        onChange={(e) => handleFilterChange("profileCompletion", e.target.value)}
-                      >
-                        <MenuItem value="all">הכל</MenuItem>
-                        <MenuItem value="complete">פרופיל מלא</MenuItem>
-                        <MenuItem value="incomplete">פרופיל חלקי</MenuItem>
-                        <MenuItem value="none">ללא פרטים</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -1349,45 +894,29 @@ const CandidatesPage = () => {
         {/* Gender Tabs */}
         {token && candidates.length > 0 && (
           <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-            <Tabs
-              value={genderTab}
-              onChange={handleGenderTabChange}
-              aria-label="gender tabs"
-              sx={{
-                "& .MuiTabs-indicator": {
-                  backgroundColor: theme.palette.primary.main,
-                  height: 3,
-                },
-              }}
-            >
-              <GenderTab
-                value="all"
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Person />
-                    <span>כל המועמדים ({candidates.length})</span>
-                  </Box>
-                }
-              />
-              <GenderTab
-                value="male"
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Male />
-                    <span>גברים ({maleCount})</span>
-                  </Box>
-                }
-              />
-              <GenderTab
-                value="female"
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Female />
-                    <span>נשים ({femaleCount})</span>
-                  </Box>
-                }
-              />
-            </Tabs>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button
+                variant={genderTab === "all" ? "contained" : "outlined"}
+                onClick={() => setGenderTab("all")}
+                startIcon={<Person />}
+              >
+                כל המועמדים ({candidates.length})
+              </Button>
+              <Button
+                variant={genderTab === "male" ? "contained" : "outlined"}
+                onClick={() => setGenderTab("male")}
+                startIcon={<Male />}
+              >
+                גברים ({maleCount})
+              </Button>
+              <Button
+                variant={genderTab === "female" ? "contained" : "outlined"}
+                onClick={() => setGenderTab("female")}
+                startIcon={<Female />}
+              >
+                נשים ({femaleCount})
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -1414,20 +943,6 @@ const CandidatesPage = () => {
               <Typography variant="h6" color="text.secondary">
                 {filteredCandidates.length} מועמדים נמצאו
               </Typography>
-              <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                <Chip
-                  icon={<VerifiedUser />}
-                  label={`פרופילים מלאים: ${completeProfilesCount}`}
-                  color="primary"
-                  variant="outlined"
-                />
-                <Chip
-                  icon={<PendingActions />}
-                  label={`פרופילים חלקיים: ${partialProfilesCount}`}
-                  color="warning"
-                  variant="outlined"
-                />
-              </Box>
             </Box>
             {filteredCandidates.length === 0 ? (
               <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
@@ -1442,8 +957,6 @@ const CandidatesPage = () => {
             ) : (
               <Grid container spacing={3} sx={{ mt: 2 }}>
                 {filteredCandidates.map((candidate) => {
-                  const profileComplete = isProfileComplete(candidate)
-                  const profilePartial = hasPartialProfile(candidate)
                   const imageUrl = getImageUrl(candidate)
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
@@ -1452,13 +965,6 @@ const CandidatesPage = () => {
                         <StatusChip
                           status={candidate.statusVacant}
                           label={candidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                          size="small"
-                          theme={undefined}
-                        />
-                        {/* תג השלמת פרופיל */}
-                        <ProfileCompletionChip
-                          completed={profileComplete}
-                          label={profileComplete ? "פרופיל מלא" : profilePartial ? "פרופיל חלקי" : "ללא פרטים"}
                           size="small"
                           theme={undefined}
                         />
@@ -1488,10 +994,8 @@ const CandidatesPage = () => {
                                 border: `3px solid ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
                               }}
                               onError={(e) => {
-                                // אם התמונה לא נטענת, הצג אווטר
                                 const target = e.target as HTMLImageElement
                                 target.style.display = "none"
-                                // הוסף אווטר במקום
                                 const parent = target.parentElement
                                 if (parent && !parent.querySelector(".fallback-avatar")) {
                                   const avatar = document.createElement("div")
@@ -1582,15 +1086,6 @@ const CandidatesPage = () => {
                           <Typography variant="body2">חוג: {candidate.class || "לא צוין"}</Typography>
                           <Typography variant="body2">רקע: {candidate.backGround || "לא צוין"}</Typography>
                           <Typography variant="body2">מראה כללי: {candidate.generalAppearance || "לא צוין"}</Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: "bold",
-                              color: profileComplete ? "#4caf50" : profilePartial ? "#ff9800" : "#f44336",
-                            }}
-                          >
-                            {profileComplete ? "✓ פרופיל מלא" : profilePartial ? "⚠ פרופיל חלקי" : "✗ ללא פרטים"}
-                          </Typography>
                         </CardOverlay>
                       </StyledCard>
                     </Grid>
@@ -1601,819 +1096,39 @@ const CandidatesPage = () => {
           </>
         )}
 
-        {/* דיאלוג פרטים מלאים */}
-        {selectedCandidate && (
-          <DetailDialog
-            open={openDialog}
-            onClose={handleCloseDetails}
-            fullScreen={isMobile}
-            TransitionComponent={Fade}
-            closeAfterTransition
-            BackdropComponent={Backdrop}
-            BackdropProps={{
-              timeout: 500,
-            }}
-          >
-            {isMobile ? (
-              // תצוגה למובייל
-              <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                <DialogTitle
-                  sx={{
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography variant="h6">
-                    {selectedCandidate.firstName} {selectedCandidate.lastName}
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    {user?.id && (
-                      <IconButton color="primary" onClick={() => setNotesDrawerOpen(true)} aria-label="notes">
-                        <NotesIcon />
-                      </IconButton>
-                    )}
-                    <IconButton edge="end" onClick={handleCloseDetails} aria-label="close">
-                      <Close />
-                    </IconButton>
-                  </Box>
-                </DialogTitle>
-                <Box sx={{ p: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  {/* תמונת פרופיל */}
-                  {getImageUrl(selectedCandidate) ? (
-                    <img
-                      src={getImageUrl(selectedCandidate)! || "/placeholder.svg"}
-                      alt={`${selectedCandidate.firstName}'s profile`}
-                      style={{
-                        width: 100,
-                        height: 100,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
-                      }}
-                    />
-                  ) : selectedCandidate.role === "Male" ? (
-                    <Avatar
-                      sx={{
-                        width: 100,
-                        height: 100,
-                        bgcolor: theme.palette.primary.main,
-                        fontSize: "2.5rem",
-                      }}
-                    >
-                      {(selectedCandidate.firstName || "M").charAt(0)}
-                    </Avatar>
-                  ) : (
-                    <Avatar
-                      sx={{
-                        width: 100,
-                        height: 100,
-                        bgcolor: theme.palette.primary.light,
-                        fontSize: "2.5rem",
-                      }}
-                    >
-                      {(selectedCandidate.firstName || "W").charAt(0)}
-                    </Avatar>
-                  )}
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
-                    <Chip
-                      label={selectedCandidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                      color={selectedCandidate.statusVacant ? "success" : "error"}
-                    />
-                    <Chip
-                      icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
-                      label={
-                        isProfileComplete(selectedCandidate)
-                          ? "פרופיל מלא"
-                          : hasPartialProfile(selectedCandidate)
-                            ? "פרופיל חלקי"
-                            : "ללא פרטים"
-                      }
-                      color={
-                        isProfileComplete(selectedCandidate)
-                          ? "primary"
-                          : hasPartialProfile(selectedCandidate)
-                            ? "warning"
-                            : "error"
-                      }
-                    />
-                  </Box>
-                  {/* כפתורי הורדה */}
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
-                    {selectedCandidate.photoName && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<ImageIcon />}
-                        onClick={() => downloadFile(selectedCandidate.photoName!)}
-                      >
-                        הורד תמונה
-                      </Button>
-                    )}
-                    {selectedCandidate.tzFormName && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Description />}
-                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
-                      >
-                        הורד תעודת זהות
-                      </Button>
-                    )}
-                  </Box>
-                  <Box sx={{ width: "100%" }}>
-                    <Tabs
-                      value={tabValue}
-                      onChange={handleTabChange}
-                      variant="fullWidth"
-                      indicatorColor="primary"
-                      textColor="primary"
-                    >
-                      <Tab label="פרטים אישיים" />
-                      <Tab label="השכלה ועיסוק" />
-                      <Tab label="ציפיות ודרישות" />
-                      <Tab label="משפחה וקשר" />
-                    </Tabs>
-                  </Box>
-                </Box>
-                <DialogContent dividers sx={{ flex: 1, p: 2 }}>
-                  {/* תוכן הטאבים למובייל */}
-                  {tabValue === 0 && (
-                    <Box>
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          פרטים אישיים
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <PersonOutline sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גיל: {selectedCandidate.age || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <LocationOn sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              עיר: {selectedCandidate.city || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Height sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גובה: {selectedCandidate.height || "לא צוין"} ס"מ
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Email sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              אימייל: {selectedCandidate.email || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Phone sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              טלפון: {selectedCandidate.phone || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </InfoSection>
-                    </Box>
-                  )}
-                  {tabValue === 1 && (
-                    <Box>
-                      {selectedCandidate.role === "Male" ? (
-                        <InfoSection>
-                          <Typography
-                            variant="h6"
-                            gutterBottom
-                            sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                          >
-                            רקע ישיבתי
-                          </Typography>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                ישיבה קטנה: {(selectedCandidate as MaleType).smallYeshiva || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                ישיבה גדולה: {(selectedCandidate as MaleType).bigYeshiva || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <WorkOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                עיסוק: {(selectedCandidate as MaleType).occupation || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </InfoSection>
-                      ) : (
-                        <InfoSection>
-                          <Typography
-                            variant="h6"
-                            gutterBottom
-                            sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                          >
-                            רקע השכלתי
-                          </Typography>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                תיכון: {(selectedCandidate as Women).highSchool || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                סמינר: {(selectedCandidate as Women).seminar || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <WorkOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                עיסוק כיום: {(selectedCandidate as Women).currentOccupation || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </InfoSection>
-                      )}
-                    </Box>
-                  )}
-                  {tabValue === 2 && (
-                    <Box>
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          ציפיות {selectedCandidate.role === "Male" ? "מבת" : "מבן"} הזוג
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Cake sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גיל מינימלי: {selectedCandidate.ageFrom || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Cake sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גיל מקסימלי: {selectedCandidate.ageTo || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <FamilyRestroomOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              חוג: {selectedCandidate.club || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </InfoSection>
-                    </Box>
-                  )}
-                  {tabValue === 3 && (
-                    <Box>
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          פרטי משפחה
-                        </Typography>
-                        {familyDetails ? (
-                          <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
-                                פרטי אב
-                              </Typography>
-                              <Typography variant="body1">שם: {familyDetails.fatherName}</Typography>
-                              <Typography variant="body1">מוצא: {familyDetails.fatherOrigin}</Typography>
-                              <Typography variant="body1">עיסוק: {familyDetails.fatherOccupation}</Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
-                                פרטי אם
-                              </Typography>
-                              <Typography variant="body1">שם: {familyDetails.motherName}</Typography>
-                              <Typography variant="body1">מוצא: {familyDetails.motherOrigin}</Typography>
-                              <Typography variant="body1">עיסוק: {familyDetails.motherOccupation}</Typography>
-                            </Grid>
-                          </Grid>
-                        ) : (
-                          <Typography variant="body1" color="text.secondary" align="center">
-                            אין פרטי משפחה זמינים
-                          </Typography>
-                        )}
-                      </InfoSection>
-                    </Box>
-                  )}
-                </DialogContent>
-                <Box sx={{ p: 2, display: "flex", justifyContent: "space-between" }}>
-                  <Button
-                    variant="contained"
-                    color={selectedCandidate.statusVacant ? "error" : "success"}
-                    onClick={() =>
-                      updateCandidateStatus(
-                        selectedCandidate.id,
-                        selectedCandidate.role,
-                        !selectedCandidate.statusVacant,
-                      )
-                    }
-                  >
-                    {selectedCandidate.statusVacant ? "סמן כלא פנוי/ה" : "סמן כפנוי/ה להצעות"}
-                  </Button>
-                  <Button variant="outlined" onClick={handleCloseDetails}>
-                    סגור
-                  </Button>
-                </Box>
-              </Box>
-            ) : (
-              // תצוגה לדסקטופ
-              <>
-                <DetailSidebar>
-                  <IconButton sx={{ position: "absolute", top: 8, right: 8 }} onClick={handleCloseDetails}>
-                    <Close />
-                  </IconButton>
-                  {/* תמונת פרופיל */}
-                  {getImageUrl(selectedCandidate) ? (
-                    <img
-                      src={getImageUrl(selectedCandidate)! || "/placeholder.svg"}
-                      alt={`${selectedCandidate.firstName}'s profile`}
-                      style={{
-                        width: 150,
-                        height: 150,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: `3px solid ${selectedCandidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
-                        marginBottom: theme.spacing(2),
-                      }}
-                    />
-                  ) : selectedCandidate.role === "Male" ? (
-                    <ProfileAvatar sx={{ bgcolor: theme.palette.primary.main }}>
-                      {(selectedCandidate.firstName || "M").charAt(0)}
-                    </ProfileAvatar>
-                  ) : (
-                    <ProfileAvatar sx={{ bgcolor: theme.palette.primary.light }}>
-                      {(selectedCandidate.firstName || "W").charAt(0)}
-                    </ProfileAvatar>
-                  )}
-                  <Typography variant="h5" gutterBottom align="center" sx={{ fontWeight: "bold" }}>
-                    {selectedCandidate.firstName} {selectedCandidate.lastName}
-                  </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "center" }}>
-                    <Chip
-                      icon={selectedCandidate.statusVacant ? <CheckCircle /> : <Visibility />}
-                      label={selectedCandidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                      color={selectedCandidate.statusVacant ? "success" : "error"}
-                    />
-                    <Chip
-                      icon={isProfileComplete(selectedCandidate) ? <VerifiedUser /> : <PendingActions />}
-                      label={
-                        isProfileComplete(selectedCandidate)
-                          ? "פרופיל מלא"
-                          : hasPartialProfile(selectedCandidate)
-                            ? "פרופיל חלקי"
-                            : "ללא פרטים"
-                      }
-                      color={
-                        isProfileComplete(selectedCandidate)
-                          ? "primary"
-                          : hasPartialProfile(selectedCandidate)
-                            ? "warning"
-                            : "error"
-                      }
-                    />
-                  </Box>
-                  {/* כפתורי הורדה */}
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
-                    {selectedCandidate.photoName && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Download />}
-                        onClick={() => downloadFile(selectedCandidate.photoName!)}
-                        fullWidth
-                      >
-                        הורד תמונה
-                      </Button>
-                    )}
-                    {selectedCandidate.tzFormName && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Download />}
-                        onClick={() => downloadFile(selectedCandidate.tzFormName!)}
-                        fullWidth
-                      >
-                        הורד תעודת זהות
-                      </Button>
-                    )}
-                  </Box>
-                  <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
-                    {/* טקסט מעל הכפתור */}
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: "#000",
-                        fontWeight: "bold",
-                        fontSize: "13px",
-                        mb: 0.2,
-                      }}
-                    >
-                      רוצה לקבל את המועמדים שמתאימים עם AI?
-                    </Typography>
-                    {/* כפתור קטן ומעוצב */}
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => {
-                        handleNavigate(`match/${selectedCandidate?.role}/${selectedCandidate?.id}`, "match")
-                      }}
-                      sx={{
-                        backgroundColor: theme.palette.primary.main,
-                        color: "#fff",
-                        px: 3,
-                        py: 1,
-                        borderRadius: "20px",
-                        fontWeight: "bold",
-                        fontSize: "0.9rem",
-                        textTransform: "none",
-                        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                        "&:hover": {
-                          backgroundColor: theme.palette.primary.dark,
-                        },
-                      }}
-                    >
-                      🔍 התחל חיפוש
-                    </Button>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    color={selectedCandidate.statusVacant ? "error" : "success"}
-                    fullWidth
-                    onClick={() =>
-                      updateCandidateStatus(
-                        selectedCandidate.id,
-                        selectedCandidate.role,
-                        !selectedCandidate.statusVacant,
-                      )
-                    }
-                    sx={{ mb: 2 }}
-                  >
-                    {selectedCandidate.statusVacant ? "סמן כלא פנוי/ה" : "סמן כפנוי/ה להצעות"}
-                  </Button>
-                  {user?.id && (
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      fullWidth
-                      startIcon={<NotesIcon />}
-                      onClick={() => setNotesDrawerOpen(true)}
-                      sx={{ mb: 2 }}
-                    >
-                      הערות שדכנית
-                    </Button>
-                  )}
-                  <Divider sx={{ width: "100%", my: 2 }} />
-                  <Box sx={{ width: "100%" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <CalendarMonth sx={{ mr: 1, color: theme.palette.primary.main }} />
-                      <Typography>גיל: {selectedCandidate.age}</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <LocationOn sx={{ mr: 1, color: theme.palette.primary.main }} />
-                      <Typography>עיר: {selectedCandidate.city}</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <Height sx={{ mr: 1, color: theme.palette.primary.main }} />
-                      <Typography>גובה: {selectedCandidate.height} ס"מ</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Person sx={{ mr: 1, color: theme.palette.primary.main }} />
-                      <Typography>חוג: {selectedCandidate.class}</Typography>
-                    </Box>
-                  </Box>
-                </DetailSidebar>
-                <DetailContent>
-                  <Tabs
-                    value={tabValue}
-                    onChange={handleTabChange}
-                    indicatorColor="primary"
-                    textColor="primary"
-                    sx={{ mb: 3 }}
-                  >
-                    <Tab label="פרטים אישיים" />
-                    <Tab label="השכלה ועיסוק" />
-                    <Tab label="ציפיות ודרישות" />
-                    <Tab label="משפחה וקשר" />
-                  </Tabs>
-                  {/* תוכן הטאבים */}
-                  {tabValue === 0 && (
-                    <Box>
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          פרטים אישיים
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={6}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <PersonOutline sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גיל: {selectedCandidate.age || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <LocationOn sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              עיר: {selectedCandidate.city || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Height sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גובה: {selectedCandidate.height || "לא צוין"} ס"מ
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <HomeOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              מדינה: {selectedCandidate.country || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <HomeOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              כתובת: {selectedCandidate.address || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <FamilyRestroomOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              חוג: {selectedCandidate.class || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
-                              <FamilyRestroomOutlined
-                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
-                              />
-                              רקע: {selectedCandidate.backGround || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Email sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              אימייל: {selectedCandidate.email || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Phone sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              טלפון: {selectedCandidate.phone || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </InfoSection>
-                    </Box>
-                  )}
-                  {tabValue === 1 && (
-                    <Box>
-                      {selectedCandidate.role === "Male" ? (
-                        <InfoSection>
-                          <Typography
-                            variant="h6"
-                            gutterBottom
-                            sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                          >
-                            רקע ישיבתי
-                          </Typography>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                ישיבה קטנה: {(selectedCandidate as MaleType).smallYeshiva || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                ישיבה גדולה: {(selectedCandidate as MaleType).bigYeshiva || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                קיבוץ: {(selectedCandidate as MaleType).kibbutz || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <WorkOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                עיסוק: {(selectedCandidate as MaleType).occupation || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </InfoSection>
-                      ) : (
-                        <InfoSection>
-                          <Typography
-                            variant="h6"
-                            gutterBottom
-                            sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                          >
-                            רקע השכלתי
-                          </Typography>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                תיכון: {(selectedCandidate as Women).highSchool || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                סמינר: {(selectedCandidate as Women).seminar || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <SchoolOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                מסלול לימודי: {(selectedCandidate as Women).studyPath || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                <WorkOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                                עיסוק כיום: {(selectedCandidate as Women).currentOccupation || "לא צוין"}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </InfoSection>
-                      )}
-                    </Box>
-                  )}
-                  {tabValue === 2 && (
-                    <Box>
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          ציפיות {selectedCandidate.role === "Male" ? "מבת" : "מבן"} הזוג
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={6} md={3}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Cake sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גיל מינימלי: {selectedCandidate.ageFrom || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <Cake sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              גיל מקסימלי: {selectedCandidate.ageTo || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                              <FamilyRestroomOutlined sx={{ mr: 1, fontSize: 20, color: theme.palette.primary.main }} />
-                              חוג: {selectedCandidate.club || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
-                              <FavoriteOutlined
-                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
-                              />
-                              תכונות חשובות בי: {selectedCandidate.importantTraitsInMe || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body1" sx={{ display: "flex", alignItems: "flex-start" }}>
-                              <FavoriteOutlined
-                                sx={{ mr: 1, mt: 0.5, fontSize: 20, color: theme.palette.primary.main }}
-                              />
-                              תכונות חשובות שאני מחפש:{" "}
-                              {selectedCandidate.role === "Male"
-                                ? (selectedCandidate as MaleType).importantTraitsIAmLookingFor || "לא צוין"
-                                : (selectedCandidate as Women).importantTraitsIMLookingFor || "לא צוין"}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </InfoSection>
-                    </Box>
-                  )}
-                  {tabValue === 3 && (
-                    <Box>
-                      {/* פרטי משפחה */}
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          פרטי משפחה
-                        </Typography>
-                        {familyDetails ? (
-                          <Grid container spacing={2}>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
-                                פרטי אב
-                              </Typography>
-                              <Typography variant="body1">שם: {familyDetails.fatherName}</Typography>
-                              <Typography variant="body1">מוצא: {familyDetails.fatherOrigin}</Typography>
-                              <Typography variant="body1">ישיבה: {familyDetails.fatherYeshiva}</Typography>
-                              <Typography variant="body1">שיוך: {familyDetails.fatherAffiliation}</Typography>
-                              <Typography variant="body1">עיסוק: {familyDetails.fatherOccupation}</Typography>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
-                                פרטי אם
-                              </Typography>
-                              <Typography variant="body1">שם: {familyDetails.motherName}</Typography>
-                              <Typography variant="body1">מוצא: {familyDetails.motherOrigin}</Typography>
-                              <Typography variant="body1">סמינר: {familyDetails.motherGraduateSeminar}</Typography>
-                              <Typography variant="body1">שם קודם: {familyDetails.motherPreviousName}</Typography>
-                              <Typography variant="body1">עיסוק: {familyDetails.motherOccupation}</Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Divider sx={{ my: 2 }} />
-                              <Typography variant="body1">
-                                סטטוס הורים: {familyDetails.parentsStatus ? "נשואים" : "אחר"}
-                              </Typography>
-                              <Typography variant="body1">
-                                מצב בריאותי: {familyDetails.healthStatus ? "תקין" : "לא תקין"}
-                              </Typography>
-                              <Typography variant="body1">רב המשפחה: {familyDetails.familyRabbi}</Typography>
-                              <Typography variant="body1" sx={{ mt: 1 }}>
-                                אודות המשפחה: {familyDetails.familyAbout}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        ) : (
-                          <Typography variant="body1" color="text.secondary" align="center">
-                            אין פרטי משפחה זמינים
-                          </Typography>
-                        )}
-                      </InfoSection>
-                      {/* פרטי התקשרות */}
-                      <InfoSection>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                        >
-                          אנשי קשר לבירורים
-                        </Typography>
-                        {contacts && contacts.length > 0 ? (
-                          <Grid container spacing={2}>
-                            {contacts.map((contact, index) => (
-                              <Grid item xs={12} md={6} key={contact.id || index}>
-                                <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }}>
-                                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                    <ContactPhone sx={{ mr: 1, color: theme.palette.primary.main }} />
-                                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                      {contact.name}
-                                    </Typography>
-                                  </Box>
-                                  <Typography variant="body1" sx={{ display: "flex", alignItems: "center" }}>
-                                    <Phone sx={{ mr: 1, fontSize: 18, color: "text.secondary" }} />
-                                    {contact.phone}
-                                  </Typography>
-                                </Paper>
-                              </Grid>
-                            ))}
-                          </Grid>
-                        ) : (
-                          <Typography variant="body1" color="text.secondary" align="center">
-                            אין אנשי קשר זמינים
-                          </Typography>
-                        )}
-                      </InfoSection>
-                    </Box>
-                  )}
-                </DetailContent>
-              </>
-            )}
-          </DetailDialog>
-        )}
+        {/* דיאלוג פרטים מלאים עם הקומפוננטה החדשה */}
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDetails}
+          maxWidth="lg"
+          fullWidth
+          fullScreen={isMobile}
+          sx={{
+            "& .MuiDialog-paper": {
+              borderRadius: isMobile ? 0 : 4,
+              maxHeight: "95vh",
+            },
+          }}
+        >
+          <Box sx={{ position: "relative" }}>
+            <IconButton
+              onClick={handleCloseDetails}
+              sx={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                zIndex: 1000,
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 1)",
+                },
+              }}
+            >
+              <Close />
+            </IconButton>
+            {selectedCandidate && <UserProfile candidateData={selectedCandidate} onClose={handleCloseDetails} />}
+          </Box>
+        </Dialog>
 
         {/* מגירת הערות */}
         <NotesDrawer anchor="right" open={notesDrawerOpen} onClose={() => setNotesDrawerOpen(false)}>
@@ -2426,7 +1141,6 @@ const CandidatesPage = () => {
             </IconButton>
           </Box>
           <Box sx={{ mb: 3 }}>
-            {/* שדה טקסט להוספת הערה חדשה */}
             <TextField
               fullWidth
               multiline
@@ -2436,7 +1150,6 @@ const CandidatesPage = () => {
               placeholder="הוסף הערה חדשה"
               sx={{ mb: 1 }}
             />
-            {/* כפתור להוספת הערה */}
             <Button
               variant="contained"
               color="primary"
@@ -2447,7 +1160,6 @@ const CandidatesPage = () => {
               הוסף הערה
             </Button>
           </Box>
-          {/* הצגת הערות */}
           <Box>
             {selectedCandidate ? (
               candidateNotes.length > 0 ? (

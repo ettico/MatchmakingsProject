@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect, useContext } from "react"
 import {
   Box,
@@ -295,7 +294,12 @@ interface ContactData {
   phone: string
 }
 
-const UserProfile = () => {
+interface UserProfileProps {
+  candidateData?: any
+  onClose?: () => void
+}
+
+const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [familyData, setFamilyData] = useState<FamilyData | null>(null)
   const [contactsData, setContactsData] = useState<ContactData[]>([])
@@ -317,12 +321,65 @@ const UserProfile = () => {
       try {
         setLoading(true)
         setError("")
-
         console.log("🔍 מתחיל טעינת פרופיל משתמש...")
+
+        // אם יש נתוני מועמד מהקומפוננטה הראשית, השתמש בהם
+        if (candidateData) {
+          console.log("📋 משתמש בנתוני מועמד מהקומפוננטה הראשית:", candidateData)
+          setUserData(candidateData)
+
+          // טען נתוני משפחה ואנשי קשר
+          if (token) {
+            const headers = {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            }
+
+            // טעינת נתוני משפחה
+            try {
+              console.log("📡 שולח בקשה לטעינת נתוני משפחה...")
+              const familyResponse = await axios.get(`${API_BASE_URL}/FamilyDetails`, { headers })
+              console.log("📋 כל נתוני המשפחות:", familyResponse.data)
+              const familyDetails = familyResponse.data.find(
+                (detail: any) =>
+                  (candidateData.role === "Male" && detail.maleId === candidateData.id) ||
+                  (candidateData.role === "Women" && detail.womenId === candidateData.id),
+              )
+              if (familyDetails) {
+                console.log("✅ נמצאו נתוני משפחה:", familyDetails)
+                setFamilyData(familyDetails)
+              } else {
+                console.log("ℹ️ לא נמצאו נתוני משפחה למשתמש זה")
+              }
+            } catch (familyError: any) {
+              console.log("⚠️ שגיאה בטעינת נתוני משפחה:", familyError.message)
+            }
+
+            // טעינת אנשי קשר
+            try {
+              console.log("📡 שולח בקשה לטעינת אנשי קשר...")
+              const contactsResponse = await axios.get(`${API_BASE_URL}/Contact`, { headers })
+              console.log("📋 כל אנשי הקשר:", contactsResponse.data)
+              const userContacts = contactsResponse.data.filter(
+                (contact: any) =>
+                  (candidateData.role === "Male" && contact.maleId === candidateData.id) ||
+                  (candidateData.role === "Women" && contact.womenId === candidateData.id),
+              )
+              console.log("✅ אנשי קשר של המשתמש:", userContacts)
+              setContactsData(userContacts)
+            } catch (contactError: any) {
+              console.log("⚠️ שגיאה בטעינת אנשי קשר:", contactError.message)
+            }
+          }
+
+          console.log("🎉 טעינת הפרופיל הושלמה בהצלחה!")
+          return
+        }
+
+        // אם אין נתוני מועמד, טען מהשרת (לוגיקה מקורית)
         console.log("👤 נתוני משתמש מהקונטקסט:", user)
         console.log("🔑 טוקן:", token ? "קיים" : "לא קיים")
 
-        // 🔧 בדיקה משופרת של נתוני המשתמש
         if (!user) {
           console.error("❌ לא נמצא משתמש בקונטקסט")
           setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
@@ -350,12 +407,9 @@ const UserProfile = () => {
         const { id, role } = user
         console.log(`📋 פרטי משתמש: ID=${id}, Role=${role}`)
 
-        // 🔧 קביעת כתובת ה-API לפי המגדר
         const apiUrl = role === "Male" ? `${API_BASE_URL}/Male/${id}` : `${API_BASE_URL}/Women/${id}`
-
         console.log("🌐 כתובת API:", apiUrl)
 
-        // 🔧 הגדרת headers משופרת
         const headers = {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -365,7 +419,6 @@ const UserProfile = () => {
 
         // טעינת נתוני המשתמש
         const userResponse = await axios.get(apiUrl, { headers })
-
         console.log("✅ התקבלו נתוני משתמש:", userResponse.data)
         setUserData(userResponse.data)
 
@@ -373,13 +426,10 @@ const UserProfile = () => {
         try {
           console.log("📡 שולח בקשה לטעינת נתוני משפחה...")
           const familyResponse = await axios.get(`${API_BASE_URL}/FamilyDetails`, { headers })
-
           console.log("📋 כל נתוני המשפחות:", familyResponse.data)
-
           const familyDetails = familyResponse.data.find(
             (detail: any) => (role === "Male" && detail.maleId === id) || (role === "Women" && detail.womenId === id),
           )
-
           if (familyDetails) {
             console.log("✅ נמצאו נתוני משפחה:", familyDetails)
             setFamilyData(familyDetails)
@@ -394,14 +444,11 @@ const UserProfile = () => {
         try {
           console.log("📡 שולח בקשה לטעינת אנשי קשר...")
           const contactsResponse = await axios.get(`${API_BASE_URL}/Contact`, { headers })
-
           console.log("📋 כל אנשי הקשר:", contactsResponse.data)
-
           const userContacts = contactsResponse.data.filter(
             (contact: any) =>
               (role === "Male" && contact.maleId === id) || (role === "Women" && contact.womenId === id),
           )
-
           console.log("✅ אנשי קשר של המשתמש:", userContacts)
           setContactsData(userContacts)
         } catch (contactError: any) {
@@ -411,15 +458,11 @@ const UserProfile = () => {
         console.log("🎉 טעינת הפרופיל הושלמה בהצלחה!")
       } catch (error: any) {
         console.error("❌ שגיאה בטעינת פרופיל:", error)
-
-        // 🔧 הודעות שגיאה מפורטות יותר
         if (error.response) {
           const status = error.response.status
           const message = error.response.data?.message || error.response.statusText
-
           console.error(`📊 סטטוס שגיאה: ${status}`)
           console.error(`📝 הודעת שגיאה: ${message}`)
-
           if (status === 401) {
             setError("אין הרשאה לצפות בפרופיל. אנא התחבר מחדש.")
           } else if (status === 404) {
@@ -441,13 +484,12 @@ const UserProfile = () => {
       }
     }
 
-    // 🔧 הוספת עיכוב קצר לוודא שהקונטקסט נטען
     const timer = setTimeout(() => {
       loadUserProfile()
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [user, token])
+  }, [user, token, candidateData])
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
@@ -522,7 +564,6 @@ const UserProfile = () => {
               >
                 <PersonIcon sx={{ fontSize: 100, color: "#b87333" }} />
               </ProfileAvatar>
-
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="h2"
@@ -536,13 +577,11 @@ const UserProfile = () => {
                 >
                   {userData.firstName} {userData.lastName}
                 </Typography>
-
                 <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
                   <StyledChip icon={<CakeIcon />} label={`גיל ${userData.age}`} />
                   <StyledChip icon={<LocationOnIcon />} label={`${userData.city}, ${userData.country}`} />
                   <StyledChip icon={<HeightIcon />} label={`${userData.height} ס"מ`} />
                 </Box>
-
                 <Typography
                   variant="h5"
                   sx={{
@@ -554,21 +593,23 @@ const UserProfile = () => {
                   {userData.status} • {userData.backGround} • {userData.openness}
                 </Typography>
               </Box>
-
-              <IconButton
-                sx={{
-                  color: "white",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  width: 60,
-                  height: 60,
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    transform: "scale(1.1)",
-                  },
-                }}
-              >
-                <EditIcon sx={{ fontSize: 30 }} />
-              </IconButton>
+              {onClose && (
+                <IconButton
+                  onClick={onClose}
+                  sx={{
+                    color: "white",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    width: 60,
+                    height: 60,
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.2)",
+                      transform: "scale(1.1)",
+                    },
+                  }}
+                >
+                  <EditIcon sx={{ fontSize: 30 }} />
+                </IconButton>
+              )}
             </Box>
           </ProfileHeader>
         </ProfileCard>
@@ -581,7 +622,6 @@ const UserProfile = () => {
               פרטים אישיים
               {expandedSections.personal ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </SectionTitle>
-
             <Collapse in={expandedSections.personal}>
               <AnimatePresence>
                 {expandedSections.personal && (
@@ -605,7 +645,6 @@ const UserProfile = () => {
                           </Box>
                         </DetailItem>
                       </Grid>
-
                       <Grid item xs={12} md={6}>
                         <DetailItem>
                           <PhoneIcon sx={{ color: "#b87333", fontSize: 28 }} />
@@ -619,7 +658,6 @@ const UserProfile = () => {
                           </Box>
                         </DetailItem>
                       </Grid>
-
                       <Grid item xs={12}>
                         <DetailItem>
                           <LocationOnIcon sx={{ color: "#b87333", fontSize: 28 }} />
@@ -633,7 +671,6 @@ const UserProfile = () => {
                           </Box>
                         </DetailItem>
                       </Grid>
-
                       <Grid item xs={12}>
                         <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
                           עדה וזרם
@@ -644,7 +681,6 @@ const UserProfile = () => {
                           <Chip label={userData.openness} size="medium" variant="outlined" />
                         </Box>
                       </Grid>
-
                       {/* שדות ייחודיים לבחורים */}
                       {userData.smallYeshiva && (
                         <Grid item xs={12} md={6}>
@@ -659,7 +695,6 @@ const UserProfile = () => {
                           </DetailItem>
                         </Grid>
                       )}
-
                       {userData.bigYeshiva && (
                         <Grid item xs={12} md={6}>
                           <DetailItem>
@@ -673,7 +708,6 @@ const UserProfile = () => {
                           </DetailItem>
                         </Grid>
                       )}
-
                       {userData.kibbutz && (
                         <Grid item xs={12} md={6}>
                           <DetailItem>
@@ -687,7 +721,6 @@ const UserProfile = () => {
                           </DetailItem>
                         </Grid>
                       )}
-
                       {/* שדות ייחודיים לבחורות */}
                       {userData.highSchool && (
                         <Grid item xs={12} md={6}>
@@ -702,7 +735,6 @@ const UserProfile = () => {
                           </DetailItem>
                         </Grid>
                       )}
-
                       {userData.seminar && (
                         <Grid item xs={12} md={6}>
                           <DetailItem>
@@ -716,7 +748,6 @@ const UserProfile = () => {
                           </DetailItem>
                         </Grid>
                       )}
-
                       {userData.moreInformation && (
                         <Grid item xs={12}>
                           <Divider sx={{ my: 3 }} />
@@ -753,7 +784,6 @@ const UserProfile = () => {
               תכונות ועדיפויות
               {expandedSections.traits ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </SectionTitle>
-
             <Collapse in={expandedSections.traits}>
               <AnimatePresence>
                 {expandedSections.traits && (
@@ -783,7 +813,6 @@ const UserProfile = () => {
                         </Typography>
                       </Box>
                     )}
-
                     {userData.importantTraitsIAmLookingFor && (
                       <Box sx={{ mb: 4 }}>
                         <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -804,9 +833,7 @@ const UserProfile = () => {
                         </Typography>
                       </Box>
                     )}
-
                     <Divider sx={{ my: 3 }} />
-
                     <Typography variant="h6" color="text.secondary" gutterBottom>
                       העדפות שידוך
                     </Typography>
@@ -830,7 +857,6 @@ const UserProfile = () => {
                 פרטי משפחה
                 {expandedSections.family ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </SectionTitle>
-
               <Collapse in={expandedSections.family}>
                 <AnimatePresence>
                   {expandedSections.family && (
@@ -857,7 +883,6 @@ const UserProfile = () => {
                             </Box>
                           </DetailItem>
                         </Grid>
-
                         <Grid item xs={12} md={6}>
                           <DetailItem>
                             <PersonIcon sx={{ color: "#d4af37", fontSize: 28 }} />
@@ -874,7 +899,6 @@ const UserProfile = () => {
                             </Box>
                           </DetailItem>
                         </Grid>
-
                         {familyData.familyRabbi && (
                           <Grid item xs={12}>
                             <DetailItem>
@@ -888,7 +912,6 @@ const UserProfile = () => {
                             </DetailItem>
                           </Grid>
                         )}
-
                         {familyData.familyAbout && (
                           <Grid item xs={12}>
                             <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
@@ -928,7 +951,6 @@ const UserProfile = () => {
                 אנשי קשר לבירורים
                 {expandedSections.contacts ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </SectionTitle>
-
               <Collapse in={expandedSections.contacts}>
                 <AnimatePresence>
                   {expandedSections.contacts && (
@@ -952,7 +974,6 @@ const UserProfile = () => {
                                 >
                                   <ContactPhoneIcon sx={{ fontSize: 30 }} />
                                 </Avatar>
-
                                 <Box sx={{ flex: 1 }}>
                                   <Typography variant="h6" fontWeight="600" gutterBottom>
                                     {contact.name}
@@ -984,7 +1005,6 @@ const UserProfile = () => {
               <InfoIcon />
               פרטי קשר נוספים
             </SectionTitle>
-
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <DetailItem>
@@ -999,7 +1019,6 @@ const UserProfile = () => {
                   </Box>
                 </DetailItem>
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <DetailItem>
                   <PhoneIcon sx={{ color: "#d4af37", fontSize: 28 }} />
