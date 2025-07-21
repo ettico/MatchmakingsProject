@@ -1,5 +1,5 @@
 "use client"
-// import type React from "react"
+import type React from "react"
 import { useState, useEffect, useContext } from "react"
 import axios from "axios"
 import {
@@ -29,6 +29,12 @@ import {
   createTheme,
   Alert,
   AlertTitle,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Tooltip,
+  Badge,
 } from "@mui/material"
 import { styled, useTheme, alpha } from "@mui/material/styles"
 import {
@@ -50,6 +56,14 @@ import {
   Female,
   Login,
   Refresh,
+  MoreVert,
+  CheckCircle,
+  Cancel,
+  Psychology,
+  Visibility,
+  Share,
+  Favorite,
+  FavoriteBorder,
 } from "@mui/icons-material"
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note } from "../Models"
@@ -140,6 +154,9 @@ const StyledCard = styled(Card)(() => ({
     "& .card-overlay": {
       opacity: 1,
     },
+    "& .card-actions": {
+      opacity: 1,
+    },
   },
 }))
 
@@ -156,6 +173,18 @@ const CardOverlay = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   gap: theme.spacing(1),
+}))
+
+const CardActions = styled(Box)(() => ({
+  position: "absolute",
+  top: 10,
+  right: 10,
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  opacity: 0,
+  transition: "opacity 0.3s ease",
+  zIndex: 2,
 }))
 
 const StatusChip = styled(Chip)(({ theme, status }: { theme: any; status: boolean }) => ({
@@ -243,6 +272,10 @@ const CandidatesPage = () => {
   // const [, setModalType] = useState("")
   const navigate = useNavigate()
   const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all")
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [menuCandidate, setMenuCandidate] = useState<Candidate | null>(null)
+  const [favorites, setFavorites] = useState<number[]>([])
+  const [aiSearchLoading, setAiSearchLoading] = useState(false)
 
   // API URL
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
@@ -374,6 +407,7 @@ const CandidatesPage = () => {
   useEffect(() => {
     if (token) {
       fetchCandidates()
+      loadFavorites()
     } else {
       setLoading(false)
       setError("נדרש להתחבר למערכת")
@@ -385,6 +419,23 @@ const CandidatesPage = () => {
       fetchNotes()
     }
   }, [notesDrawerOpen, user?.id, token])
+
+  // טעינת מועמדים מועדפים
+  const loadFavorites = () => {
+    const savedFavorites = localStorage.getItem("favorites")
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites))
+    }
+  }
+
+  // הוספה/הסרה ממועדפים
+  const toggleFavorite = (candidateId: number) => {
+    const newFavorites = favorites.includes(candidateId)
+      ? favorites.filter((id) => id !== candidateId)
+      : [...favorites, candidateId]
+    setFavorites(newFavorites)
+    localStorage.setItem("favorites", JSON.stringify(newFavorites))
+  }
 
   // פתיחת דיאלוג פרטים - עכשיו עם הקומפוננטה החדשה
   const handleOpenDetails = (candidate: Candidate) => {
@@ -437,6 +488,56 @@ const CandidatesPage = () => {
     })
     setSearchQuery("")
     setGenderTab("all")
+  }
+
+  // חיפוש AI
+  const handleAISearch = async () => {
+    if (!searchQuery.trim()) return
+
+    setAiSearchLoading(true)
+    try {
+      const headers = getAuthHeaders()
+      const response = await axios.post(
+        `${ApiUrl}/ai/search-candidates`,
+        { query: searchQuery },
+        { headers, timeout: 30000 },
+      )
+
+      if (response.data && response.data.length > 0) {
+        setCandidates(response.data)
+      } else {
+        setError("לא נמצאו מועמדים מתאימים לחיפוש AI")
+      }
+    } catch (error) {
+      console.error("שגיאה בחיפוש AI:", error)
+      setError("שגיאה בחיפוש AI. נסה שוב מאוחר יותר.")
+    } finally {
+      setAiSearchLoading(false)
+    }
+  }
+
+  // עדכון סטטוס מועמד
+  const updateCandidateStatus = async (candidateId: number, newStatus: boolean) => {
+    try {
+      const headers = getAuthHeaders()
+      const candidate = candidates.find((c) => c.id === candidateId)
+      if (!candidate) return
+
+      const endpoint = candidate.role === "Male" ? "Male" : "Women"
+      await axios.put(
+        `${ApiUrl}/${endpoint}/${candidateId}`,
+        { ...candidate, statusVacant: newStatus },
+        { headers, timeout: 10000 },
+      )
+
+      // עדכון המועמד ברשימה
+      setCandidates((prev) => prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c)))
+
+      setAnchorEl(null)
+    } catch (error) {
+      console.error("שגיאה בעדכון סטטוס:", error)
+      setError("שגיאה בעדכון סטטוס המועמד")
+    }
   }
 
   // הוספת הערות מהשרת
@@ -570,6 +671,36 @@ const CandidatesPage = () => {
   // פונקציה לניווט לדף התחברות
   const handleLogin = () => {
     navigate("/login")
+  }
+
+  // פתיחת תפריט פעולות
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, candidate: Candidate) => {
+    event.stopPropagation()
+    setAnchorEl(event.currentTarget)
+    setMenuCandidate(candidate)
+  }
+
+  // סגירת תפריט פעולות
+  const handleMenuClose = () => {
+    setAnchorEl(null)
+    setMenuCandidate(null)
+  }
+
+  // שיתוף מועמד
+  const shareCandidate = (candidate: Candidate) => {
+    if (navigator.share) {
+      navigator.share({
+        title: `${candidate.firstName} ${candidate.lastName}`,
+        text: `מועמד/ת לשידוך: ${candidate.firstName} ${candidate.lastName}, גיל ${candidate.age}`,
+        url: window.location.href,
+      })
+    } else {
+      // Fallback - העתקה ללוח
+      const text = `מועמד/ת לשידוך: ${candidate.firstName} ${candidate.lastName}, גיל ${candidate.age}`
+      navigator.clipboard.writeText(text)
+      alert("הפרטים הועתקו ללוח")
+    }
+    handleMenuClose()
   }
 
   // סינון מועמדים - פשוט יותר ללא סינון פרופילים
@@ -734,11 +865,23 @@ const CandidatesPage = () => {
               <Grid item xs={12} md={6}>
                 <SearchTextField
                   fullWidth
-                  placeholder="חיפוש לפי שם, עיר, חוג..."
+                  placeholder="חיפוש לפי שם, עיר, חוג... או תיאור AI"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
                     startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
+                    endAdornment: (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={aiSearchLoading ? <CircularProgress size={16} /> : <Psychology />}
+                        onClick={handleAISearch}
+                        disabled={!searchQuery.trim() || aiSearchLoading}
+                        sx={{ mr: 1 }}
+                      >
+                        חיפוש AI
+                      </Button>
+                    ),
                   }}
                 />
               </Grid>
@@ -958,6 +1101,9 @@ const CandidatesPage = () => {
               <Grid container spacing={3} sx={{ mt: 2 }}>
                 {filteredCandidates.map((candidate) => {
                   const imageUrl = getImageUrl(candidate)
+                  const candidateNoteCount = notes.filter((note) => note.userId === candidate.id).length
+                  const isFavorite = favorites.includes(candidate.id)
+
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
                       <StyledCard onClick={() => handleOpenDetails(candidate)}>
@@ -968,6 +1114,55 @@ const CandidatesPage = () => {
                           size="small"
                           theme={undefined}
                         />
+
+                        {/* פעולות כרטיס */}
+                        <CardActions className="card-actions">
+                          <Tooltip title={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleFavorite(candidate.id)
+                              }}
+                              sx={{
+                                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+                              }}
+                            >
+                              {isFavorite ? (
+                                <Favorite sx={{ color: "#d32f2f" }} />
+                              ) : (
+                                <FavoriteBorder sx={{ color: "#666" }} />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+
+                          {candidateNoteCount > 0 && (
+                            <Badge badgeContent={candidateNoteCount} color="primary">
+                              <IconButton
+                                size="small"
+                                sx={{
+                                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                  "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+                                }}
+                              >
+                                <NotesIcon sx={{ color: theme.palette.primary.main }} />
+                              </IconButton>
+                            </Badge>
+                          )}
+
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, candidate)}
+                            sx={{
+                              backgroundColor: "rgba(255, 255, 255, 0.9)",
+                              "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
+                            }}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        </CardActions>
+
                         {/* תמונת פרופיל */}
                         <Box
                           sx={{
@@ -1095,6 +1290,45 @@ const CandidatesPage = () => {
             )}
           </>
         )}
+
+        {/* תפריט פעולות */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        >
+          <MenuItem onClick={() => handleOpenDetails(menuCandidate!)}>
+            <ListItemIcon>
+              <Visibility fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>צפה בפרטים</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={() => shareCandidate(menuCandidate!)}>
+            <ListItemIcon>
+              <Share fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>שתף</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={() => updateCandidateStatus(menuCandidate!.id, true)}>
+            <ListItemIcon>
+              <CheckCircle fontSize="small" sx={{ color: "success.main" }} />
+            </ListItemIcon>
+            <ListItemText>סמן כפנוי</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={() => updateCandidateStatus(menuCandidate!.id, false)}>
+            <ListItemIcon>
+              <Cancel fontSize="small" sx={{ color: "error.main" }} />
+            </ListItemIcon>
+            <ListItemText>סמן כלא פנוי</ListItemText>
+          </MenuItem>
+        </Menu>
 
         {/* דיאלוג פרטים מלאים עם הקומפוננטה החדשה */}
         <Dialog
