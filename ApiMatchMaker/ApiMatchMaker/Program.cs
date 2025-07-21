@@ -62,6 +62,11 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); // אם משתמשים ב-Credentials
     });
 });
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 //builder.Services.AddAuthorization(options =>
 //{
