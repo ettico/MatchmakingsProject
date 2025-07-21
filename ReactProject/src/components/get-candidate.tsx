@@ -388,23 +388,21 @@ const CandidatesPage = () => {
 
   // פונקציה מתוקנת לבדיקת השלמת פרופיל
   const isProfileComplete = (candidate: Candidate): boolean => {
-    try {
-      if (!candidate) return false
+  try {
+    if (!candidate) return false;
 
-      // פרופיל חלקי: יש שם פרטי ומשפחה
-      const hasBasicInfo = !!(candidate.firstName?.trim() && candidate.lastName?.trim())
+    const { firstName, lastName, age } = candidate;
 
-      // פרופיל מלא: יש שם פרטי, משפחה וגיל
-      const hasDetailedInfo = hasBasicInfo && candidate.age && candidate.age > 0||true
+    const hasBasicInfo = !!(firstName?.trim() && lastName?.trim());
+    const hasDetailedInfo = hasBasicInfo && typeof age === "number" && age > 0;
 
-      return hasDetailedInfo
-    } catch (error:any) {
-      console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate)
-      console.log(error.response.data);
-      
-      return false
-    }
+    return hasDetailedInfo;
+  } catch (error: any) {
+    console.error("שגיאה בבדיקת השלמת פרופיל:", error, candidate);
+    return false;
   }
+}
+
 
   // פונקציה לבדיקה אם יש פרופיל חלקי
   const hasPartialProfile = (candidate: Candidate): boolean => {
