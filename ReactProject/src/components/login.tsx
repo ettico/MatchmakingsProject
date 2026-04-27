@@ -106,7 +106,10 @@ const Login = () => {
       //   throw new Error("לא נמצא תפקיד משתמש")
       // }
 
-      const role = user?.role
+      // קריאה ישירות מ-localStorage כי ה-state לא מתעדכן מיד
+      const authData = localStorage.getItem("auth")
+      const parsedAuth = authData ? JSON.parse(authData) : null
+      const role = parsedAuth?.user?.role
       console.log("תפקיד המשתמש:", role)
 
       // ניתוב לפי תפקיד
