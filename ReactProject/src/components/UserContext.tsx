@@ -75,8 +75,8 @@ const UserProvider = ({ children }: UserProviderProps) => {
     const response = await axios.post(
       `${ApiUrl}/Auth/login`,
       {
-        Username: username,
-        Password: password,
+        username: username,
+        password: password,
       },
       {
         headers: {
