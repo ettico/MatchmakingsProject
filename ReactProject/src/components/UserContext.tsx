@@ -44,7 +44,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const ApiUrl = process.env.REACT_APP_API_URL || "https://matchmakingsprojectserver.onrender.com/api"
+  const ApiUrl = import.meta.env.VITE_API_URL|| "https://matchmakingsprojectserver.onrender.com/api"
 
   useEffect(() => {
     const storedData = localStorage.getItem("auth")

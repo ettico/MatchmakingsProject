@@ -57,6 +57,7 @@ builder.Services.AddCors(options =>
             "http://localhost:5173",
             "https://matchmakingsproject.onrender.com", 
             "https://matchmakingsprojectangular.onrender.com") // הוספת הדומיינים הרלוונטיים
+              .SetIsOriginAllowed((host) => true)  // ← חובה עם AllowCredentials!
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // אם משתמשים ב-Credentials
