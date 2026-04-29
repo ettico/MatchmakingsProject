@@ -244,7 +244,7 @@ const Login = () => {
                 color: colors.text + "90",
               }}
             >
-              {userType === "auth" ? "התחברות למערכת כמועמד/ת" : "התחברות למערכת כשדכן/ית"}
+              {userType === "candidate" ? "התחברות למערכת כמועמד/ת" : "התחברות למערכת כשדכן/ית"}
             </Typography>
 
             <form onSubmit={handleSubmit(onSubmit)}>
