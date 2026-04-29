@@ -40,6 +40,7 @@ const colors = {
 
 const Login = () => {
   const { userType } = useParams() // יקבל את הערך מה-URL
+  console.log("userType מה-URL:", userType) // לוג לבדיקה
   const { login, error: contextError } = useContext(userContext)
   const navigate = useNavigate()
   const [error, setError] = useState("")
