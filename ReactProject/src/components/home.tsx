@@ -384,9 +384,10 @@ const Home = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-               עבור נטפרי
+                 בשורה טובה         
               </Typography>
             </motion.div>
+            
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
