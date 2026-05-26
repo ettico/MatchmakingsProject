@@ -23,26 +23,50 @@ namespace ApiMatchMaker.Controllers
             _userService = userService;
         }
         [HttpPost("login")]
+        //public async Task<IActionResult> AdminLogin([FromBody] LoginDTO loginDto)
+        //{
+        //    Console.WriteLine($"🔹 מנסה להתחבר עם: {loginDto.Username}");
+        //    Console.WriteLine($"🔹 סיסמה שהוזנה: {loginDto.Password}");
+        //    Console.WriteLine($"🔹 סיסמה במערכת: {_config["Admin:Password"]}");
+
+        //    if (loginDto.Username == _config["Admin:Username"] && loginDto.Password == _config["Admin:Password"])
+        //    {
+        //        var user = await _userService.GetUserByEmailAsync(loginDto.Username);
+
+        //        var token = _authService.GenerateToken(user);
+
+        //        Console.WriteLine("✅ התחברות הצליחה! נוצר טוקן.");
+        //        Console.WriteLine($"Configured Key: {_config["Jwt:Key"]}");
+        //        return Ok(new { Token = token, Role = "Admin" });
+        //    }
+
+        //    Console.WriteLine("❌ שם משתמש או סיסמה שגויים!");
+        //    return Unauthorized("שם משתמש או סיסמה שגויים!");
+        //}
         public async Task<IActionResult> AdminLogin([FromBody] LoginDTO loginDto)
         {
-            Console.WriteLine($"🔹 מנסה להתחבר עם: {loginDto.Username}");
-            Console.WriteLine($"🔹 סיסמה שהוזנה: {loginDto.Password}");
-            Console.WriteLine($"🔹 סיסמה במערכת: {_config["Admin:Password"]}");
-
-            if (loginDto.Username == _config["Admin:Username"] && loginDto.Password == _config["Admin:Password"])
+            if (loginDto.Username == _config["Admin:Username"] &&
+                loginDto.Password == _config["Admin:Password"])
             {
-                var user = await _userService.GetUserByEmailAsync(loginDto.Username);
+                var adminUser = new BaseUserDTO
+                {
+                    Id = 0,
+                    Username = loginDto.Username,
+                    Role = "Admin"
+                };
 
-                var token = _authService.GenerateToken(user);
+                var token = _authService.GenerateToken(adminUser);
 
-                Console.WriteLine("✅ התחברות הצליחה! נוצר טוקן.");
-                Console.WriteLine($"Configured Key: {_config["Jwt:Key"]}");
-                return Ok(new { Token = token, Role = "Admin" });
+                return Ok(new
+                {
+                    Token = token,
+                    Role = "Admin"
+                });
             }
 
-            Console.WriteLine("❌ שם משתמש או סיסמה שגויים!");
             return Unauthorized("שם משתמש או סיסמה שגויים!");
         }
+
         [HttpDelete("delete-user/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

@@ -49,7 +49,7 @@ namespace MatchMakings.Data.Repository
 
         public async Task<int> GetIdByRoleAsync(string role)
         {
-            var r = await _dataContext.Roles.FirstOrDefaultAsync(r => r.RoleName == role);
+            var r = await _dataContext.Roles.FirstOrDefaultAsync(r => r.RoleName.ToLower() == role.ToLower());
             if (r != null)
                 return r.Id;
             return -1;
