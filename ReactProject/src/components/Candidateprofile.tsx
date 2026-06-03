@@ -37,44 +37,26 @@ import EditIcon from "@mui/icons-material/Edit"
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
 import ExpandLessIcon from "@mui/icons-material/ExpandLess"
 
-// אנימציות מותאמות אישית
+// אנימציות
 const pulse = keyframes`
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(184, 115, 51, 0.7);
-  }
-  70% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(184, 115, 51, 0);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(184, 115, 51, 0);
-  }
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(184, 115, 51, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(184, 115, 51, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(184, 115, 51, 0); }
 `
 
 const float = keyframes`
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 `
 
 const glow = keyframes`
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(184, 115, 51, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(184, 115, 51, 0.6);
-  }
+  0%, 100% { box-shadow: 0 0 20px rgba(184, 115, 51, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(184, 115, 51, 0.6); }
 `
 
-// 🔧 תיקון כתובת ה-API
 const API_BASE_URL = "https://matchmakingsprojectserver.onrender.com/api"
 
-// סטיילינג מותאם אישית
+// סטיילינג
 const ProfileContainer = styled(Container)(({ theme }) => ({
   minHeight: "100vh",
   background: "linear-gradient(135deg, #f8f9fa 0%, #fff8f0 50%, #f0f8ff 100%)",
@@ -135,9 +117,7 @@ const ProfileAvatar = styled(Avatar)(({}) => ({
   position: "relative",
   zIndex: 2,
   animation: `${glow} 3s ease-in-out infinite`,
-  "& .MuiAvatar-img": {
-    objectFit: "cover",
-  },
+  "& .MuiAvatar-img": { objectFit: "cover" },
 }))
 
 const InfoCard = styled(Card)(({ theme }) => ({
@@ -176,9 +156,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   fontSize: "1.8rem",
   cursor: "pointer",
   transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "translateX(8px)",
-  },
+  "&:hover": { transform: "translateX(8px)" },
   "& svg": {
     color: "#b87333",
     filter: "drop-shadow(0 2px 4px rgba(184, 115, 51, 0.3))",
@@ -228,89 +206,6 @@ const DetailItem = styled(Box)(({ theme }) => ({
   },
 }))
 
-interface UserData {
-  id: number
-  firstName: string
-  lastName: string
-  age: number
-  city: string
-  country: string
-  address: string
-  height: number
-  phone: string
-  email: string
-  fatherPhone: string
-  motherPhone: string
-  class: string
-  backGround: string
-  openness: string
-  status: string
-  pairingType: string
-  tz: string
-  burnDate: string
-  anOutsider: boolean
-  healthCondition: boolean
-  statusVacant: boolean
-  smoker: boolean
-  driversLicense?: boolean
-  drivingLicense?: string
-  generalAppearance: string
-  facePaint: string
-  appearance: string
-  headCovering: string
-  suit: string
-  beard: string
-  hot?: string
-  photoUrl?: string
-  moreInformation?: string
-  importantTraitsInMe?: string
-  importantTraitsIAmLookingFor?: string
-  importantTraitsIMLookingFor?: string
-  smallYeshiva?: string
-  bigYeshiva?: string
-  kibbutz?: string
-  occupation?: string
-  expectationsFromPartner?: string
-  club?: string
-  ageFrom?: number
-  ageTo?: number
-  preferredSeminarStyle?: string
-  preferredProfessionalPath?: string
-  highSchool?: string
-  seminar?: string
-  studyPath?: string
-  additionalEducationalInstitution?: string
-  currentOccupation?: string
-  preferredSittingStyle?: string
-  interestedInBoy?: string
-  hat?: string
-  role?: string
-}
-
-interface FamilyData {
-  fatherName: string
-  fatherOrigin: string
-  fatherYeshiva: string
-  fatherAffiliation: string
-  fatherOccupation: string
-  motherName: string
-  motherOrigin: string
-  motherGraduateSeminar: string
-  motherPreviousName: string
-  motherOccupation: string
-  parentsStatus: boolean
-  healthStatus: boolean
-  familyRabbi: string
-  familyAbout: string
-}
-
-interface ContactData {
-  id: number
-  name: string
-  contactType?: string
-  phone: string
-}
-
 interface UserProfileProps {
   candidateData?: any
   onClose?: () => void
@@ -319,15 +214,17 @@ interface UserProfileProps {
 const NA = "לא צוין"
 
 function formatValue(val: any): string {
-  if (val === null || val === undefined || val === "") return NA
+  if (val === null || val === undefined || val === "" || val === "null" || val === "undefined") return NA
   if (typeof val === "boolean") return val ? "כן" : "לא"
-  return String(val)
+  if (typeof val === "string" && val.toLowerCase() === "true") return "כן"
+  if (typeof val === "string" && val.toLowerCase() === "false") return "לא"
+  return String(val).trim() || NA
 }
 
 const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
-  const [userData, setUserData] = useState<UserData | null>(null)
-  const [familyData, setFamilyData] = useState<FamilyData | null>(null)
-  const [contactsData, setContactsData] = useState<ContactData[]>([])
+  const [userData, setUserData] = useState<any>(null)
+  const [familyData, setFamilyData] = useState<any>(null)
+  const [contactsData, setContactsData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
   const ctx = useContext(userContext) as any
@@ -353,30 +250,27 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
           const res = await fetch(url, {
             headers: { Authorization: `Bearer ${tkn}`, "Content-Type": "application/json" },
           })
-          if (!res.ok) {
-            const err: any = new Error(res.statusText)
-            err.response = { status: res.status }
-            throw err
-          }
+          if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`)
           return res.json()
         }
 
+        // אם יש candidateData, השתמש בו ישירות
         if (candidateData) {
           setUserData(candidateData)
           if (token) {
             try {
-              const data = await apiFetch(`${API_BASE_URL}/FamilyDetails`, token)
-              const found = data.find(
-                (d: any) =>
-                  (candidateData.role === "Male" && d.maleId === candidateData.id) ||
-                  (candidateData.role === "Women" && d.womenId === candidateData.id),
+              const allFamily = await apiFetch(`${API_BASE_URL}/FamilyDetails`, token)
+              const matched = allFamily.find(
+                (f: any) =>
+                  (candidateData.role === "Male" && f.maleId === candidateData.id) ||
+                  (candidateData.role === "Women" && f.womenId === candidateData.id),
               )
-              if (found) setFamilyData(found)
+              if (matched) setFamilyData(matched)
             } catch {}
             try {
-              const data = await apiFetch(`${API_BASE_URL}/Contact`, token)
+              const allContacts = await apiFetch(`${API_BASE_URL}/Contact`, token)
               setContactsData(
-                data.filter(
+                allContacts.filter(
                   (c: any) =>
                     (candidateData.role === "Male" && c.maleId === candidateData.id) ||
                     (candidateData.role === "Women" && c.womenId === candidateData.id),
@@ -387,83 +281,59 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
           return
         }
 
-        if (!user || !token) {
-          setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
+        // אחרת, טען מה-context
+        if (!user?.id || !token) {
+          setError("לא נמצאו נתוני משתמש")
           return
         }
 
-        const { id, role } = user
-        const apiUrl = role === "Male" ? `${API_BASE_URL}/Male/${id}` : `${API_BASE_URL}/Women/${id}`
-
-        const uData = await apiFetch(apiUrl, token)
-        setUserData(uData)
+        const apiUrl = user.role === "Male" ? `${API_BASE_URL}/Male/${user.id}` : `${API_BASE_URL}/Women/${user.id}`
+        const userData = await apiFetch(apiUrl, token)
+        setUserData(userData)
 
         try {
-          const fAll = await apiFetch(`${API_BASE_URL}/FamilyDetails`, token)
-          const fFound = fAll.find(
-            (d: any) => (role === "Male" && d.maleId === id) || (role === "Women" && d.womenId === id),
+          const allFamily = await apiFetch(`${API_BASE_URL}/FamilyDetails`, token)
+          const matched = allFamily.find(
+            (f: any) =>
+              (user.role === "Male" && f.maleId === user.id) ||
+              (user.role === "Women" && f.womenId === user.id),
           )
-          if (fFound) setFamilyData(fFound)
+          if (matched) setFamilyData(matched)
         } catch {}
 
         try {
-          const cAll = await apiFetch(`${API_BASE_URL}/Contact`, token)
+          const allContacts = await apiFetch(`${API_BASE_URL}/Contact`, token)
           setContactsData(
-            cAll.filter(
-              (c: any) => (role === "Male" && c.maleId === id) || (role === "Women" && c.womenId === id),
+            allContacts.filter(
+              (c: any) =>
+                (user.role === "Male" && c.maleId === user.id) ||
+                (user.role === "Women" && c.womenId === user.id),
             ),
           )
         } catch {}
-      } catch (error: any) {
-        if (error.response?.status === 401) {
-          setError("אין הרשאה לצפות בפרופיל")
-        } else if (error.response?.status === 404) {
-          setError("הפרופיל לא נמצא")
-        } else if (error.response?.status === 500) {
-          setError("שגיאת שרת")
-        } else {
-          setError("שגיאה בטעינת הפרופיל")
-        }
+      } catch (err: any) {
+        console.error("❌ Profile error:", err)
+        setError("שגיאה בטעינת הפרופיל")
       } finally {
         setLoading(false)
       }
     }
 
-    const timer = setTimeout(() => {
-      loadUserProfile()
-    }, 100)
-
+    const timer = setTimeout(loadUserProfile, 100)
     return () => clearTimeout(timer)
   }, [user, token, candidateData])
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }))
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
   if (loading) {
     return (
       <ProfileContainer>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "50vh",
-            flexDirection: "column",
-          }}
-        >
-          <CircularProgress
-            size={60}
-            sx={{
-              color: "#b87333",
-              animation: `${pulse} 2s infinite`,
-            }}
-          />
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh", flexDirection: "column" }}>
+          <CircularProgress size={60} sx={{ color: "#b87333", animation: `${pulse} 2s infinite` }} />
           <Typography variant="h5" sx={{ mt: 3, color: "#2c1810", fontWeight: "600" }}>
-            🔄 טוען פרופיל...
+            טוען פרופיל...
           </Typography>
         </Box>
       </ProfileContainer>
@@ -473,19 +343,9 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
   if (error || !userData) {
     return (
       <ProfileContainer>
-        <Alert
-          severity="error"
-          sx={{
-            mt: 4,
-            borderRadius: 3,
-            fontSize: "1.1rem",
-            "& .MuiAlert-message": {
-              width: "100%",
-            },
-          }}
-        >
+        <Alert severity="error" sx={{ mt: 4, borderRadius: 3, fontSize: "1.1rem" }}>
           <Typography variant="h6" gutterBottom>
-            ❌ שגיאה בטעינת הפרופיל
+            שגיאה בטעינת הפרופיל
           </Typography>
           <Typography variant="body1">{error || "לא נמצאו נתוני משתמש"}</Typography>
         </Alert>
@@ -493,65 +353,34 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
     )
   }
 
-  const isMale = userData.role === "Male" || !userData.role
-  const u = userData as any
+  const u = userData
+  const isMale = u.role === "Male"
 
   return (
     <ProfileContainer maxWidth="lg">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-        {/* כותרת הפרופיל */}
+        {/* כותרת */}
         <ProfileCard elevation={0}>
           <ProfileHeader>
             <Box sx={{ display: "flex", alignItems: "center", gap: 4, position: "relative", zIndex: 2, flexWrap: { xs: "wrap", sm: "nowrap" } }}>
-              <ProfileAvatar
-                src={u.photoUrl || "/placeholder.svg?height=180&width=180"}
-                alt={`${u.firstName} ${u.lastName}`}
-              >
+              <ProfileAvatar src={u.photoUrl || "/placeholder.svg"} alt={`${u.firstName} ${u.lastName}`}>
                 <PersonIcon sx={{ fontSize: 100, color: "#b87333" }} />
               </ProfileAvatar>
               <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant="h2"
-                  sx={{
-                    color: "white",
-                    fontWeight: "900",
-                    mb: 2,
-                    textShadow: "0 4px 8px rgba(0, 0, 0, 0.3)",
-                    fontSize: { xs: "2rem", md: "3rem" },
-                  }}
-                >
+                <Typography variant="h2" sx={{ color: "white", fontWeight: "900", mb: 2, textShadow: "0 4px 8px rgba(0, 0, 0, 0.3)", fontSize: { xs: "2rem", md: "3rem" } }}>
                   {u.firstName} {u.lastName}
                 </Typography>
                 <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-                  <StyledChip icon={<CakeIcon />} label={`גיל ${formatValue(u.age)}`} />
-                  <StyledChip icon={<LocationOnIcon />} label={`${formatValue(u.city)}, ${formatValue(u.country)}`} />
-                  <StyledChip icon={<HeightIcon />} label={`${formatValue(u.height)} ס"מ`} />
+                  <StyledChip icon={<CakeIcon />} label={`גיל ${u.age || NA}`} />
+                  <StyledChip icon={<LocationOnIcon />} label={`${u.city || NA}, ${u.country || NA}`} />
+                  <StyledChip icon={<HeightIcon />} label={`${u.height || NA} ס"מ`} />
                 </Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: "rgba(255, 255, 255, 0.9)",
-                    fontWeight: "500",
-                    fontSize: { xs: "1.2rem", md: "1.5rem" },
-                  }}
-                >
-                  {formatValue(u.status)} • {formatValue(u.backGround)} • {formatValue(u.openness)}
+                <Typography variant="h5" sx={{ color: "rgba(255, 255, 255, 0.9)", fontWeight: "500", fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
+                  {u.status || NA} • {u.backGround || NA} • {u.openness || NA}
                 </Typography>
               </Box>
               {onClose && (
-                <IconButton
-                  onClick={onClose}
-                  sx={{
-                    color: "white",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                    width: 60,
-                    height: 60,
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 0.2)",
-                      transform: "scale(1.1)",
-                    },
-                  }}
-                >
+                <IconButton onClick={onClose} sx={{ color: "white", backgroundColor: "rgba(255, 255, 255, 0.1)", width: 60, height: 60, "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.2)", transform: "scale(1.1)" } }}>
                   <EditIcon sx={{ fontSize: 30 }} />
                 </IconButton>
               )}
@@ -570,23 +399,14 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
             <Collapse in={expandedSections.personal}>
               <AnimatePresence>
                 {expandedSections.personal && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
                     <Grid container spacing={3}>
                       <Grid item xs={12} md={6}>
                         <DetailItem>
                           <EmailIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              אימייל
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.email)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">אימייל</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.email || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -594,12 +414,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <PhoneIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              טלפון
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.phone)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">טלפון</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.phone || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -607,12 +423,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              תעודת זהות
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.tz)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">תעודת זהות</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.tz || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -620,12 +432,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <CakeIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              תאריך שריפה
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.burnDate)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">תאריך שריפה</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.burnDate || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -633,35 +441,25 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <LocationOnIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              כתובת
-                            </Typography>
-                            <Typography variant="h6">
-                              {formatValue(u.address)}, {formatValue(u.city)}, {formatValue(u.country)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">כתובת</Typography>
+                            <Typography variant="h6">{u.address || NA}, {u.city || NA}, {u.country || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
                       <Grid item xs={12}>
-                        <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
-                          עדה וזרם
-                        </Typography>
+                        <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mt: 2 }}>עדה וזרם</Typography>
                         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                          <Chip label={formatValue(u.class)} size="medium" variant="outlined" />
-                          <Chip label={formatValue(u.backGround)} size="medium" variant="outlined" />
-                          <Chip label={formatValue(u.openness)} size="medium" variant="outlined" />
+                          <Chip label={u.class || NA} size="medium" variant="outlined" />
+                          <Chip label={u.backGround || NA} size="medium" variant="outlined" />
+                          <Chip label={u.openness || NA} size="medium" variant="outlined" />
                         </Box>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <DetailItem>
                           <HeightIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              גובה (ס"מ)
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.height)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">גובה (ס"מ)</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.height || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -669,12 +467,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              מראה כללי
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.generalAppearance)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">מראה כללי</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.generalAppearance || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -682,12 +476,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              מראה
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.appearance)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">מראה</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.appearance || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -695,12 +485,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              איפור פנים
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.facePaint)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">איפור פנים</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.facePaint || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -708,12 +494,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              כיסוי ראש
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.headCovering)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">כיסוי ראש</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.headCovering || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -721,12 +503,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              חליפה
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.suit)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">חליפה</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.suit || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -734,12 +512,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                         <DetailItem>
                           <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
                           <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              זקן
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.beard)}
-                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">זקן</Typography>
+                            <Typography variant="h6" fontWeight="600">{u.beard || NA}</Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
@@ -748,94 +522,60 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                           <DetailItem>
                             <FavoriteIcon sx={{ color: "#b87333", fontSize: 28 }} />
                             <Box>
-                              <Typography variant="subtitle2" color="text.secondary">
-                                חם
-                              </Typography>
-                              <Typography variant="h6" fontWeight="600">
-                                {formatValue(u.hot)}
-                              </Typography>
+                              <Typography variant="subtitle2" color="text.secondary">חם</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.hot || NA}</Typography>
                             </Box>
                           </DetailItem>
                         </Grid>
                       )}
                       <Grid item xs={12} md={6}>
                         <DetailItem>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                            בריאות תקינה
-                          </Typography>
-                          <Chip
-                            label={formatValue(u.healthCondition)}
-                            color={u.healthCondition ? "success" : "error"}
-                            variant="outlined"
-                          />
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>בריאות תקינה</Typography>
+                          <Chip label={formatValue(u.healthCondition)} color={u.healthCondition ? "success" : "error"} variant="outlined" />
                         </DetailItem>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <DetailItem>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                            פנוי לשידוך
-                          </Typography>
-                          <Chip
-                            label={formatValue(u.statusVacant)}
-                            color={u.statusVacant ? "success" : "error"}
-                            variant="outlined"
-                          />
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>פנוי לשידוך</Typography>
+                          <Chip label={formatValue(u.statusVacant)} color={u.statusVacant ? "success" : "error"} variant="outlined" />
                         </DetailItem>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <DetailItem>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                            מחוץ לעיר
-                          </Typography>
-                          <Chip
-                            label={formatValue(u.anOutsider)}
-                            color={u.anOutsider ? "success" : "error"}
-                            variant="outlined"
-                          />
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>מחוץ לעיר</Typography>
+                          <Chip label={formatValue(u.anOutsider)} color={u.anOutsider ? "success" : "error"} variant="outlined" />
                         </DetailItem>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <DetailItem>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                            מעשן
-                          </Typography>
-                          <Chip
-                            label={formatValue(u.smoker)}
-                            color={u.smoker ? "error" : "success"}
-                            variant="outlined"
-                          />
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>מעשן</Typography>
+                          <Chip label={formatValue(u.smoker)} color={u.smoker ? "error" : "success"} variant="outlined" />
                         </DetailItem>
                       </Grid>
-                      {(isMale && u.driversLicense !== undefined) || (!isMale && u.drivingLicense !== undefined) ? (
+                      {u.driversLicense !== undefined || u.drivingLicense !== undefined ? (
                         <Grid item xs={12} md={6}>
                           <DetailItem>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                              רישיון נהיגה
-                            </Typography>
-                            <Chip
-                              label={formatValue(isMale ? u.driversLicense : u.drivingLicense)}
-                              color={(isMale ? u.driversLicense : u.drivingLicense) ? "success" : "error"}
-                              variant="outlined"
-                            />
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>רישיון נהיגה</Typography>
+                            <Chip label={formatValue(isMale ? u.driversLicense : u.drivingLicense)} color={isMale ? u.driversLicense : u.drivingLicense ? "success" : "error"} variant="outlined" />
                           </DetailItem>
                         </Grid>
                       ) : null}
+                      {u.pairingType && (
+                        <Grid item xs={12} md={6}>
+                          <DetailItem>
+                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary">סוג שידוך</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.pairingType}</Typography>
+                            </Box>
+                          </DetailItem>
+                        </Grid>
+                      )}
                       {u.moreInformation && (
                         <Grid item xs={12}>
                           <Divider sx={{ my: 3 }} />
-                          <Typography variant="h6" color="text.secondary" gutterBottom>
-                            מידע נוסף
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontStyle: "italic",
-                              p: 3,
-                              backgroundColor: "rgba(184, 115, 51, 0.05)",
-                              borderRadius: 2,
-                              borderLeft: "4px solid #b87333",
-                            }}
-                          >
+                          <Typography variant="h6" color="text.secondary" gutterBottom>מידע נוסף</Typography>
+                          <Typography variant="body1" sx={{ fontStyle: "italic", p: 3, backgroundColor: "rgba(184, 115, 51, 0.05)", borderRadius: 2, borderLeft: "4px solid #b87333" }}>
                             {u.moreInformation}
                           </Typography>
                         </Grid>
@@ -859,200 +599,156 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
             <Collapse in={expandedSections.education}>
               <AnimatePresence>
                 {expandedSections.education && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
                     <Grid container spacing={3}>
                       {isMale ? (
                         <>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  ישיבה קטנה
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.smallYeshiva)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  ישיבה גדולה
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.bigYeshiva)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  קיבוץ / מקום שהות
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.kibbutz)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  עיסוק
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.occupation)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  סגנון ישיבה מועדף
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.preferredSeminarStyle)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  מסלול מקצועי מועדף
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.preferredProfessionalPath)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
+                          {u.smallYeshiva && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">ישיבה קטנה</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.smallYeshiva}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.bigYeshiva && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">ישיבה גדולה</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.bigYeshiva}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.kibbutz && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">קיבוץ / מקום שהות</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.kibbutz}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.occupation && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">עיסוק</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.occupation}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.preferredSeminarStyle && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">סגנון ישיבה מועדף</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.preferredSeminarStyle}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.preferredProfessionalPath && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">מסלול מקצועי מועדף</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.preferredProfessionalPath}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
                         </>
                       ) : (
                         <>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  תיכון
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.highSchool)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  סמינר
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.seminar)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  מסלול לימוד
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.studyPath)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  מוסד חינוכי נוסף
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.additionalEducationalInstitution)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  עיסוק נוכחי
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.currentOccupation)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  עיסוק
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.occupation)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  סגנון ישיבה מועדף
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.preferredSittingStyle)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <DetailItem>
-                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                  כיסוי ראש לבחור
-                                </Typography>
-                                <Typography variant="h6" fontWeight="600">
-                                  {formatValue(u.hat)}
-                                </Typography>
-                              </Box>
-                            </DetailItem>
-                          </Grid>
+                          {u.highSchool && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">תיכון</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.highSchool}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.seminar && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">סמינר</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.seminar}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.studyPath && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">מסלול לימוד</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.studyPath}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.additionalEducationalInstitution && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">מוסד חינוכי נוסף</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.additionalEducationalInstitution}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.currentOccupation && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">עיסוק נוכחי</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.currentOccupation}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.preferredSittingStyle && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">סגנון ישיבה מועדף</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.preferredSittingStyle}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
+                          {u.hat && (
+                            <Grid item xs={12} md={6}>
+                              <DetailItem>
+                                <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary">כיסוי ראש לבחור</Typography>
+                                  <Typography variant="h6" fontWeight="600">{u.hat}</Typography>
+                                </Box>
+                              </DetailItem>
+                            </Grid>
+                          )}
                         </>
                       )}
                     </Grid>
@@ -1074,102 +770,80 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
             <Collapse in={expandedSections.preferences}>
               <AnimatePresence>
                 {expandedSections.preferences && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
                     <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <DetailItem>
-                          <CakeIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                          <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              גיל מינימלי
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.ageFrom)}
-                            </Typography>
-                          </Box>
-                        </DetailItem>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <DetailItem>
-                          <CakeIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                          <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              גיל מקסימלי
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.ageTo)}
-                            </Typography>
-                          </Box>
-                        </DetailItem>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <DetailItem>
-                          <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                          <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              מועדון / חוג
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(u.club)}
-                            </Typography>
-                          </Box>
-                        </DetailItem>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <DetailItem>
-                          <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                          <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              {isMale ? "ציפיות מבן/בת זוג" : "מעוניינת בבחור"}
-                            </Typography>
-                            <Typography variant="h6" fontWeight="600">
-                              {formatValue(isMale ? u.expectationsFromPartner : u.interestedInBoy)}
-                            </Typography>
-                          </Box>
-                        </DetailItem>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Divider sx={{ my: 2 }} />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="h6" color="text.secondary" gutterBottom>
-                          תכונות חשובות בי
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            fontStyle: "italic",
-                            p: 3,
-                            backgroundColor: "rgba(184, 115, 51, 0.05)",
-                            borderRadius: 2,
-                            borderLeft: "4px solid #b87333",
-                          }}
-                        >
-                          {formatValue(u.importantTraitsInMe)}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="h6" color="text.secondary" gutterBottom>
-                          תכונות שאני מחפש/ת
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            fontStyle: "italic",
-                            p: 3,
-                            backgroundColor: "rgba(212, 175, 55, 0.05)",
-                            borderRadius: 2,
-                            borderLeft: "4px solid #d4af37",
-                          }}
-                        >
-                          {formatValue(u.importantTraitsIAmLookingFor || u.importantTraitsIMLookingFor)}
-                        </Typography>
-                      </Grid>
+                      {u.ageFrom && (
+                        <Grid item xs={12} md={6}>
+                          <DetailItem>
+                            <CakeIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary">גיל מינימלי</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.ageFrom}</Typography>
+                            </Box>
+                          </DetailItem>
+                        </Grid>
+                      )}
+                      {u.ageTo && (
+                        <Grid item xs={12} md={6}>
+                          <DetailItem>
+                            <CakeIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary">גיל מקסימלי</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.ageTo}</Typography>
+                            </Box>
+                          </DetailItem>
+                        </Grid>
+                      )}
+                      {u.club && (
+                        <Grid item xs={12} md={6}>
+                          <DetailItem>
+                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary">מועדון / חוג</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.club}</Typography>
+                            </Box>
+                          </DetailItem>
+                        </Grid>
+                      )}
+                      {isMale && u.expectationsFromPartner && (
+                        <Grid item xs={12} md={6}>
+                          <DetailItem>
+                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary">ציפיות מבן/בת זוג</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.expectationsFromPartner}</Typography>
+                            </Box>
+                          </DetailItem>
+                        </Grid>
+                      )}
+                      {!isMale && u.interestedInBoy && (
+                        <Grid item xs={12} md={6}>
+                          <DetailItem>
+                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                            <Box>
+                              <Typography variant="subtitle2" color="text.secondary">מעוניינת בבחור</Typography>
+                              <Typography variant="h6" fontWeight="600">{u.interestedInBoy}</Typography>
+                            </Box>
+                          </DetailItem>
+                        </Grid>
+                      )}
+                      {u.importantTraitsInMe && (
+                        <Grid item xs={12}>
+                          <Divider sx={{ my: 2 }} />
+                          <Typography variant="h6" color="text.secondary" gutterBottom>תכונות חשובות בי</Typography>
+                          <Typography variant="body1" sx={{ fontStyle: "italic", p: 3, backgroundColor: "rgba(184, 115, 51, 0.05)", borderRadius: 2, borderLeft: "4px solid #b87333" }}>
+                            {u.importantTraitsInMe}
+                          </Typography>
+                        </Grid>
+                      )}
+                      {(u.importantTraitsIAmLookingFor || u.importantTraitsIMLookingFor) && (
+                        <Grid item xs={12}>
+                          <Typography variant="h6" color="text.secondary" gutterBottom>תכונות שאני מחפש/ת</Typography>
+                          <Typography variant="body1" sx={{ fontStyle: "italic", p: 3, backgroundColor: "rgba(212, 175, 55, 0.05)", borderRadius: 2, borderLeft: "4px solid #d4af37" }}>
+                            {u.importantTraitsIAmLookingFor || u.importantTraitsIMLookingFor}
+                          </Typography>
+                        </Grid>
+                      )}
                     </Grid>
                   </motion.div>
                 )}
@@ -1190,26 +864,15 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
               <Collapse in={expandedSections.family}>
                 <AnimatePresence>
                   {expandedSections.family && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
                       <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
                           <DetailItem>
                             <PersonIcon sx={{ color: "#b87333", fontSize: 28 }} />
                             <Box>
-                              <Typography variant="h6" color="text.secondary">
-                                אב
-                              </Typography>
-                              <Typography variant="h5" fontWeight="600">
-                                {formatValue(familyData.fatherName)}
-                              </Typography>
-                              <Typography variant="body1" color="text.secondary">
-                                {formatValue(familyData.fatherOrigin)} • {formatValue(familyData.fatherOccupation)}
-                              </Typography>
+                              <Typography variant="h6" color="text.secondary">אב</Typography>
+                              <Typography variant="h5" fontWeight="600">{familyData.fatherName || NA}</Typography>
+                              <Typography variant="body1" color="text.secondary">{familyData.fatherOrigin || NA} • {familyData.fatherOccupation || NA}</Typography>
                             </Box>
                           </DetailItem>
                         </Grid>
@@ -1217,123 +880,84 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                           <DetailItem>
                             <PersonIcon sx={{ color: "#d4af37", fontSize: 28 }} />
                             <Box>
-                              <Typography variant="h6" color="text.secondary">
-                                אם
-                              </Typography>
-                              <Typography variant="h5" fontWeight="600">
-                                {formatValue(familyData.motherName)}
-                              </Typography>
-                              <Typography variant="body1" color="text.secondary">
-                                {formatValue(familyData.motherOrigin)} • {formatValue(familyData.motherOccupation)}
-                              </Typography>
+                              <Typography variant="h6" color="text.secondary">אם</Typography>
+                              <Typography variant="h5" fontWeight="600">{familyData.motherName || NA}</Typography>
+                              <Typography variant="body1" color="text.secondary">{familyData.motherOrigin || NA} • {familyData.motherOccupation || NA}</Typography>
                             </Box>
                           </DetailItem>
                         </Grid>
+                        {familyData.fatherYeshiva && (
+                          <Grid item xs={12} md={6}>
+                            <DetailItem>
+                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">ישיבת האב</Typography>
+                                <Typography variant="h6" fontWeight="600">{familyData.fatherYeshiva}</Typography>
+                              </Box>
+                            </DetailItem>
+                          </Grid>
+                        )}
+                        {familyData.fatherAffiliation && (
+                          <Grid item xs={12} md={6}>
+                            <DetailItem>
+                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">השתייכות האב</Typography>
+                                <Typography variant="h6" fontWeight="600">{familyData.fatherAffiliation}</Typography>
+                              </Box>
+                            </DetailItem>
+                          </Grid>
+                        )}
+                        {familyData.motherGraduateSeminar && (
+                          <Grid item xs={12} md={6}>
+                            <DetailItem>
+                              <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">סמינר האם</Typography>
+                                <Typography variant="h6" fontWeight="600">{familyData.motherGraduateSeminar}</Typography>
+                              </Box>
+                            </DetailItem>
+                          </Grid>
+                        )}
+                        {familyData.motherPreviousName && (
+                          <Grid item xs={12} md={6}>
+                            <DetailItem>
+                              <PersonIcon sx={{ color: "#d4af37", fontSize: 28 }} />
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">שם קודם של האם</Typography>
+                                <Typography variant="h6" fontWeight="600">{familyData.motherPreviousName}</Typography>
+                              </Box>
+                            </DetailItem>
+                          </Grid>
+                        )}
+                        {familyData.familyRabbi && (
+                          <Grid item xs={12} md={6}>
+                            <DetailItem>
+                              <PersonIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">רב המשפחה</Typography>
+                                <Typography variant="h6" fontWeight="600">{familyData.familyRabbi}</Typography>
+                              </Box>
+                            </DetailItem>
+                          </Grid>
+                        )}
                         <Grid item xs={12} md={6}>
                           <DetailItem>
-                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary">
-                                ישיבת האב
-                              </Typography>
-                              <Typography variant="h6" fontWeight="600">
-                                {formatValue(familyData.fatherYeshiva)}
-                              </Typography>
-                            </Box>
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>הורים נשואים</Typography>
+                            <Chip label={formatValue(familyData.parentsStatus)} color={familyData.parentsStatus ? "success" : "error"} variant="outlined" />
                           </DetailItem>
                         </Grid>
                         <Grid item xs={12} md={6}>
                           <DetailItem>
-                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary">
-                                השתייכות האב
-                              </Typography>
-                              <Typography variant="h6" fontWeight="600">
-                                {formatValue(familyData.fatherAffiliation)}
-                              </Typography>
-                            </Box>
-                          </DetailItem>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <DetailItem>
-                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary">
-                                סמינר האם
-                              </Typography>
-                              <Typography variant="h6" fontWeight="600">
-                                {formatValue(familyData.motherGraduateSeminar)}
-                              </Typography>
-                            </Box>
-                          </DetailItem>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <DetailItem>
-                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary">
-                                שם קודם של האם
-                              </Typography>
-                              <Typography variant="h6" fontWeight="600">
-                                {formatValue(familyData.motherPreviousName)}
-                              </Typography>
-                            </Box>
-                          </DetailItem>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <DetailItem>
-                            <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                            <Box>
-                              <Typography variant="subtitle2" color="text.secondary">
-                                רב המשפחה
-                              </Typography>
-                              <Typography variant="h6" fontWeight="600">
-                                {formatValue(familyData.familyRabbi)}
-                              </Typography>
-                            </Box>
-                          </DetailItem>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <DetailItem>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                              הורים נשואים
-                            </Typography>
-                            <Chip
-                              label={formatValue(familyData.parentsStatus)}
-                              color={familyData.parentsStatus ? "success" : "error"}
-                              variant="outlined"
-                            />
-                          </DetailItem>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <DetailItem>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
-                              מצב בריאות תקין
-                            </Typography>
-                            <Chip
-                              label={formatValue(familyData.healthStatus)}
-                              color={familyData.healthStatus ? "success" : "error"}
-                              variant="outlined"
-                            />
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>מצב בריאות תקין</Typography>
+                            <Chip label={formatValue(familyData.healthStatus)} color={familyData.healthStatus ? "success" : "error"} variant="outlined" />
                           </DetailItem>
                         </Grid>
                         {familyData.familyAbout && (
                           <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
-                            <Typography variant="h6" color="text.secondary" gutterBottom>
-                              על המשפחה
-                            </Typography>
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                fontStyle: "italic",
-                                p: 3,
-                                backgroundColor: "rgba(184, 115, 51, 0.05)",
-                                borderRadius: 2,
-                                borderLeft: "4px solid #b87333",
-                              }}
-                            >
+                            <Typography variant="h6" color="text.secondary" gutterBottom>על המשפחה</Typography>
+                            <Typography variant="body1" sx={{ fontStyle: "italic", p: 3, backgroundColor: "rgba(184, 115, 51, 0.05)", borderRadius: 2, borderLeft: "4px solid #b87333" }}>
                               {familyData.familyAbout}
                             </Typography>
                           </Grid>
@@ -1347,7 +971,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
           </InfoCard>
         )}
 
-        {/* אנשי קשר */}
+        {/* אנשי קשר לבירורים */}
         {contactsData.length > 0 && (
           <InfoCard>
             <CardContent sx={{ p: 4 }}>
@@ -1359,38 +983,19 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
               <Collapse in={expandedSections.contacts}>
                 <AnimatePresence>
                   {expandedSections.contacts && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
                       <Grid container spacing={3}>
-                        {contactsData.map((contact) => (
+                        {contactsData.map((contact: any) => (
                           <Grid item xs={12} md={6} key={contact.id}>
                             <ContactCard elevation={2}>
                               <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                                <Avatar
-                                  sx={{
-                                    bgcolor: "#b87333",
-                                    width: 60,
-                                    height: 60,
-                                  }}
-                                >
+                                <Avatar sx={{ bgcolor: "#b87333", width: 60, height: 60 }}>
                                   <ContactPhoneIcon sx={{ fontSize: 30 }} />
                                 </Avatar>
                                 <Box sx={{ flex: 1 }}>
-                                  <Typography variant="h6" fontWeight="600" gutterBottom>
-                                    {formatValue(contact.name)}
-                                  </Typography>
-                                  {contact.contactType && (
-                                    <Typography variant="body1" color="text.secondary" gutterBottom>
-                                      {formatValue(contact.contactType)}
-                                    </Typography>
-                                  )}
-                                  <Typography variant="h6" fontWeight="600" color="#b87333">
-                                    {formatValue(contact.phone)}
-                                  </Typography>
+                                  <Typography variant="h6" fontWeight="600" gutterBottom>{contact.name || NA}</Typography>
+                                  {contact.contactType && <Typography variant="body1" color="text.secondary" gutterBottom>{contact.contactType}</Typography>}
+                                  <Typography variant="h6" fontWeight="600" color="#b87333">{contact.phone || NA}</Typography>
                                 </Box>
                               </Box>
                             </ContactCard>
@@ -1417,12 +1022,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                 <DetailItem>
                   <PhoneIcon sx={{ color: "#b87333", fontSize: 28 }} />
                   <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      טלפון אב
-                    </Typography>
-                    <Typography variant="h6" fontWeight="600">
-                      {formatValue(u.fatherPhone)}
-                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">טלפון אב</Typography>
+                    <Typography variant="h6" fontWeight="600">{u.fatherPhone || NA}</Typography>
                   </Box>
                 </DetailItem>
               </Grid>
@@ -1430,12 +1031,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                 <DetailItem>
                   <PhoneIcon sx={{ color: "#d4af37", fontSize: 28 }} />
                   <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      טלפון אם
-                    </Typography>
-                    <Typography variant="h6" fontWeight="600">
-                      {formatValue(u.motherPhone)}
-                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">טלפון אם</Typography>
+                    <Typography variant="h6" fontWeight="600">{u.motherPhone || NA}</Typography>
                   </Box>
                 </DetailItem>
               </Grid>
