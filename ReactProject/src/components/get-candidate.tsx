@@ -1,1559 +1,798 @@
 "use client"
-import type React from "react"
 import { useState, useEffect, useContext } from "react"
-import axios from "axios"
 import {
+  Box,
+  Container,
+  Paper,
+  Typography,
+  Avatar,
+  Grid,
+  Chip,
+  // Divider,
   Card,
   CardContent,
-  Typography,
-  Grid,
-  Box,
-  Chip,
-  Dialog,
   IconButton,
-  FormControl,
-  Select,
-  MenuItem,
-  InputLabel,
-  Paper,
   CircularProgress,
-  useMediaQuery,
-  TextField,
-  Slider,
-  Autocomplete,
-  Button,
-  Collapse,
-  Drawer,
-  Avatar,
-  ThemeProvider,
-  createTheme,
   Alert,
-  AlertTitle,
-  Menu,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  Tooltip,
-  Badge,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Collapse,
 } from "@mui/material"
-import { styled, useTheme, alpha } from "@mui/material/styles"
-import {
-  Close,
-  Person,
-  LocationOn,
-  School,
-  Work,
-  CalendarMonth,
-  Height,
-  Search,
-  FilterAltOutlined,
-  ClearAll,
-  Edit,
-  Delete,
-  Save,
-  Notes as NotesIcon,
-  Male,
-  Female,
-  Login,
-  Refresh,
-  MoreVert,
-  CheckCircle,
-  Cancel,
-  Psychology,
-  Visibility,
-  Share,
-  Favorite,
-  FavoriteBorder,
-  SmartToy,
-  Comment,
-} from "@mui/icons-material"
+import { styled, keyframes } from "@mui/material/styles"
+import { motion } from "framer-motion"
 import { userContext } from "./UserContext"
-import type { Candidate, Male as MaleType, Women, Note } from "../Models"
-import { Outlet, useNavigate } from "react-router-dom"
-import UserProfile from "./Candidateprofile"
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#b87333",
-      light: "#d9a875",
-      dark: "#8c5319",
-    },
-    secondary: {
-      main: "#000000",
-      light: "#333333",
-      dark: "#000000",
-    },
-    background: {
-      default: "#ffffff",
-      paper: "#ffffff",
-    },
-    text: {
-      primary: "#333333",
-      secondary: "#666666",
-    },
-    error: {
-      main: "#d32f2f",
-    },
-    success: {
-      main: "#388e3c",
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 700,
-    },
-    h6: {
-      fontWeight: 600,
-    },
-  },
-  shape: {
-    borderRadius: 8,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          borderRadius: 8,
-        },
-        contained: {
-          boxShadow: "0 4px 6px rgba(184, 115, 51, 0.2)",
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: 16,
-        },
-      },
-    },
-  },
-})
+import PersonIcon from "@mui/icons-material/Person"
+// import FamilyRestroomIcon from "@mui/material-icons/FamilyRestroom"
+import ContactPhoneIcon from "@mui/icons-material/ContactPhone"
+import LocationOnIcon from "@mui/icons-material/LocationOn"
+import CakeIcon from "@mui/icons-material/Cake"
+import HeightIcon from "@mui/icons-material/Height"
+import EmailIcon from "@mui/icons-material/Email"
+import PhoneIcon from "@mui/icons-material/Phone"
+import SchoolIcon from "@mui/icons-material/School"
+import WorkIcon from "@mui/icons-material/Work"
+// import FavoriteIcon from "@mui/icons-material/Favorite"
+import InfoIcon from "@mui/icons-material/Info"
+import EditIcon from "@mui/icons-material/Edit"
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
+import ExpandLessIcon from "@mui/icons-material/ExpandLess"
 
-const StyledCard = styled(Card)(() => ({
-  transition: "all 0.3s ease",
+const pulse = keyframes`
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(184, 115, 51, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(184, 115, 51, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(184, 115, 51, 0); }
+`
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+`
+
+const glow = keyframes`
+  0%, 100% { box-shadow: 0 0 20px rgba(184, 115, 51, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(184, 115, 51, 0.6); }
+`
+
+const API_BASE_URL = "https://matchmakingsprojectserver.onrender.com/api"
+
+const ProfileContainer = styled(Container)(({ theme }) => ({
+  minHeight: "100vh",
+  background: "linear-gradient(135deg, #f8f9fa 0%, #fff8f0 50%, #f0f8ff 100%)",
+  padding: theme.spacing(4, 2),
+  position: "relative",
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: `
+      radial-gradient(circle at 20% 80%, rgba(184, 115, 51, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(44, 24, 16, 0.05) 0%, transparent 50%)
+    `,
+    zIndex: 0,
+  },
+}))
+
+const ProfileCard = styled(Paper)(({ theme }) => ({
+  position: "relative",
+  zIndex: 1,
+  borderRadius: theme.spacing(4),
+  background: "linear-gradient(145deg, #ffffff 0%, #fefefe 50%, #fff8f0 100%)",
+  boxShadow: "0 20px 60px rgba(184, 115, 51, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)",
+  border: "1px solid rgba(184, 115, 51, 0.1)",
+  overflow: "hidden",
+  marginBottom: theme.spacing(3),
+}))
+
+const ProfileHeader = styled(Box)(({ theme }) => ({
+  background: "linear-gradient(135deg, #2c1810 0%, #b87333 50%, #d4af37 100%)",
+  padding: theme.spacing(6, 4),
   position: "relative",
   overflow: "hidden",
-  height: "100%",
-  borderRadius: 16,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
-  cursor: "pointer",
-  "&:hover": {
-    transform: "translateY(-8px)",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
-    "& .card-overlay": {
-      opacity: 1,
-    },
-    "& .card-actions": {
-      opacity: 1,
-    },
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: "-50%",
+    left: "-50%",
+    width: "200%",
+    height: "200%",
+    background: `
+      radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%),
+      radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.2) 0%, transparent 50%)
+    `,
+    animation: `${float} 6s ease-in-out infinite`,
   },
 }))
 
-const CardOverlay = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)",
-  padding: theme.spacing(2),
-  opacity: 0,
-  transition: "opacity 0.3s ease",
-  color: "white",
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.spacing(1),
-}))
-
-const CardActions = styled(Box)(() => ({
-  position: "absolute",
-  top: 10,
-  right: 10,
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  opacity: 0,
-  transition: "opacity 0.3s ease",
-  zIndex: 2,
-}))
-
-const StatusChip = styled(Chip)(({ theme, status }: { theme: any; status: boolean }) => ({
-  position: "absolute",
-  top: 10,
-  left: 10,
-  backgroundColor: status ? theme.palette.success.main : theme.palette.error.main,
-  color: "white",
-  zIndex: 1,
-}))
-
-const SearchTextField = styled(TextField)(({ theme }) => ({
-  "& .MuiOutlinedInput-root": {
-    borderRadius: 30,
-    backgroundColor: alpha(theme.palette.common.white, 0.9),
-    transition: theme.transitions.create(["background-color", "box-shadow"]),
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.common.white, 1),
-    },
-    "&.Mui-focused": {
-      backgroundColor: alpha(theme.palette.common.white, 1),
-      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.25)}`,
-    },
-  },
-}))
-
-const NotesDrawer = styled(Drawer)(({ theme }) => ({
-  "& .MuiDrawer-paper": {
-    width: 400,
-    maxWidth: "100%",
-    padding: theme.spacing(2),
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
-  },
-}))
-
-const NoteItem = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  borderRadius: 8,
+const ProfileAvatar = styled(Avatar)(({}) => ({
+  width: 180,
+  height: 180,
+  border: "4px solid rgba(255, 255, 255, 0.9)",
+  boxShadow: "0 16px 32px rgba(0, 0, 0, 0.3)",
   position: "relative",
-  transition: "all 0.2s ease",
+  zIndex: 2,
+  animation: `${glow} 3s ease-in-out infinite`,
+  "& .MuiAvatar-img": { objectFit: "cover" },
+}))
+
+const InfoCard = styled(Card)(({ theme }) => ({
+  borderRadius: theme.spacing(3),
+  background: "linear-gradient(145deg, #ffffff 0%, #fefefe 100%)",
+  border: "1px solid rgba(184, 115, 51, 0.1)",
+  transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+  position: "relative",
+  overflow: "hidden",
+  marginBottom: theme.spacing(3),
   "&:hover": {
-    boxShadow: theme.shadows[3],
-    "& .note-actions": {
-      opacity: 1,
-    },
+    transform: "translateY(-4px)",
+    boxShadow: "0 20px 40px rgba(184, 115, 51, 0.2)",
+    border: "1px solid rgba(184, 115, 51, 0.3)",
+  },
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "4px",
+    background: "linear-gradient(90deg, #b87333, #d4af37, #b87333)",
   },
 }))
 
-const NoteActions = styled(Box)(({}) => ({
-  position: "absolute",
-  top: 8,
-  right: 8,
+const SectionTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: "800",
+  marginBottom: theme.spacing(2),
   display: "flex",
-  gap: 8,
-  opacity: 0,
-  transition: "opacity 0.2s ease",
+  alignItems: "center",
+  gap: theme.spacing(2),
+  background: "linear-gradient(135deg, #2c1810 0%, #b87333 50%, #d4af37 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  fontSize: "1.8rem",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  "&:hover": { transform: "translateX(8px)" },
+  "& svg": {
+    color: "#b87333",
+    filter: "drop-shadow(0 2px 4px rgba(184, 115, 51, 0.3))",
+    fontSize: "2rem",
+  },
 }))
 
-const CopperGradientBox = styled(Box)(({ theme }) => ({
-  background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+const StyledChip = styled(Chip)(({ theme }) => ({
+  background: "linear-gradient(135deg, #b87333, #d4af37)",
   color: "white",
-  borderRadius: "12px",
-  padding: theme.spacing(2),
-  boxShadow: "0 4px 20px rgba(184, 115, 51, 0.25)",
+  fontWeight: "600",
+  margin: theme.spacing(0.5),
+  boxShadow: "0 4px 8px rgba(184, 115, 51, 0.3)",
+  fontSize: "1rem",
+  height: "36px",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 12px rgba(184, 115, 51, 0.4)",
+  },
 }))
 
-const CandidatesPage = () => {
-  const muiTheme = useTheme()
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"))
-  const [candidates, setCandidates] = useState<Candidate[]>([])
+const ContactCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  margin: theme.spacing(2, 0),
+  borderRadius: theme.spacing(2),
+  background: "linear-gradient(135deg, #fff8f0 0%, #f0f8ff 100%)",
+  border: "1px solid rgba(184, 115, 51, 0.1)",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "translateX(8px)",
+    boxShadow: "0 8px 16px rgba(184, 115, 51, 0.2)",
+  },
+}))
+
+const DetailItem = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing(2),
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(1),
+  background: "rgba(184, 115, 51, 0.05)",
+  marginBottom: theme.spacing(2),
+  transition: "all 0.3s ease",
+  "&:hover": {
+    background: "rgba(184, 115, 51, 0.1)",
+    transform: "translateX(4px)",
+  },
+}))
+
+interface UserProfileProps {
+  candidateData?: any
+  onClose?: () => void
+}
+
+const NA = "לא צוין"
+
+function formatValue(val: any): string {
+  if (val === null || val === undefined || val === "" || val === "null" || val === "undefined") return NA
+  if (typeof val === "boolean") return val ? "כן" : "לא"
+  if (typeof val === "string" && val.toLowerCase() === "true") return "כן"
+  if (typeof val === "string" && val.toLowerCase() === "false") return "לא"
+  return String(val).trim() || NA
+}
+
+const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
+  const [familyData, setFamilyData] = useState<any>(null)
+  const [contactsData, setContactsData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null)
-  const [openDialog, setOpenDialog] = useState(false)
-  const [expandedFilters, setExpandedFilters] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false)
-  const [notes, setNotes] = useState<Note[]>([])
-  const [editingNote, setEditingNote] = useState<Note | null>(null)
-  const [newNoteText, setNewNoteText] = useState("")
-  const { user, token, logout } = useContext(userContext)
-  const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
-  const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all")
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [menuCandidate, setMenuCandidate] = useState<Candidate | null>(null)
-  const [favorites, setFavorites] = useState<number[]>([])
-  const [aiSearchLoading, setAiSearchLoading] = useState(false)
-  const [statusUpdateLoading, setStatusUpdateLoading] = useState<number | null>(null)
-  const [candidateNotesDialog, setCandidateNotesDialog] = useState<Candidate | null>(null)
+  const [error, setError] = useState<string>("")
+  const ctx = useContext(userContext) as any
+  const token = ctx?.token
 
-  const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
-
-  const getAuthHeaders = () => {
-    if (!token) {
-      throw new Error("אין טוקן אימות")
-    }
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    }
-  }
-
-  const handle401Error = () => {
-    setError("פג תוקף ההתחברות. נא להתחבר מחדש.")
-    logout()
-    navigate("/login")
-  }
-
-  const [filters, setFilters] = useState({
-    statusFilter: "all",
-    genderFilter: "all",
-    ageRange: [18, 50],
-    heightRange: [150, 200],
-    cities: [] as string[],
-    classes: [] as string[],
-    occupations: [] as string[],
-    backgrounds: [] as string[],
+  const [expandedSections, setExpandedSections] = useState({
+    personal: true,
+    family: false,
+    contacts: false,
+    traits: false,
+    education: false,
+    preferences: false,
   })
 
-  const fetchCandidates = async () => {
-    setLoading(true)
-    setError(null)
-    if (!token) {
-      setError("נדרש להתחבר למערכת כדי לצפות במועמדים")
-      setLoading(false)
-      return
-    }
-    try {
-      console.log("מנסה להתחבר לשרת עם טוקן:", token.substring(0, 20) + "...")
-      const headers = getAuthHeaders()
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        setLoading(true)
+        setError("")
 
-      console.log("טוען גברים...")
-      const malesResponse = await axios.get<MaleType[]>(`${ApiUrl}/Male`, {
-        headers,
-        timeout: 30000,
-      })
-      console.log("תגובת גברים:", malesResponse.status, malesResponse.data.length)
-      const males = malesResponse.data.map((male) => ({
-        ...male,
-        role: "Male" as const,
-      }))
-
-      console.log("טוען נשים...")
-      const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`, {
-        headers,
-        timeout: 30000,
-      })
-      console.log("תגובת נשים:", femalesResponse.status, femalesResponse.data.length)
-      const females = femalesResponse.data.map((female) => ({
-        ...female,
-        role: "Women" as const,
-      }))
-
-      console.log("גברים:", males.length)
-      console.log("נשים:", females.length)
-
-      const allCandidates = [...males, ...females]
-
-      const sortedCandidates = allCandidates.sort((a, b) => b.id - a.id)
-
-      setCandidates(sortedCandidates)
-      console.log("סה״כ מועמדים:", sortedCandidates.length)
-
-      if (sortedCandidates.length === 0) {
-        setError("לא נמצאו מועמדים במערכת.")
-      }
-    } catch (error) {
-      console.error("שגיאה מפורטת:", error)
-      if (axios.isAxiosError(error)) {
-        console.error("Axios Error Details:", {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-        })
-        if (error.response?.status === 401) {
-          handle401Error()
+        if (!candidateData) {
+          setError("לא נמצאו נתוני מועמד")
           return
-        } else if (error.response?.status === 404) {
-          setError("לא נמצא נתיב API (404). נא לבדוק את כתובת השרת.")
-        } else if (error.response?.status === 403) {
-          setError("אין הרשאה לגשת לנתונים (403).")
-        } else if (error.response?.status === 500) {
-          setError("שגיאת שרת פנימית (500). נא לנסות שוב מאוחר יותר.")
-        } else if (error.code === "ECONNABORTED") {
-          setError("תם הזמן הקצוב לחיבור. נא לנסות שוב.")
-        } else if (error.code === "ERR_NETWORK") {
-          setError("שגיאת רשת. נא לבדוק את החיבור לאינטרנט.")
-        } else {
-          setError(`שגיאה בטעינת נתונים: ${error.response?.status || error.code} - ${error.message}`)
         }
-      } else {
-        setError("שגיאה לא צפויה בטעינת נתונים.")
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  useEffect(() => {
-    if (token) {
-      fetchCandidates()
-      loadFavorites()
-    } else {
-      setLoading(false)
-      setError("נדרש להתחבר למערכת")
-    }
-  }, [token])
-
-  useEffect(() => {
-    if (notesDrawerOpen && user?.id && token) {
-      fetchNotes()
-    }
-  }, [notesDrawerOpen, user?.id, token])
-
-  const loadFavorites = () => {
-    const savedFavorites = localStorage.getItem("favorites")
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites))
-    }
-  }
-
-  const toggleFavorite = (candidateId: number) => {
-    const newFavorites = favorites.includes(candidateId)
-      ? favorites.filter((id) => id !== candidateId)
-      : [...favorites, candidateId]
-    setFavorites(newFavorites)
-    localStorage.setItem("favorites", JSON.stringify(newFavorites))
-  }
-
-  const handleOpenDetails = (candidate: Candidate) => {
-    setSelectedCandidate(candidate)
-    setOpenDialog(true)
-  }
-
-  const handleCloseDetails = () => {
-    setOpenDialog(false)
-    setSelectedCandidate(null)
-  }
-
-  const getImageUrl = (candidate: Candidate) => {
-    if (candidate.photoUrl) return candidate.photoUrl
-    if (candidate.photoName) return `${ApiUrl}/files/${candidate.photoName}`
-    if ((candidate as any).photo) return (candidate as any).photo
-    if ((candidate as any).image) return (candidate as any).image
-    if ((candidate as any).profileImage) return (candidate as any).profileImage
-    return null
-  }
-
-  const handleFilterChange = (filterName: string, value: any) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterName]: value,
-    }))
-  }
-
-  const resetFilters = () => {
-    setFilters({
-      statusFilter: "all",
-      genderFilter: "all",
-      ageRange: [18, 50],
-      heightRange: [150, 200],
-      cities: [],
-      classes: [],
-      occupations: [],
-      backgrounds: [],
-    })
-    setSearchQuery("")
-    setGenderTab("all")
-  }
-
-  const handleAISearch = async () => {
-    if (!searchQuery.trim()) return
-
-    setAiSearchLoading(true)
-    try {
-      const headers = getAuthHeaders()
-      const response = await axios.post(
-        `${ApiUrl}/ai/search-candidates`,
-        { query: searchQuery },
-        { headers, timeout: 30000 },
-      )
-
-      if (response.data && response.data.length > 0) {
-        setCandidates(response.data)
-      } else {
-        setError("לא נמצאו מועמדים מתאימים לחיפוש AI")
-      }
-    } catch (error) {
-      console.error("שגיאה בחיפוש AI:", error)
-      setError("שגיאה בחיפוש AI. נסה שוב מאוחר יותר.")
-    } finally {
-      setAiSearchLoading(false)
-    }
-  }
-
-  const handleCandidateAISearch = (candidate: Candidate) => {
-    navigate("/ai-match-search", {
-      state: {
-        candidate: candidate,
-        searchType: "match",
-      },
-    })
-  }
-
-  const updateCandidateStatus = async (candidateId: number, newStatus: boolean) => {
-    setStatusUpdateLoading(candidateId)
-    try {
-      const headers = getAuthHeaders()
-      const candidate = candidates.find((c) => c.id === candidateId)
-      if (!candidate) {
-        setError("לא נמצא המועמד")
-        setStatusUpdateLoading(null)
-        return
-      }
-
-      const endpoint = candidate.role === "Male" ? "Male" : "Women"
-      const updateData = { statusVacant: newStatus }
-
-      await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
-        headers,
-        timeout: 15000,
-      })
-
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c))
-      )
-    } catch (error: any) {
-      console.error("שגיאה בעדכון סטטוס:", error)
-      if (error.response) {
-        setError(`שגיאה בעדכון סטטוס: ${error.response.status}`)
-      } else {
-        setError("לא ניתן להתחבר לשרת")
-      }
-    } finally {
-      setStatusUpdateLoading(null)
-      setAnchorEl(null)
-    }
-  }
-
-  const fetchNotes = async () => {
-    if (!token) return
-    try {
-      const headers = getAuthHeaders()
-      const response = await axios.get(`${ApiUrl}/Note`, {
-        headers,
-        timeout: 10000,
-      })
-      setNotes(response.data)
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          handle401Error()
-        } else if (error.response?.status === 404) {
-          setNotes([])
-        }
-      }
-    }
-  }
-
-  const addNote = async () => {
-    if (!user?.id || !newNoteText.trim() || !selectedCandidate || !token) return
-
-    try {
-      const headers = getAuthHeaders()
-      const newNote = {
-        matchMakerId: user.id,
-        userId: selectedCandidate.id,
-        content: newNoteText,
-        createdAt: new Date().toISOString(),
-      }
-
-      const response = await axios.post(`${ApiUrl}/Note`, newNote, {
-        headers,
-        timeout: 10000,
-      })
-
-      setNotes((prev) => [...prev, response.data])
-      setNewNoteText("")
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          handle401Error()
-        } else {
-          setError(`שגיאה בהוספת הערה: ${error.response?.data?.message || error.message}`)
-        }
-      }
-    }
-  }
-
-  const updateNote = async () => {
-    if (!editingNote || !token) return
-    try {
-      const headers = getAuthHeaders()
-      await axios.put(
-        `${ApiUrl}/Note/${editingNote.id}`,
-        {
-          id: editingNote.id,
-          matchMakerId: editingNote.matchMakerId,
-          userId: editingNote.userId,
-          content: editingNote.content,
-          createdAt: editingNote.createdAt,
-        },
-        {
-          headers,
-          timeout: 10000,
-        },
-      )
-      setNotes((prev) => prev.map((note) => (note.id === editingNote.id ? editingNote : note)))
-      setEditingNote(null)
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          handle401Error()
-        } else {
-          setError(`שגיאה בעדכון הערה: ${error.response?.data?.message || error.message}`)
-        }
-      }
-    }
-  }
-
-  const deleteNote = async (noteId: number) => {
-    if (!token) return
-    try {
-      const headers = getAuthHeaders()
-      await axios.delete(`${ApiUrl}/Note/${noteId}`, {
-        headers,
-        timeout: 10000,
-      })
-      setNotes((prev) => prev.filter((note) => note.id !== noteId))
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          handle401Error()
-        } else {
-          setError(`שגיאה במחיקת הערה: ${error.response?.data?.message || error.message}`)
-        }
-      }
-    }
-  }
-
-  const handleRetry = () => {
-    setError(null)
-    if (token) {
-      fetchCandidates()
-    }
-  }
-
-  const handleLogin = () => {
-    navigate("/login")
-  }
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, candidate: Candidate) => {
-    event.stopPropagation()
-    setAnchorEl(event.currentTarget)
-    setMenuCandidate(candidate)
-  }
-
-  const handleMenuClose = () => {
-    setAnchorEl(null)
-    setMenuCandidate(null)
-  }
-
-  const shareCandidate = (candidate: Candidate) => {
-    if (navigator.share) {
-      navigator.share({
-        title: `${candidate.firstName} ${candidate.lastName}`,
-        text: `מועמד/ת לשידוך: ${candidate.firstName} ${candidate.lastName}, גיל ${candidate.age}`,
-        url: window.location.href,
-      })
-    } else {
-      const text = `מועמד/ת לשידוך: ${candidate.firstName} ${candidate.lastName}, גיל ${candidate.age}`
-      navigator.clipboard.writeText(text)
-    }
-    handleMenuClose()
-  }
-
-  const openCandidateNotes = (candidate: Candidate) => {
-    setCandidateNotesDialog(candidate)
-    if (!notes.length) {
-      fetchNotes()
-    }
-    handleMenuClose()
-  }
-
-  const filteredCandidates = candidates.filter((candidate) => {
-    try {
-      if (!candidate || typeof candidate.id === "undefined") {
-        return false
-      }
-
-      if (genderTab === "male" && candidate.role !== "Male") return false
-      if (genderTab === "female" && candidate.role !== "Women") return false
-
-      if (searchQuery && searchQuery.trim()) {
-        const searchLower = searchQuery.toLowerCase()
-        const searchFields = [
-          candidate.firstName || "",
-          candidate.lastName || "",
-          candidate.city || "",
-          candidate.class || "",
-          candidate.occupation || "",
-          candidate.backGround || "",
-        ]
-        if (candidate.role === "Women") {
-          searchFields.push((candidate as Women).currentOccupation || "")
-          searchFields.push((candidate as Women).seminar || "")
-          searchFields.push((candidate as Women).highSchool || "")
-        }
-        if (candidate.role === "Male") {
-          searchFields.push((candidate as MaleType).bigYeshiva || "")
-          searchFields.push((candidate as MaleType).smallYeshiva || "")
-        }
-        const matchesSearch = searchFields.some((field) => field.toLowerCase().includes(searchLower))
-        if (!matchesSearch) return false
-      }
-
-      if (filters.statusFilter !== "all") {
-        const isAvailable = filters.statusFilter === "available"
-        if (candidate.statusVacant !== isAvailable) return false
-      }
-
-      if (filters.genderFilter !== "all") {
-        const expectedRole = filters.genderFilter === "Male" ? "Male" : "Women"
-        if (candidate.role !== expectedRole) return false
-      }
-
-      if (candidate.age && typeof candidate.age === "number") {
-        if (candidate.age < filters.ageRange[0] || candidate.age > filters.ageRange[1]) return false
-      }
-
-      if (candidate.height && typeof candidate.height === "number") {
-        if (candidate.height < filters.heightRange[0] || candidate.height > filters.heightRange[1]) return false
-      }
-
-      if (filters.cities.length > 0) {
-        if (!candidate.city || !filters.cities.includes(candidate.city)) return false
-      }
-
-      if (filters.classes.length > 0) {
-        if (!candidate.class || !filters.classes.includes(candidate.class)) return false
-      }
-
-      if (filters.occupations.length > 0) {
-        const occupation = candidate.role === "Male" ? candidate.occupation : (candidate as Women).currentOccupation
-        if (!occupation || !filters.occupations.includes(occupation)) return false
-      }
-
-      if (filters.backgrounds.length > 0) {
-        if (!candidate.backGround || !filters.backgrounds.includes(candidate.backGround)) return false
-      }
-
-      return true
-    } catch (error) {
-      return true
-    }
-  })
-
-  const uniqueCities = [...new Set(candidates.map((c) => c.city).filter(Boolean))]
-  const uniqueClasses = [...new Set(candidates.map((c) => c.class).filter(Boolean))]
-  const uniqueOccupations = [
-    ...new Set(
-      candidates
-        .map((c) => {
-          if (c.role === "Women" && (c as Women).currentOccupation) {
-            return (c as Women).currentOccupation
-          }
-          return c.occupation || ""
-        })
-        .filter(Boolean),
-    ),
-  ]
-  const uniqueBackgrounds = [...new Set(candidates.map((c) => c.backGround).filter(Boolean))]
-
-  const candidateNotes = notes.filter((note) => note.userId === selectedCandidate?.id)
-  const specificCandidateNotes = candidateNotesDialog
-    ? notes.filter((note) => note.userId === candidateNotesDialog.id)
-    : []
-
-  const maleCount = candidates.filter((c) => c.role === "Male").length
-  const femaleCount = candidates.filter((c) => c.role === "Women").length
-
-  return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: 3, bgcolor: "#f8f9fa", minHeight: "100vh" }}>
-        <CopperGradientBox sx={{ mb: 4, p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 2, fontWeight: "bold" }}>
-            מאגר המועמדים לשידוכים
-          </Typography>
-          <Typography variant="subtitle1" align="center">
-            סה"כ {candidates.length} מועמדים במערכת • {maleCount} גברים • {femaleCount} נשים
-          </Typography>
-        </CopperGradientBox>
-
-        {error && (
-          <Alert
-            severity={error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? "warning" : "error"}
-            sx={{ mb: 3, borderRadius: 2 }}
-            action={
-              <Box sx={{ display: "flex", gap: 1 }}>
-                {error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? (
-                  <Button color="inherit" size="small" startIcon={<Login />} onClick={handleLogin}>
-                    התחבר
-                  </Button>
-                ) : (
-                  <Button color="inherit" size="small" startIcon={<Refresh />} onClick={handleRetry}>
-                    נסה שוב
-                  </Button>
-                )}
-              </Box>
+        if (token && candidateData.id) {
+          try {
+            const familyRes = await fetch(`${API_BASE_URL}/FamilyDetails`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (familyRes.ok) {
+              const allFamily = await familyRes.json()
+              const matched = allFamily.find(
+                (f: any) =>
+                  (candidateData.role === "Male" && f.maleId === candidateData.id) ||
+                  (candidateData.role === "Women" && f.womenId === candidateData.id),
+              )
+              if (matched) setFamilyData(matched)
             }
-          >
-            <AlertTitle>שגיאה</AlertTitle>
-            {error}
-          </Alert>
-        )}
+          } catch (e) {
+            console.log("משפחה לא טוענת")
+          }
 
-        {token && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              mb: 4,
-              borderRadius: 4,
-              background: "linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={6}>
-                <SearchTextField
-                  fullWidth
-                  placeholder="חיפוש לפי שם, עיר, חוג... או תיאור AI"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: <Search sx={{ mr: 1, color: "text.secondary" }} />,
-                    endAdornment: (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={aiSearchLoading ? <CircularProgress size={16} /> : <Psychology />}
-                        onClick={handleAISearch}
-                        disabled={!searchQuery.trim() || aiSearchLoading}
-                        sx={{ mr: 1 }}
-                      >
-                        חיפוש AI
-                      </Button>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: "flex", gap: 1, justifyContent: { xs: "flex-start", md: "flex-end" } }}>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<FilterAltOutlined />}
-                    onClick={() => setExpandedFilters(!expandedFilters)}
-                  >
-                    {expandedFilters ? "הסתר פילטרים" : "הצג פילטרים"}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<ClearAll />}
-                    onClick={resetFilters}
-                    disabled={
-                      filters.statusFilter === "all" &&
-                      filters.genderFilter === "all" &&
-                      filters.ageRange[0] === 18 &&
-                      filters.ageRange[1] === 50 &&
-                      filters.heightRange[0] === 150 &&
-                      filters.heightRange[1] === 200 &&
-                      filters.cities.length === 0 &&
-                      filters.classes.length === 0 &&
-                      filters.occupations.length === 0 &&
-                      filters.backgrounds.length === 0 &&
-                      !searchQuery &&
-                      genderTab === "all"
-                    }
-                  >
-                    נקה פילטרים
-                  </Button>
-                  {user?.id && (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<NotesIcon />}
-                      onClick={() => setNotesDrawerOpen(true)}
-                    >
-                      הערות שדכנית
-                    </Button>
-                  )}
-                </Box>
-              </Grid>
-            </Grid>
-            <Collapse in={expandedFilters}>
-              <Box sx={{ mt: 3 }}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6} lg={3}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel id="status-filter-label">סטטוס</InputLabel>
-                      <Select
-                        labelId="status-filter-label"
-                        value={filters.statusFilter}
-                        label="סטטוס"
-                        onChange={(e) => handleFilterChange("statusFilter", e.target.value)}
-                      >
-                        <MenuItem value="all">הכל</MenuItem>
-                        <MenuItem value="available">פנוי להצעות</MenuItem>
-                        <MenuItem value="unavailable">לא פנוי להצעות</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={6} lg={3}>
-                    <Autocomplete
-                      multiple
-                      options={uniqueCities}
-                      value={filters.cities}
-                      onChange={(_, newValue) => handleFilterChange("cities", newValue)}
-                      renderInput={(params) => <TextField {...params} label="ערים" size="small" />}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6} lg={3}>
-                    <Autocomplete
-                      multiple
-                      options={uniqueClasses}
-                      value={filters.classes}
-                      onChange={(_, newValue) => handleFilterChange("classes", newValue)}
-                      renderInput={(params) => <TextField {...params} label="חוגים" size="small" />}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6} lg={3}>
-                    <Autocomplete
-                      multiple
-                      options={uniqueOccupations}
-                      value={filters.occupations}
-                      onChange={(_, newValue) => handleFilterChange("occupations", newValue)}
-                      renderInput={(params) => <TextField {...params} label="עיסוקים" size="small" />}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography gutterBottom>
-                      טווח גילאים: {filters.ageRange[0]} - {filters.ageRange[1]}
-                    </Typography>
-                    <Slider
-                      value={filters.ageRange}
-                      onChange={(_, newValue) => handleFilterChange("ageRange", newValue)}
-                      valueLabelDisplay="auto"
-                      min={18}
-                      max={70}
-                      sx={{
-                        "& .MuiSlider-thumb": {
-                          backgroundColor: theme.palette.primary.main,
-                        },
-                        "& .MuiSlider-track": {
-                          backgroundColor: theme.palette.primary.main,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography gutterBottom>
-                      טווח גבהים: {filters.heightRange[0]} - {filters.heightRange[1]} ס"מ
-                    </Typography>
-                    <Slider
-                      value={filters.heightRange}
-                      onChange={(_, newValue) => handleFilterChange("heightRange", newValue)}
-                      valueLabelDisplay="auto"
-                      min={140}
-                      max={210}
-                      sx={{
-                        "& .MuiSlider-thumb": {
-                          backgroundColor: theme.palette.primary.main,
-                        },
-                        "& .MuiSlider-track": {
-                          backgroundColor: theme.palette.primary.main,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Autocomplete
-                      multiple
-                      options={uniqueBackgrounds}
-                      value={filters.backgrounds}
-                      onChange={(_, newValue) => handleFilterChange("backgrounds", newValue)}
-                      renderInput={(params) => <TextField {...params} label="רקע" size="small" />}
-                      size="small"
-                    />
-                  </Grid>
-                </Grid>
-              </Box>
-            </Collapse>
-          </Paper>
-        )}
+          try {
+            const contactRes = await fetch(`${API_BASE_URL}/Contact`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (contactRes.ok) {
+              const allContacts = await contactRes.json()
+              setContactsData(
+                allContacts.filter(
+                  (c: any) =>
+                    (candidateData.role === "Male" && c.maleId === candidateData.id) ||
+                    (candidateData.role === "Women" && c.womenId === candidateData.id),
+                ),
+              )
+            }
+          } catch (e) {
+            console.log("אנשי קשר לא טוענים")
+          }
+        }
+      } catch (err: any) {
+        console.error("שגיאה בטעינת פרופיל:", err)
+        setError("שגיאה בטעינת הפרופיל")
+      } finally {
+        setLoading(false)
+      }
+    }
 
-        {token && candidates.length > 0 && (
-          <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button
-                variant={genderTab === "all" ? "contained" : "outlined"}
-                onClick={() => setGenderTab("all")}
-                startIcon={<Person />}
-              >
-                כל המועמדים ({candidates.length})
-              </Button>
-              <Button
-                variant={genderTab === "male" ? "contained" : "outlined"}
-                onClick={() => setGenderTab("male")}
-                startIcon={<Male />}
-              >
-                גברים ({maleCount})
-              </Button>
-              <Button
-                variant={genderTab === "female" ? "contained" : "outlined"}
-                onClick={() => setGenderTab("female")}
-                startIcon={<Female />}
-              >
-                נשים ({femaleCount})
-              </Button>
-            </Box>
-          </Box>
-        )}
+    loadUserProfile()
+  }, [token, candidateData])
 
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
-            <CircularProgress sx={{ color: theme.palette.primary.main }} />
-          </Box>
-        ) : !token ? (
-          <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              נדרש להתחבר למערכת
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              כדי לצפות במועמדים, נדרש להתחבר למערכת
-            </Typography>
-            <Button variant="contained" color="primary" startIcon={<Login />} onClick={handleLogin}>
-              התחבר למערכת
-            </Button>
-          </Paper>
-        ) : (
-          <>
-            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                {filteredCandidates.length} מועמדים נמצאו
-              </Typography>
-            </Box>
-            {filteredCandidates.length === 0 ? (
-              <Paper sx={{ p: 5, textAlign: "center", borderRadius: 2 }}>
-                <Typography variant="h6">לא נמצאו מועמדים מתאימים</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  נסה לשנות את הפילטרים או לנקות את החיפוש
-                </Typography>
-                <Button variant="outlined" color="primary" sx={{ mt: 2 }} onClick={resetFilters}>
-                  נקה את כל הפילטרים
-                </Button>
-              </Paper>
-            ) : (
-              <Grid container spacing={3} sx={{ mt: 2 }}>
-                {filteredCandidates.map((candidate) => {
-                  const imageUrl = getImageUrl(candidate)
-                  const candidateNoteCount = notes.filter((note) => note.userId === candidate.id).length
-                  const isFavorite = favorites.includes(candidate.id)
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  }
 
-                  return (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
-                      <StyledCard onClick={() => handleOpenDetails(candidate)}>
-                        <StatusChip
-                          status={candidate.statusVacant}
-                          label={candidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
-                          size="small"
-                          theme={undefined}
-                        />
-
-                        <CardActions className="card-actions">
-                          <Tooltip title={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                toggleFavorite(candidate.id)
-                              }}
-                              sx={{
-                                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                                "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
-                              }}
-                            >
-                              {isFavorite ? (
-                                <Favorite sx={{ color: "#d32f2f" }} />
-                              ) : (
-                                <FavoriteBorder sx={{ color: "#666" }} />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title="חיפוש AI למועמד זה">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleCandidateAISearch(candidate)
-                              }}
-                              sx={{
-                                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                                "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
-                              }}
-                            >
-                              <SmartToy sx={{ color: theme.palette.primary.main }} />
-                            </IconButton>
-                          </Tooltip>
-
-                          {candidateNoteCount > 0 && (
-                            <Badge badgeContent={candidateNoteCount} color="primary">
-                              <Tooltip title="הערות על המועמד">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    openCandidateNotes(candidate)
-                                  }}
-                                  sx={{
-                                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
-                                  }}
-                                >
-                                  <NotesIcon sx={{ color: theme.palette.primary.main }} />
-                                </IconButton>
-                              </Tooltip>
-                            </Badge>
-                          )}
-
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleMenuOpen(e, candidate)}
-                            sx={{
-                              backgroundColor: "rgba(255, 255, 255, 0.9)",
-                              "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
-                            }}
-                          >
-                            <MoreVert />
-                          </IconButton>
-                        </CardActions>
-
-                        <Box
-                          sx={{
-                            height: 200,
-                            bgcolor:
-                              candidate.role === "Male"
-                                ? alpha(theme.palette.primary.main, 0.1)
-                                : alpha(theme.palette.primary.light, 0.2),
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            position: "relative",
-                          }}
-                        >
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl || "/placeholder.svg"}
-                              alt={`${candidate.firstName}'s profile`}
-                              style={{
-                                width: 120,
-                                height: 120,
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                                border: `3px solid ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light}`,
-                              }}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.style.display = "none"
-                                const parent = target.parentElement
-                                if (parent && !parent.querySelector(".fallback-avatar")) {
-                                  const avatar = document.createElement("div")
-                                  avatar.className = "fallback-avatar"
-                                  avatar.style.cssText = `
-                                    width: 120px;
-                                    height: 120px;
-                                    border-radius: 50%;
-                                    background-color: ${candidate.role === "Male" ? theme.palette.primary.main : theme.palette.primary.light};
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    color: white;
-                                    font-size: 3rem;
-                                    font-weight: bold;
-                                    border: 3px solid white;
-                                  `
-                                  avatar.textContent = (
-                                    candidate.firstName || (candidate.role === "Male" ? "M" : "W")
-                                  ).charAt(0)
-                                  parent.appendChild(avatar)
-                                }
-                              }}
-                            />
-                          ) : candidate.role === "Male" ? (
-                            <Avatar
-                              sx={{
-                                width: 120,
-                                height: 120,
-                                bgcolor: theme.palette.primary.main,
-                                fontSize: "3rem",
-                                border: `3px solid white`,
-                              }}
-                            >
-                              {(candidate.firstName || "M").charAt(0)}
-                            </Avatar>
-                          ) : (
-                            <Avatar
-                              sx={{
-                                width: 120,
-                                height: 120,
-                                bgcolor: theme.palette.primary.light,
-                                fontSize: "3rem",
-                                border: `3px solid white`,
-                              }}
-                            >
-                              {(candidate.firstName || "W").charAt(0)}
-                            </Avatar>
-                          )}
-                        </Box>
-                        <CardContent sx={{ pt: 2, pb: 7 }}>
-                          <Typography variant="h5" component="div" align="center" gutterBottom>
-                            {candidate.firstName || "ללא שם"} {candidate.lastName || ""}
-                          </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                            <CalendarMonth fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="body2">גיל: {candidate.age || "לא צוין"}</Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                            <LocationOn fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="body2">עיר: {candidate.city || "לא צוין"}</Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                            <Height fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="body2">גובה: {candidate.height || "לא צוין"} ס"מ</Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                            <School fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="body2" noWrap>
-                              {candidate.role === "Male" ? "ישיבה:" : "סמינר:"}{" "}
-                              {candidate.role === "Male"
-                                ? (candidate as MaleType).bigYeshiva || "לא צוין"
-                                : (candidate as Women).seminar || "לא צוין"}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Work fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="body2" noWrap>
-                              עיסוק:{" "}
-                              {candidate.role === "Male"
-                                ? candidate.occupation || "לא צוין"
-                                : (candidate as Women).currentOccupation || "לא צוין"}
-                            </Typography>
-                          </Box>
-                        </CardContent>
-                        <CardOverlay className="card-overlay">
-                          <Typography variant="body2">חוג: {candidate.class || "לא צוין"}</Typography>
-                          <Typography variant="body2">רקע: {candidate.backGround || "לא צוין"}</Typography>
-                          <Typography variant="body2">מראה כללי: {candidate.generalAppearance || "לא צוין"}</Typography>
-                        </CardOverlay>
-                      </StyledCard>
-                    </Grid>
-                  )
-                })}
-              </Grid>
-            )}
-          </>
-        )}
-
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          transformOrigin={{ horizontal: "right", vertical: "top" }}
-          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-        >
-          <MenuItem onClick={() => handleOpenDetails(menuCandidate!)}>
-            <ListItemIcon>
-              <Visibility fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>צפה בפרטים</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={() => shareCandidate(menuCandidate!)}>
-            <ListItemIcon>
-              <Share fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>שתף</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={() => openCandidateNotes(menuCandidate!)}>
-            <ListItemIcon>
-              <Comment fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>הערות על המועמד</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem
-            onClick={() => updateCandidateStatus(menuCandidate!.id, true)}
-            disabled={statusUpdateLoading === menuCandidate?.id}
-          >
-            <ListItemIcon>
-              {statusUpdateLoading === menuCandidate?.id ? (
-                <CircularProgress size={16} />
-              ) : (
-                <CheckCircle fontSize="small" sx={{ color: "success.main" }} />
-              )}
-            </ListItemIcon>
-            <ListItemText>סמן כפנוי</ListItemText>
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => updateCandidateStatus(menuCandidate!.id, false)}
-            disabled={statusUpdateLoading === menuCandidate?.id}
-          >
-            <ListItemIcon>
-              {statusUpdateLoading === menuCandidate?.id ? (
-                <CircularProgress size={16} />
-              ) : (
-                <Cancel fontSize="small" sx={{ color: "error.main" }} />
-              )}
-            </ListItemIcon>
-            <ListItemText>סמן כלא פנוי</ListItemText>
-          </MenuItem>
-        </Menu>
-
-        <Dialog
-          open={Boolean(candidateNotesDialog)}
-          onClose={() => setCandidateNotesDialog(null)}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            הערות על {candidateNotesDialog?.firstName} {candidateNotesDialog?.lastName}
-          </DialogTitle>
-          <DialogContent>
-            {specificCandidateNotes.length > 0 ? (
-              <Box sx={{ mt: 2 }}>
-                {specificCandidateNotes.map((note) => (
-                  <NoteItem key={note.id} elevation={1}>
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      {note.content}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {new Date(note.createdAt).toLocaleDateString("he-IL", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Typography>
-                  </NoteItem>
-                ))}
-              </Box>
-            ) : (
-              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
-                אין הערות על מועמד זה
-              </Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCandidateNotesDialog(null)}>סגור</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={openDialog}
-          onClose={handleCloseDetails}
-          maxWidth="lg"
-          fullWidth
-          fullScreen={isMobile}
+  if (loading) {
+    return (
+      <ProfileContainer>
+        <Box
           sx={{
-            "& .MuiDialog-paper": {
-              borderRadius: isMobile ? 0 : 4,
-              maxHeight: "95vh",
-            },
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "50vh",
+            flexDirection: "column",
           }}
         >
-          <Box sx={{ position: "relative" }}>
-            <IconButton
-              onClick={handleCloseDetails}
+          <CircularProgress size={60} sx={{ color: "#b87333", animation: `${pulse} 2s infinite` }} />
+          <Typography variant="h5" sx={{ mt: 3, color: "#2c1810", fontWeight: "600" }}>
+            טוען פרופיל...
+          </Typography>
+        </Box>
+      </ProfileContainer>
+    )
+  }
+
+  if (error || !candidateData) {
+    return (
+      <ProfileContainer>
+        <Alert severity="error" sx={{ mt: 4, borderRadius: 3, fontSize: "1.1rem" }}>
+          <Typography variant="h6" gutterBottom>
+            שגיאה בטעינת הפרופיל
+          </Typography>
+          <Typography variant="body1">{error || "לא נמצאו נתוני משתמש"}</Typography>
+        </Alert>
+      </ProfileContainer>
+    )
+  }
+
+  const u = candidateData
+  const isMale = u.role === "Male"
+
+  return (
+    <ProfileContainer maxWidth="lg">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <ProfileCard elevation={0}>
+          <ProfileHeader>
+            <Box
               sx={{
-                position: "absolute",
-                top: 16,
-                right: 16,
-                zIndex: 1000,
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 1)",
-                },
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                position: "relative",
+                zIndex: 2,
+                flexWrap: { xs: "wrap", sm: "nowrap" },
               }}
             >
-              <Close />
-            </IconButton>
-            {selectedCandidate && <UserProfile candidateData={selectedCandidate} onClose={handleCloseDetails} />}
-          </Box>
-        </Dialog>
-
-        <NotesDrawer anchor="right" open={notesDrawerOpen} onClose={() => setNotesDrawerOpen(false)}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-              הערות שדכנית
-            </Typography>
-            <IconButton onClick={() => setNotesDrawerOpen(false)}>
-              <Close />
-            </IconButton>
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              value={newNoteText}
-              onChange={(e) => setNewNoteText(e.target.value)}
-              placeholder="הוסף הערה חדשה"
-              sx={{ mb: 1 }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={addNote}
-              disabled={!newNoteText.trim() || !selectedCandidate}
-              fullWidth
-            >
-              הוסף הערה
-            </Button>
-          </Box>
-          <Box>
-            {selectedCandidate ? (
-              candidateNotes.length > 0 ? (
-                candidateNotes.map((note) => (
-                  <NoteItem key={note.id} elevation={1}>
-                    {editingNote && editingNote.id === note.id ? (
-                      <Box>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={3}
-                          value={editingNote.content}
-                          onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                          sx={{ mb: 1 }}
-                        />
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                          <Button
-                            size="small"
-                            startIcon={<Save />}
-                            onClick={updateNote}
-                            disabled={!editingNote.content.trim()}
-                          >
-                            שמור
-                          </Button>
-                          <Button size="small" color="inherit" onClick={() => setEditingNote(null)}>
-                            בטל
-                          </Button>
-                        </Box>
-                      </Box>
-                    ) : (
-                      <>
-                        <Typography variant="body1">{note.content}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(note.createdAt).toLocaleDateString("he-IL", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </Typography>
-                        <NoteActions className="note-actions">
-                          <IconButton size="small" color="primary" onClick={() => setEditingNote(note)}>
-                            <Edit fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => deleteNote(note.id)}>
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </NoteActions>
-                      </>
-                    )}
-                  </NoteItem>
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary" align="center">
-                  אין הערות על מועמד זה
+              <ProfileAvatar src={u.photoUrl || "/placeholder.svg"} alt={`${u.firstName} ${u.lastName}`}>
+                <PersonIcon sx={{ fontSize: 100, color: "#b87333" }} />
+              </ProfileAvatar>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="h2"
+                  sx={{
+                    color: "white",
+                    fontWeight: "900",
+                    mb: 2,
+                    textShadow: "0 4px 8px rgba(0, 0, 0, 0.3)",
+                    fontSize: { xs: "2rem", md: "3rem" },
+                  }}
+                >
+                  {u.firstName} {u.lastName}
                 </Typography>
-              )
-            ) : notes.length > 0 ? (
-              notes.map((note) => {
-                const noteCandidate = candidates.find((c) => c.id === note.userId)
-                return (
-                  <NoteItem key={note.id} elevation={1}>
-                    {editingNote && editingNote.id === note.id ? (
-                      <Box>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={3}
-                          value={editingNote.content}
-                          onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                          sx={{ mb: 1 }}
-                        />
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                          <Button
-                            size="small"
-                            startIcon={<Save />}
-                            onClick={updateNote}
-                            disabled={!editingNote.content.trim()}
-                          >
-                            שמור
-                          </Button>
-                          <Button size="small" color="inherit" onClick={() => setEditingNote(null)}>
-                            בטל
-                          </Button>
-                        </Box>
-                      </Box>
-                    ) : (
-                      <>
-                        {noteCandidate && (
-                          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: "bold" }}>
-                            {noteCandidate.firstName} {noteCandidate.lastName}
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+                  <StyledChip icon={<CakeIcon />} label={`גיל ${u.age || NA}`} />
+                  <StyledChip icon={<LocationOnIcon />} label={`${u.city || NA}, ${u.country || NA}`} />
+                  <StyledChip icon={<HeightIcon />} label={`${u.height || NA} ס"מ`} />
+                </Box>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: "rgba(255, 255, 255, 0.9)",
+                    fontWeight: "500",
+                    fontSize: { xs: "1.2rem", md: "1.5rem" },
+                  }}
+                >
+                  {u.status || NA} • {u.backGround || NA} • {u.openness || NA}
+                </Typography>
+              </Box>
+              {onClose && (
+                <IconButton
+                  onClick={onClose}
+                  sx={{
+                    color: "white",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    width: 60,
+                    height: 60,
+                    "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.2)", transform: "scale(1.1)" },
+                  }}
+                >
+                  <EditIcon sx={{ fontSize: 30 }} />
+                </IconButton>
+              )}
+            </Box>
+          </ProfileHeader>
+        </ProfileCard>
+
+        <InfoCard>
+          <CardContent sx={{ p: 4 }}>
+            <SectionTitle onClick={() => toggleSection("personal")}>
+              <PersonIcon />
+              פרטים אישיים {expandedSections.personal ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </SectionTitle>
+            <Collapse in={expandedSections.personal}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <EmailIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        אימייל
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.email || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <PhoneIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        טלפון
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.phone || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        תעודת זהות
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.tz || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <CakeIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        תאריך לידה
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.burnDate || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12}>
+                  <DetailItem>
+                    <LocationOnIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        כתובת
+                      </Typography>
+                      <Typography variant="h6">
+                        {u.address || NA}, {u.city || NA}, {u.country || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom sx={{ mt: 2 }}>
+                    עדה וזרם
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                    <Chip label={u.class || NA} size="medium" variant="outlined" />
+                    <Chip label={u.backGround || NA} size="medium" variant="outlined" />
+                    <Chip label={u.openness || NA} size="medium" variant="outlined" />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <HeightIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        גובה (ס"מ)
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.height || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
+                      פנוי לשידוך
+                    </Typography>
+                    <Chip
+                      label={formatValue(u.statusVacant)}
+                      color={u.statusVacant ? "success" : "error"}
+                      variant="outlined"
+                    />
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        מראה כללי
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.generalAppearance || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <DetailItem>
+                    <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        מראה
+                      </Typography>
+                      <Typography variant="h6" fontWeight="600">
+                        {u.appearance || NA}
+                      </Typography>
+                    </Box>
+                  </DetailItem>
+                </Grid>
+                {isMale && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            זקן
                           </Typography>
-                        )}
-                        <Typography variant="body1">{note.content}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(note.createdAt).toLocaleDateString("he-IL", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </Typography>
-                        <NoteActions className="note-actions">
-                          <IconButton size="small" color="primary" onClick={() => setEditingNote(note)}>
-                            <Edit fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => deleteNote(note.id)}>
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </NoteActions>
-                      </>
+                          <Typography variant="h6" fontWeight="600">
+                            {u.beard || NA}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            כיפה
+                          </Typography>
+                          <Typography variant="h6" fontWeight="600">
+                            {u.headCovering || NA}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            חליפה
+                          </Typography>
+                          <Typography variant="h6" fontWeight="600">
+                            {u.suit || NA}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                  </>
+                )}
+                {!isMale && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            כיסוי ראש
+                          </Typography>
+                          <Typography variant="h6" fontWeight="600">
+                            {u.headCovering || NA}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            איפור פנים
+                          </Typography>
+                          <Typography variant="h6" fontWeight="600">
+                            {u.facePaint || NA}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                  </>
+                )}
+              </Grid>
+            </Collapse>
+          </CardContent>
+        </InfoCard>
+
+        <InfoCard>
+          <CardContent sx={{ p: 4 }}>
+            <SectionTitle onClick={() => toggleSection("education")}>
+              <SchoolIcon />
+              השכלה ותעסוקה {expandedSections.education ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </SectionTitle>
+            <Collapse in={expandedSections.education}>
+              <Grid container spacing={3}>
+                {isMale ? (
+                  <>
+                    {u.bigYeshiva && (
+                      <Grid item xs={12} md={6}>
+                        <DetailItem>
+                          <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              ישיבה גדולה
+                            </Typography>
+                            <Typography variant="h6" fontWeight="600">
+                              {u.bigYeshiva}
+                            </Typography>
+                          </Box>
+                        </DetailItem>
+                      </Grid>
                     )}
-                  </NoteItem>
-                )
-              })
-            ) : (
-              <Typography variant="body2" color="text.secondary" align="center">
-                אין הערות
-              </Typography>
-            )}
-          </Box>
-        </NotesDrawer>
-        <Outlet />
-      </Box>
-    </ThemeProvider>
+                    {u.smallYeshiva && (
+                      <Grid item xs={12} md={6}>
+                        <DetailItem>
+                          <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              ישיבה קטנה
+                            </Typography>
+                            <Typography variant="h6" fontWeight="600">
+                              {u.smallYeshiva}
+                            </Typography>
+                          </Box>
+                        </DetailItem>
+                      </Grid>
+                    )}
+                    {u.occupation && (
+                      <Grid item xs={12} md={6}>
+                        <DetailItem>
+                          <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              עיסוק
+                            </Typography>
+                            <Typography variant="h6" fontWeight="600">
+                              {u.occupation}
+                            </Typography>
+                          </Box>
+                        </DetailItem>
+                      </Grid>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {u.seminar && (
+                      <Grid item xs={12} md={6}>
+                        <DetailItem>
+                          <SchoolIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              סמינר
+                            </Typography>
+                            <Typography variant="h6" fontWeight="600">
+                              {u.seminar}
+                            </Typography>
+                          </Box>
+                        </DetailItem>
+                      </Grid>
+                    )}
+                    {u.currentOccupation && (
+                      <Grid item xs={12} md={6}>
+                        <DetailItem>
+                          <WorkIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                          <Box>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              עיסוק נוכחי
+                            </Typography>
+                            <Typography variant="h6" fontWeight="600">
+                              {u.currentOccupation}
+                            </Typography>
+                          </Box>
+                        </DetailItem>
+                      </Grid>
+                    )}
+                  </>
+                )}
+              </Grid>
+            </Collapse>
+          </CardContent>
+        </InfoCard>
+
+        {familyData && (
+          <InfoCard>
+            <CardContent sx={{ p: 4 }}>
+              <SectionTitle onClick={() => toggleSection("family")}>
+                {/* <FamilyRestroomIcon /> */}
+                פרטי משפחה {expandedSections.family ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </SectionTitle>
+              <Collapse in={expandedSections.family}>
+                <Grid container spacing={3}>
+                  {familyData.fatherName && (
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <PersonIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="h6" color="text.secondary">
+                            אב
+                          </Typography>
+                          <Typography variant="h5" fontWeight="600">
+                            {familyData.fatherName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {familyData.fatherOrigin || ""} • {familyData.fatherOccupation || ""}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                  )}
+                  {familyData.motherName && (
+                    <Grid item xs={12} md={6}>
+                      <DetailItem>
+                        <PersonIcon sx={{ color: "#d4af37", fontSize: 28 }} />
+                        <Box>
+                          <Typography variant="h6" color="text.secondary">
+                            אם
+                          </Typography>
+                          <Typography variant="h5" fontWeight="600">
+                            {familyData.motherName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {familyData.motherOrigin || ""} • {familyData.motherOccupation || ""}
+                          </Typography>
+                        </Box>
+                      </DetailItem>
+                    </Grid>
+                  )}
+                </Grid>
+              </Collapse>
+            </CardContent>
+          </InfoCard>
+        )}
+
+        {contactsData.length > 0 && (
+          <InfoCard>
+            <CardContent sx={{ p: 4 }}>
+              <SectionTitle onClick={() => toggleSection("contacts")}>
+                <ContactPhoneIcon />
+                אנשי קשר לבירורים {expandedSections.contacts ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </SectionTitle>
+              <Collapse in={expandedSections.contacts}>
+                <Grid container spacing={3}>
+                  {contactsData.map((contact: any) => (
+                    <Grid item xs={12} md={6} key={contact.id}>
+                      <ContactCard elevation={2}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                          <Avatar sx={{ bgcolor: "#b87333", width: 60, height: 60 }}>
+                            <ContactPhoneIcon sx={{ fontSize: 30 }} />
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" fontWeight="600" gutterBottom>
+                              {contact.name || NA}
+                            </Typography>
+                            <Typography variant="h6" fontWeight="600" color="#b87333">
+                              {contact.phone || NA}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </ContactCard>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Collapse>
+            </CardContent>
+          </InfoCard>
+        )}
+      </motion.div>
+    </ProfileContainer>
   )
 }
 
-export default CandidatesPage
+export default UserProfile
