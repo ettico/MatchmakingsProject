@@ -534,49 +534,50 @@ const CandidatesPage = () => {
     })
   }
 
-  // עדכון סטטוס מועמד - תיקון
   const updateCandidateStatus = async (candidateId: number, newStatus: boolean) => {
-    setStatusUpdateLoading(candidateId)
-    try {
-      const headers = getAuthHeaders()
-      const candidate = candidates.find((c) => c.id === candidateId)
-      if (!candidate) {
-        throw new Error("מועמד לא נמצא")
-      }
+  setStatusUpdateLoading(candidateId);
+  try {
+    const headers = getAuthHeaders();
+    
+    // בואי נשלח אך ורק את השדה שאנחנו רוצים לעדכן
+    // זה מונע מהשרת לזרוק שגיאה על שדות אחרים באובייקט המועמד
+    const updateData = { 
+        statusVacant: newStatus 
+    };
 
-      const endpoint = candidate.role === "Male" ? "Male" : "Women"
-      const updateData = { ...candidate, statusVacant: newStatus }
+    console.log(`מנסה לעדכן מועמד ${candidateId} עם הנתונים:`, updateData);
 
-      console.log(`מעדכן סטטוס מועמד ${candidateId} ל-${newStatus}`)
+    // נזהה את הנתיב הנכון
+    const candidate = candidates.find((c) => c.id === candidateId);
+    const endpoint = candidate?.role === "Male" ? "Male" : "Women";
 
-      const response = await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, { headers, timeout: 15000 })
+    const response = await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, { 
+        headers, 
+        timeout: 15000 
+    });
 
-      console.log("תגובת עדכון סטטוס:", response.data)
+    console.log("העדכון הצליח:", response.data);
 
-      // עדכון המועמד ברשימה
-      setCandidates((prev) => prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c)))
+    // עדכון מקומי ב-State כדי שהמסך יתרענן מיד
+    setCandidates((prev) => 
+      prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c))
+    );
 
-      // הודעת הצלחה
-      setError(null)
-      alert(`סטטוס המועמד עודכן בהצלחה ל${newStatus ? "פנוי" : "לא פנוי"}`)
-    } catch (error) {
-      console.error("שגיאה בעדכון סטטוס:", error)
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          handle401Error()
-        } else if (error.response?.status === 404) {
-          setError("מועמד לא נמצא במערכת")
-        } else {
-          setError(`שגיאה בעדכון סטטוס: ${error.response?.data?.message || error.message}`)
-        }
-      } else {
-        setError("שגיאה לא צפויה בעדכון סטטוס")
-      }
-    } finally {
-      setStatusUpdateLoading(null)
-      setAnchorEl(null)
+    alert("הסטטוס עודכן בהצלחה!");
+  } catch (error: any) {
+    // כאן נראה בדיוק מה השרת אומר
+    if (error.response) {
+      console.error("שגיאת שרת (400/500):", error.response.data);
+      setError(`השרת דחה את הבקשה: ${JSON.stringify(error.response.data)}`);
+    } else {
+      console.error("שגיאת תקשורת:", error.message);
+      setError("לא ניתן להתחבר לשרת");
     }
+  } finally {
+    setStatusUpdateLoading(null);
+    setAnchorEl(null);
   }
+}
 
   // הוספת הערות מהשרת
   const fetchNotes = async () => {
