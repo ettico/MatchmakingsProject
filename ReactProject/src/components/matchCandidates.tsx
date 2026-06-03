@@ -31,7 +31,7 @@ function MatchCandidates() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-    const ApiUrl=process.env.REACT_APP_API_URL
+    const ApiUrl="https://matchmakingsprojectserver.onrender.com/api"
 
   useEffect(() => {
     fetchMatches();
