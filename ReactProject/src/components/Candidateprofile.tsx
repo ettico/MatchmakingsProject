@@ -1,77 +1,77 @@
 "use client"
 import { useState, useEffect, useContext } from "react"
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  Avatar,
-  Grid,
-  Chip,
-  Divider,
-  Card,
-  CardContent,
-  IconButton,
-  CircularProgress,
-  Alert,
-  Collapse,
-} from "@mui/material"
-import { styled, keyframes } from "@mui/material/styles"
-import axios from "axios"
-import { motion, AnimatePresence } from "framer-motion"
+// import {
+//   Box,
+//   Container,
+//   Paper,
+//   Typography,
+//   Avatar,
+//   Grid,
+//   Chip,
+//   Divider,
+//   Card,
+//   CardContent,
+//   IconButton,
+//   CircularProgress,
+//   Alert,
+//   Collapse,
+// } from "@mui/material"
+// import {  keyframes } from "@mui/material/styles"
+// import axios from "axios"
+// import { motion, AnimatePresence } from "framer-motion"
 import { userContext } from "./UserContext"
 
 // אייקונים
-import PersonIcon from "@mui/icons-material/Person"
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
-import ContactPhoneIcon from "@mui/icons-material/ContactPhone"
-import LocationOnIcon from "@mui/icons-material/LocationOn"
-import CakeIcon from "@mui/icons-material/Cake"
-import HeightIcon from "@mui/icons-material/Height"
-import EmailIcon from "@mui/icons-material/Email"
-import PhoneIcon from "@mui/icons-material/Phone"
-import SchoolIcon from "@mui/icons-material/School"
-import WorkIcon from "@mui/icons-material/Work"
-import FavoriteIcon from "@mui/icons-material/Favorite"
-import InfoIcon from "@mui/icons-material/Info"
-import EditIcon from "@mui/icons-material/Edit"
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
-import ExpandLessIcon from "@mui/icons-material/ExpandLess"
+// import PersonIcon from "@mui/icons-material/Person"
+// import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom"
+// import ContactPhoneIcon from "@mui/icons-material/ContactPhone"
+// import LocationOnIcon from "@mui/icons-material/LocationOn"
+// import CakeIcon from "@mui/icons-material/Cake"
+// import HeightIcon from "@mui/icons-material/Height"
+// import EmailIcon from "@mui/icons-material/Email"
+// import PhoneIcon from "@mui/icons-material/Phone"
+// import SchoolIcon from "@mui/icons-material/School"
+// import WorkIcon from "@mui/icons-material/Work"
+// import FavoriteIcon from "@mui/icons-material/Favorite"
+// import InfoIcon from "@mui/icons-material/Info"
+// import EditIcon from "@mui/icons-material/Edit"
+// import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
+// import ExpandLessIcon from "@mui/icons-material/ExpandLess"
 import { Contact, FamilyDetails, Male, Women } from "../Models"
 
 // אנימציות מותאמות אישית
-const pulse = keyframes`
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(184, 115, 51, 0.7);
-  }
-  70% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(184, 115, 51, 0);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(184, 115, 51, 0);
-  }
-`
+// const pulse = keyframes`
+//   0% {
+//     transform: scale(1);
+//     box-shadow: 0 0 0 0 rgba(184, 115, 51, 0.7);
+//   }
+//   70% {
+//     transform: scale(1.05);
+//     box-shadow: 0 0 0 10px rgba(184, 115, 51, 0);
+//   }
+//   100% {
+//     transform: scale(1);
+//     box-shadow: 0 0 0 0 rgba(184, 115, 51, 0);
+//   }
+// `
 
-const float = keyframes`
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-`
+// const float = keyframes`
+//   0%, 100% {
+//     transform: translateY(0px);
+//   }
+//   50% {
+//     transform: translateY(-10px);
+//   }
+// `
 
-const glow = keyframes`
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(184, 115, 51, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(184, 115, 51, 0.6);
-  }
-`
+// const glow = keyframes`
+//   0%, 100% {
+//     box-shadow: 0 0 20px rgba(184, 115, 51, 0.3);
+//   }
+//   50% {
+//     box-shadow: 0 0 40px rgba(184, 115, 51, 0.6);
+//   }
+
 const API_BASE_URL = "https://matchmakingsprojectserver.onrender.com/api"
 
 const NA = "לא צוין"
