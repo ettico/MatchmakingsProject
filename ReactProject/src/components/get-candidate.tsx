@@ -365,8 +365,6 @@ const CandidatesPage = () => {
           status: error.response?.status,
           statusText: error.response?.statusText,
           data: error.response?.data,
-          headers: error.response?.headers,
-          config: error.config,
         })
         if (error.response?.status === 401) {
           handle401Error()
@@ -502,34 +500,29 @@ const CandidatesPage = () => {
     setStatusUpdateLoading(candidateId)
     try {
       const headers = getAuthHeaders()
-
-      const updateData = {
-        statusVacant: newStatus
+      const candidate = candidates.find((c) => c.id === candidateId)
+      if (!candidate) {
+        setError("לא נמצא המועמד")
+        setStatusUpdateLoading(null)
+        return
       }
 
-      console.log(`מנסה לעדכן מועמד ${candidateId} עם הנתונים:`, updateData)
+      const endpoint = candidate.role === "Male" ? "Male" : "Women"
+      const updateData = { statusVacant: newStatus }
 
-      const candidate = candidates.find((c) => c.id === candidateId)
-      const endpoint = candidate?.role === "Male" ? "Male" : "Women"
-
-      const response = await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
+      await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
         headers,
-        timeout: 15000
+        timeout: 15000,
       })
-
-      console.log("העדכון הצליח:", response.data)
 
       setCandidates((prev) =>
         prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c))
       )
-
-      alert("הסטטוס עודכן בהצלחה!")
     } catch (error: any) {
+      console.error("שגיאה בעדכון סטטוס:", error)
       if (error.response) {
-        console.error("שגיאת שרת (400/500):", error.response.data)
-        setError(`השרת דחה את הבקשה: ${JSON.stringify(error.response.data)}`)
+        setError(`שגיאה בעדכון סטטוס: ${error.response.status}`)
       } else {
-        console.error("שגיאת תקשורת:", error.message)
         setError("לא ניתן להתחבר לשרת")
       }
     } finally {
@@ -542,20 +535,16 @@ const CandidatesPage = () => {
     if (!token) return
     try {
       const headers = getAuthHeaders()
-      console.log("טוען הערות...")
       const response = await axios.get(`${ApiUrl}/Note`, {
         headers,
         timeout: 10000,
       })
-      console.log("הערות נטענו:", response.data.length)
       setNotes(response.data)
     } catch (error) {
-      console.error("שגיאה בהבאת הערות:", error)
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           handle401Error()
         } else if (error.response?.status === 404) {
-          console.log("נתיב הערות לא נמצא - ייתכן שאין הערות במערכת")
           setNotes([])
         }
       }
@@ -563,15 +552,8 @@ const CandidatesPage = () => {
   }
 
   const addNote = async () => {
-    if (!user?.id || !newNoteText.trim() || !selectedCandidate || !token) {
-      console.log("לא ניתן להוסיף הערה:", {
-        hasUser: !!user?.id,
-        hasText: !!newNoteText.trim(),
-        hasCandidate: !!selectedCandidate,
-        hasToken: !!token,
-      })
-      return
-    }
+    if (!user?.id || !newNoteText.trim() || !selectedCandidate || !token) return
+
     try {
       const headers = getAuthHeaders()
       const newNote = {
@@ -580,17 +562,15 @@ const CandidatesPage = () => {
         content: newNoteText,
         createdAt: new Date().toISOString(),
       }
-      console.log("מוסיף הערה:", newNote)
+
       const response = await axios.post(`${ApiUrl}/Note`, newNote, {
         headers,
         timeout: 10000,
       })
-      console.log("הערה נוספה:", response.data)
+
       setNotes((prev) => [...prev, response.data])
       setNewNoteText("")
-      alert("הערה נוספה בהצלחה!")
     } catch (error) {
-      console.error("שגיאה בהוספת הערה:", error)
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           handle401Error()
@@ -605,7 +585,6 @@ const CandidatesPage = () => {
     if (!editingNote || !token) return
     try {
       const headers = getAuthHeaders()
-      console.log("מעדכן הערה:", editingNote.id)
       await axios.put(
         `${ApiUrl}/Note/${editingNote.id}`,
         {
@@ -622,10 +601,7 @@ const CandidatesPage = () => {
       )
       setNotes((prev) => prev.map((note) => (note.id === editingNote.id ? editingNote : note)))
       setEditingNote(null)
-      console.log("הערה עודכנה בהצלחה")
-      alert("הערה עודכנה בהצלחה!")
     } catch (error) {
-      console.error("שגיאה בעדכון הערה:", error)
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           handle401Error()
@@ -640,16 +616,12 @@ const CandidatesPage = () => {
     if (!token) return
     try {
       const headers = getAuthHeaders()
-      console.log("מוחק הערה:", noteId)
       await axios.delete(`${ApiUrl}/Note/${noteId}`, {
         headers,
         timeout: 10000,
       })
       setNotes((prev) => prev.filter((note) => note.id !== noteId))
-      console.log("הערה נמחקה בהצלחה")
-      alert("הערה נמחקה בהצלחה!")
     } catch (error) {
-      console.error("שגיאה במחיקת הערה:", error)
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           handle401Error()
@@ -692,7 +664,6 @@ const CandidatesPage = () => {
     } else {
       const text = `מועמד/ת לשידוך: ${candidate.firstName} ${candidate.lastName}, גיל ${candidate.age}`
       navigator.clipboard.writeText(text)
-      alert("הפרטים הועתקו ללוח")
     }
     handleMenuClose()
   }
@@ -708,7 +679,6 @@ const CandidatesPage = () => {
   const filteredCandidates = candidates.filter((candidate) => {
     try {
       if (!candidate || typeof candidate.id === "undefined") {
-        console.log("מועמד לא תקין:", candidate)
         return false
       }
 
@@ -775,7 +745,6 @@ const CandidatesPage = () => {
 
       return true
     } catch (error) {
-      console.error("שגיאה בסינון מועמד:", error, candidate)
       return true
     }
   })
