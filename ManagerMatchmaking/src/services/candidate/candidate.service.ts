@@ -36,7 +36,7 @@ export interface GenderDistribution {
   providedIn: 'root'
 })
 export class CandidateService {
-  private baseUrl = 'https://localhost:7012/api';
+  private baseUrl = 'https://matchmakingsprojectserver.onrender.com/api';
 
   constructor(private http: HttpClient) {}
 
