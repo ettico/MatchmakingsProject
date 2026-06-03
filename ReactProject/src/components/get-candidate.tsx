@@ -73,23 +73,22 @@ import {
 import { userContext } from "./UserContext"
 import type { Candidate, Male as MaleType, Women, Note } from "../Models"
 import { Outlet, useNavigate } from "react-router-dom"
-import UserProfile from "./Candidateprofile" // ייבוא הקומפוננטה החדשה
+import UserProfile from "./Candidateprofile"
 
-// Custom theme with copper colors
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#b87333", // Copper
+      main: "#b87333",
       light: "#d9a875",
       dark: "#8c5319",
     },
     secondary: {
-      main: "#000000", // Black
+      main: "#000000",
       light: "#333333",
       dark: "#000000",
     },
     background: {
-      default: "#ffffff", // White
+      default: "#ffffff",
       paper: "#ffffff",
     },
     text: {
@@ -144,7 +143,6 @@ const theme = createTheme({
   },
 })
 
-// קומפוננטים מעוצבים
 const StyledCard = styled(Card)(() => ({
   transition: "all 0.3s ease",
   position: "relative",
@@ -273,8 +271,6 @@ const CandidatesPage = () => {
   const [newNoteText, setNewNoteText] = useState("")
   const { user, token, logout } = useContext(userContext)
   const [error, setError] = useState<string | null>(null)
-  // const [, setOpen] = useState(false)
-  // const [, setModalType] = useState("")
   const navigate = useNavigate()
   const [genderTab, setGenderTab] = useState<"all" | "male" | "female">("all")
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -284,10 +280,8 @@ const CandidatesPage = () => {
   const [statusUpdateLoading, setStatusUpdateLoading] = useState<number | null>(null)
   const [candidateNotesDialog, setCandidateNotesDialog] = useState<Candidate | null>(null)
 
-  // API URL
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
 
-  // פונקציה לקבלת headers עם אימות
   const getAuthHeaders = () => {
     if (!token) {
       throw new Error("אין טוקן אימות")
@@ -299,20 +293,12 @@ const CandidatesPage = () => {
     }
   }
 
-  // פונקציה לטיפול בשגיאות 401
   const handle401Error = () => {
     setError("פג תוקף ההתחברות. נא להתחבר מחדש.")
     logout()
     navigate("/login")
   }
 
-  // const handleNavigate = (path: string, type: string) => {
-  //   navigate(path)
-  //   setModalType(type)
-  //   setOpen(true)
-  // }
-
-  // פילטרים פשוטים יותר - ללא סינון פרופילים
   const [filters, setFilters] = useState({
     statusFilter: "all",
     genderFilter: "all",
@@ -324,7 +310,6 @@ const CandidatesPage = () => {
     backgrounds: [] as string[],
   })
 
-  // פונקציה לטעינת נתונים עם אימות - מציגה את כל המועמדים
   const fetchCandidates = async () => {
     setLoading(true)
     setError(null)
@@ -337,7 +322,6 @@ const CandidatesPage = () => {
       console.log("מנסה להתחבר לשרת עם טוקן:", token.substring(0, 20) + "...")
       const headers = getAuthHeaders()
 
-      // טעינת גברים
       console.log("טוען גברים...")
       const malesResponse = await axios.get<MaleType[]>(`${ApiUrl}/Male`, {
         headers,
@@ -349,7 +333,6 @@ const CandidatesPage = () => {
         role: "Male" as const,
       }))
 
-      // טעינת נשים
       console.log("טוען נשים...")
       const femalesResponse = await axios.get<Women[]>(`${ApiUrl}/Women`, {
         headers,
@@ -364,10 +347,8 @@ const CandidatesPage = () => {
       console.log("גברים:", males.length)
       console.log("נשים:", females.length)
 
-      // איחוד הנתונים - מציג את כל המועמדים ללא סינון
       const allCandidates = [...males, ...females]
 
-      // מיון פשוט לפי ID (החדשים קודם)
       const sortedCandidates = allCandidates.sort((a, b) => b.id - a.id)
 
       setCandidates(sortedCandidates)
@@ -427,7 +408,6 @@ const CandidatesPage = () => {
     }
   }, [notesDrawerOpen, user?.id, token])
 
-  // טעינת מועמדים מועדפים
   const loadFavorites = () => {
     const savedFavorites = localStorage.getItem("favorites")
     if (savedFavorites) {
@@ -435,7 +415,6 @@ const CandidatesPage = () => {
     }
   }
 
-  // הוספה/הסרה ממועדפים
   const toggleFavorite = (candidateId: number) => {
     const newFavorites = favorites.includes(candidateId)
       ? favorites.filter((id) => id !== candidateId)
@@ -444,26 +423,16 @@ const CandidatesPage = () => {
     localStorage.setItem("favorites", JSON.stringify(newFavorites))
   }
 
-  // פתיחת דיאלוג פרטים - עכשיו עם הקומפוננטה החדשה
   const handleOpenDetails = (candidate: Candidate) => {
     setSelectedCandidate(candidate)
     setOpenDialog(true)
   }
 
-  // סגירת דיאלוג
   const handleCloseDetails = () => {
     setOpenDialog(false)
     setSelectedCandidate(null)
   }
 
-  // // פונקציה להורדת קובץ
-  // const downloadFile = (fileName: string) => {
-  //   if (!fileName) return
-  //   const downloadUrl = `${ApiUrl}/files/download/${fileName}`
-  //   window.open(downloadUrl, "_blank")
-  // }
-
-  // פונקציה לקבלת URL של תמונה
   const getImageUrl = (candidate: Candidate) => {
     if (candidate.photoUrl) return candidate.photoUrl
     if (candidate.photoName) return `${ApiUrl}/files/${candidate.photoName}`
@@ -473,7 +442,6 @@ const CandidatesPage = () => {
     return null
   }
 
-  // עדכון פילטרים
   const handleFilterChange = (filterName: string, value: any) => {
     setFilters((prev) => ({
       ...prev,
@@ -481,7 +449,6 @@ const CandidatesPage = () => {
     }))
   }
 
-  // איפוס פילטרים
   const resetFilters = () => {
     setFilters({
       statusFilter: "all",
@@ -497,7 +464,6 @@ const CandidatesPage = () => {
     setGenderTab("all")
   }
 
-  // חיפוש AI כללי
   const handleAISearch = async () => {
     if (!searchQuery.trim()) return
 
@@ -523,9 +489,7 @@ const CandidatesPage = () => {
     }
   }
 
-  // חיפוש AI למועמד ספציפי
   const handleCandidateAISearch = (candidate: Candidate) => {
-    // ניווט לקומפוננטה של חיפוש AI עם פרטי המועמד
     navigate("/ai-match-search", {
       state: {
         candidate: candidate,
@@ -535,51 +499,45 @@ const CandidatesPage = () => {
   }
 
   const updateCandidateStatus = async (candidateId: number, newStatus: boolean) => {
-  setStatusUpdateLoading(candidateId);
-  try {
-    const headers = getAuthHeaders();
-    
-    // בואי נשלח אך ורק את השדה שאנחנו רוצים לעדכן
-    // זה מונע מהשרת לזרוק שגיאה על שדות אחרים באובייקט המועמד
-    const updateData = { 
-        statusVacant: newStatus 
-    };
+    setStatusUpdateLoading(candidateId)
+    try {
+      const headers = getAuthHeaders()
 
-    console.log(`מנסה לעדכן מועמד ${candidateId} עם הנתונים:`, updateData);
+      const updateData = {
+        statusVacant: newStatus
+      }
 
-    // נזהה את הנתיב הנכון
-    const candidate = candidates.find((c) => c.id === candidateId);
-    const endpoint = candidate?.role === "Male" ? "Male" : "Women";
+      console.log(`מנסה לעדכן מועמד ${candidateId} עם הנתונים:`, updateData)
 
-    const response = await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, { 
-        headers, 
-        timeout: 15000 
-    });
+      const candidate = candidates.find((c) => c.id === candidateId)
+      const endpoint = candidate?.role === "Male" ? "Male" : "Women"
 
-    console.log("העדכון הצליח:", response.data);
+      const response = await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
+        headers,
+        timeout: 15000
+      })
 
-    // עדכון מקומי ב-State כדי שהמסך יתרענן מיד
-    setCandidates((prev) => 
-      prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c))
-    );
+      console.log("העדכון הצליח:", response.data)
 
-    alert("הסטטוס עודכן בהצלחה!");
-  } catch (error: any) {
-    // כאן נראה בדיוק מה השרת אומר
-    if (error.response) {
-      console.error("שגיאת שרת (400/500):", error.response.data);
-      setError(`השרת דחה את הבקשה: ${JSON.stringify(error.response.data)}`);
-    } else {
-      console.error("שגיאת תקשורת:", error.message);
-      setError("לא ניתן להתחבר לשרת");
+      setCandidates((prev) =>
+        prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c))
+      )
+
+      alert("הסטטוס עודכן בהצלחה!")
+    } catch (error: any) {
+      if (error.response) {
+        console.error("שגיאת שרת (400/500):", error.response.data)
+        setError(`השרת דחה את הבקשה: ${JSON.stringify(error.response.data)}`)
+      } else {
+        console.error("שגיאת תקשורת:", error.message)
+        setError("לא ניתן להתחבר לשרת")
+      }
+    } finally {
+      setStatusUpdateLoading(null)
+      setAnchorEl(null)
     }
-  } finally {
-    setStatusUpdateLoading(null);
-    setAnchorEl(null);
   }
-}
 
-  // הוספת הערות מהשרת
   const fetchNotes = async () => {
     if (!token) return
     try {
@@ -604,9 +562,16 @@ const CandidatesPage = () => {
     }
   }
 
-  // הוספת הערה חדשה
   const addNote = async () => {
-    if (!user?.id || !newNoteText.trim() || !selectedCandidate || !token) return
+    if (!user?.id || !newNoteText.trim() || !selectedCandidate || !token) {
+      console.log("לא ניתן להוסיף הערה:", {
+        hasUser: !!user?.id,
+        hasText: !!newNoteText.trim(),
+        hasCandidate: !!selectedCandidate,
+        hasToken: !!token,
+      })
+      return
+    }
     try {
       const headers = getAuthHeaders()
       const newNote = {
@@ -623,6 +588,7 @@ const CandidatesPage = () => {
       console.log("הערה נוספה:", response.data)
       setNotes((prev) => [...prev, response.data])
       setNewNoteText("")
+      alert("הערה נוספה בהצלחה!")
     } catch (error) {
       console.error("שגיאה בהוספת הערה:", error)
       if (axios.isAxiosError(error)) {
@@ -635,7 +601,6 @@ const CandidatesPage = () => {
     }
   }
 
-  // עדכון הערה
   const updateNote = async () => {
     if (!editingNote || !token) return
     try {
@@ -658,6 +623,7 @@ const CandidatesPage = () => {
       setNotes((prev) => prev.map((note) => (note.id === editingNote.id ? editingNote : note)))
       setEditingNote(null)
       console.log("הערה עודכנה בהצלחה")
+      alert("הערה עודכנה בהצלחה!")
     } catch (error) {
       console.error("שגיאה בעדכון הערה:", error)
       if (axios.isAxiosError(error)) {
@@ -670,7 +636,6 @@ const CandidatesPage = () => {
     }
   }
 
-  // מחיקת הערה
   const deleteNote = async (noteId: number) => {
     if (!token) return
     try {
@@ -682,6 +647,7 @@ const CandidatesPage = () => {
       })
       setNotes((prev) => prev.filter((note) => note.id !== noteId))
       console.log("הערה נמחקה בהצלחה")
+      alert("הערה נמחקה בהצלחה!")
     } catch (error) {
       console.error("שגיאה במחיקת הערה:", error)
       if (axios.isAxiosError(error)) {
@@ -694,12 +660,6 @@ const CandidatesPage = () => {
     }
   }
 
-  // // Handle gender tab change
-  // const handleGenderTabChange = (_event: React.SyntheticEvent, newValue: "all" | "male" | "female") => {
-  //   setGenderTab(newValue)
-  // }
-
-  // פונקציה לטיפול בניסיון חוזר
   const handleRetry = () => {
     setError(null)
     if (token) {
@@ -707,25 +667,21 @@ const CandidatesPage = () => {
     }
   }
 
-  // פונקציה לניווט לדף התחברות
   const handleLogin = () => {
     navigate("/login")
   }
 
-  // פתיחת תפריט פעולות
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, candidate: Candidate) => {
     event.stopPropagation()
     setAnchorEl(event.currentTarget)
     setMenuCandidate(candidate)
   }
 
-  // סגירת תפריט פעולות
   const handleMenuClose = () => {
     setAnchorEl(null)
     setMenuCandidate(null)
   }
 
-  // שיתוף מועמד
   const shareCandidate = (candidate: Candidate) => {
     if (navigator.share) {
       navigator.share({
@@ -734,7 +690,6 @@ const CandidatesPage = () => {
         url: window.location.href,
       })
     } else {
-      // Fallback - העתקה ללוח
       const text = `מועמד/ת לשידוך: ${candidate.firstName} ${candidate.lastName}, גיל ${candidate.age}`
       navigator.clipboard.writeText(text)
       alert("הפרטים הועתקו ללוח")
@@ -742,7 +697,6 @@ const CandidatesPage = () => {
     handleMenuClose()
   }
 
-  // פתיחת דיאלוג הערות למועמד ספציפי
   const openCandidateNotes = (candidate: Candidate) => {
     setCandidateNotesDialog(candidate)
     if (!notes.length) {
@@ -751,7 +705,6 @@ const CandidatesPage = () => {
     handleMenuClose()
   }
 
-  // סינון מועמדים - פשוט יותר ללא סינון פרופילים
   const filteredCandidates = candidates.filter((candidate) => {
     try {
       if (!candidate || typeof candidate.id === "undefined") {
@@ -759,11 +712,9 @@ const CandidatesPage = () => {
         return false
       }
 
-      // Filter by gender tab
       if (genderTab === "male" && candidate.role !== "Male") return false
       if (genderTab === "female" && candidate.role !== "Women") return false
 
-      // חיפוש טקסטואלי
       if (searchQuery && searchQuery.trim()) {
         const searchLower = searchQuery.toLowerCase()
         const searchFields = [
@@ -787,45 +738,37 @@ const CandidatesPage = () => {
         if (!matchesSearch) return false
       }
 
-      // סינון לפי סטטוס
       if (filters.statusFilter !== "all") {
         const isAvailable = filters.statusFilter === "available"
         if (candidate.statusVacant !== isAvailable) return false
       }
 
-      // סינון לפי מגדר
       if (filters.genderFilter !== "all") {
         const expectedRole = filters.genderFilter === "Male" ? "Male" : "Women"
         if (candidate.role !== expectedRole) return false
       }
 
-      // סינון לפי גיל
       if (candidate.age && typeof candidate.age === "number") {
         if (candidate.age < filters.ageRange[0] || candidate.age > filters.ageRange[1]) return false
       }
 
-      // סינון לפי גובה
       if (candidate.height && typeof candidate.height === "number") {
         if (candidate.height < filters.heightRange[0] || candidate.height > filters.heightRange[1]) return false
       }
 
-      // סינון לפי עיר
       if (filters.cities.length > 0) {
         if (!candidate.city || !filters.cities.includes(candidate.city)) return false
       }
 
-      // סינון לפי חוג
       if (filters.classes.length > 0) {
         if (!candidate.class || !filters.classes.includes(candidate.class)) return false
       }
 
-      // סינון לפי עיסוק
       if (filters.occupations.length > 0) {
         const occupation = candidate.role === "Male" ? candidate.occupation : (candidate as Women).currentOccupation
         if (!occupation || !filters.occupations.includes(occupation)) return false
       }
 
-      // סינון לפי רקע
       if (filters.backgrounds.length > 0) {
         if (!candidate.backGround || !filters.backgrounds.includes(candidate.backGround)) return false
       }
@@ -837,7 +780,6 @@ const CandidatesPage = () => {
     }
   })
 
-  // רשימות ערכים לפילטרים
   const uniqueCities = [...new Set(candidates.map((c) => c.city).filter(Boolean))]
   const uniqueClasses = [...new Set(candidates.map((c) => c.class).filter(Boolean))]
   const uniqueOccupations = [
@@ -854,13 +796,11 @@ const CandidatesPage = () => {
   ]
   const uniqueBackgrounds = [...new Set(candidates.map((c) => c.backGround).filter(Boolean))]
 
-  // הערות למועמד הנוכחי
   const candidateNotes = notes.filter((note) => note.userId === selectedCandidate?.id)
   const specificCandidateNotes = candidateNotesDialog
     ? notes.filter((note) => note.userId === candidateNotesDialog.id)
     : []
 
-  // Count candidates by gender
   const maleCount = candidates.filter((c) => c.role === "Male").length
   const femaleCount = candidates.filter((c) => c.role === "Women").length
 
@@ -876,7 +816,6 @@ const CandidatesPage = () => {
           </Typography>
         </CopperGradientBox>
 
-        {/* הודעת שגיאה או אימות */}
         {error && (
           <Alert
             severity={error.includes("אין הרשאה") || error.includes("נדרש להתחבר") ? "warning" : "error"}
@@ -900,7 +839,6 @@ const CandidatesPage = () => {
           </Alert>
         )}
 
-        {/* חיפוש ופילטרים */}
         {token && (
           <Paper
             elevation={0}
@@ -1085,7 +1023,6 @@ const CandidatesPage = () => {
           </Paper>
         )}
 
-        {/* Gender Tabs */}
         {token && candidates.length > 0 && (
           <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
             <Box sx={{ display: "flex", gap: 2 }}>
@@ -1114,7 +1051,6 @@ const CandidatesPage = () => {
           </Box>
         )}
 
-        {/* רשימת מועמדים */}
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
             <CircularProgress sx={{ color: theme.palette.primary.main }} />
@@ -1158,7 +1094,6 @@ const CandidatesPage = () => {
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={`${candidate.role}-${candidate.id}`}>
                       <StyledCard onClick={() => handleOpenDetails(candidate)}>
-                        {/* תג סטטוס */}
                         <StatusChip
                           status={candidate.statusVacant}
                           label={candidate.statusVacant ? "פנוי/ה להצעות" : "לא פנוי/ה כרגע"}
@@ -1166,7 +1101,6 @@ const CandidatesPage = () => {
                           theme={undefined}
                         />
 
-                        {/* פעולות כרטיס */}
                         <CardActions className="card-actions">
                           <Tooltip title={isFavorite ? "הסר ממועדפים" : "הוסף למועדפים"}>
                             <IconButton
@@ -1236,7 +1170,6 @@ const CandidatesPage = () => {
                           </IconButton>
                         </CardActions>
 
-                        {/* תמונת פרופיל */}
                         <Box
                           sx={{
                             height: 200,
@@ -1349,7 +1282,6 @@ const CandidatesPage = () => {
                             </Typography>
                           </Box>
                         </CardContent>
-                        {/* שכבת מידע נוסף בהאובר */}
                         <CardOverlay className="card-overlay">
                           <Typography variant="body2">חוג: {candidate.class || "לא צוין"}</Typography>
                           <Typography variant="body2">רקע: {candidate.backGround || "לא צוין"}</Typography>
@@ -1364,7 +1296,6 @@ const CandidatesPage = () => {
           </>
         )}
 
-        {/* תפריט פעולות */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -1424,7 +1355,6 @@ const CandidatesPage = () => {
           </MenuItem>
         </Menu>
 
-        {/* דיאלוג הערות למועמד ספציפי */}
         <Dialog
           open={Boolean(candidateNotesDialog)}
           onClose={() => setCandidateNotesDialog(null)}
@@ -1465,7 +1395,6 @@ const CandidatesPage = () => {
           </DialogActions>
         </Dialog>
 
-        {/* דיאלוג פרטים מלאים עם הקומפוננטה החדשה */}
         <Dialog
           open={openDialog}
           onClose={handleCloseDetails}
@@ -1499,7 +1428,6 @@ const CandidatesPage = () => {
           </Box>
         </Dialog>
 
-        {/* מגירת הערות */}
         <NotesDrawer anchor="right" open={notesDrawerOpen} onClose={() => setNotesDrawerOpen(false)}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
