@@ -1,6 +1,5 @@
 "use client"
 import { useState, useEffect, useContext } from "react"
-import { styled, keyframes } from "@mui/material/styles"
 import {
   Box,
   Container,
@@ -17,6 +16,7 @@ import {
   Alert,
   Collapse,
 } from "@mui/material"
+import { styled, keyframes } from "@mui/material/styles"
 import { motion, AnimatePresence } from "framer-motion"
 import { userContext } from "./UserContext"
 
@@ -266,7 +266,6 @@ interface UserData {
   importantTraitsInMe?: string
   importantTraitsIAmLookingFor?: string
   importantTraitsIMLookingFor?: string
-  // שדות ייחודיים לבחורים
   smallYeshiva?: string
   bigYeshiva?: string
   kibbutz?: string
@@ -277,7 +276,6 @@ interface UserData {
   ageTo?: number
   preferredSeminarStyle?: string
   preferredProfessionalPath?: string
-  // שדות ייחודיים לבחורות
   highSchool?: string
   seminar?: string
   studyPath?: string
@@ -320,7 +318,7 @@ interface UserProfileProps {
 
 const NA = "לא צוין"
 
-function displayValue(val: any): string {
+function formatValue(val: any): string {
   if (val === null || val === undefined || val === "") return NA
   if (typeof val === "boolean") return val ? "כן" : "לא"
   return String(val)
@@ -336,7 +334,6 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
   const user = ctx?.user
   const token = ctx?.token
 
-  // State לניהול הרחבת כרטיסים
   const [expandedSections, setExpandedSections] = useState({
     personal: true,
     family: false,
@@ -346,7 +343,6 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
     preferences: false,
   })
 
-  // טעינת נתוני המשתמש
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
@@ -359,7 +355,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
           })
           if (!res.ok) {
             const err: any = new Error(res.statusText)
-            err.response = { status: res.status, statusText: res.statusText }
+            err.response = { status: res.status }
             throw err
           }
           return res.json()
@@ -391,20 +387,8 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
           return
         }
 
-        if (!user) {
-          setError("לא נמצא משתמש בקונטקסט")
-          return
-        }
-        if (!token) {
-          setError("לא נמצא טוקן אימות")
-          return
-        }
-        if (!user.id) {
-          setError("לא נמצא מזהה משתמש")
-          return
-        }
-        if (!user.role) {
-          setError("לא נמצא תפקיד משתמש")
+        if (!user || !token) {
+          setError("לא נמצאו נתוני משתמש. אנא התחבר מחדש.")
           return
         }
 
@@ -437,8 +421,6 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
           setError("הפרופיל לא נמצא")
         } else if (error.response?.status === 500) {
           setError("שגיאת שרת")
-        } else if (error.message?.includes("fetch")) {
-          setError("לא ניתן להתחבר לשרת")
         } else {
           setError("שגיאה בטעינת הפרופיל")
         }
@@ -541,9 +523,9 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                   {u.firstName} {u.lastName}
                 </Typography>
                 <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-                  <StyledChip icon={<CakeIcon />} label={`גיל ${displayValue(u.age)}`} />
-                  <StyledChip icon={<LocationOnIcon />} label={`${displayValue(u.city)}, ${displayValue(u.country)}`} />
-                  <StyledChip icon={<HeightIcon />} label={`${displayValue(u.height)} ס"מ`} />
+                  <StyledChip icon={<CakeIcon />} label={`גיל ${formatValue(u.age)}`} />
+                  <StyledChip icon={<LocationOnIcon />} label={`${formatValue(u.city)}, ${formatValue(u.country)}`} />
+                  <StyledChip icon={<HeightIcon />} label={`${formatValue(u.height)} ס"מ`} />
                 </Box>
                 <Typography
                   variant="h5"
@@ -553,7 +535,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                     fontSize: { xs: "1.2rem", md: "1.5rem" },
                   }}
                 >
-                  {displayValue(u.status)} • {displayValue(u.backGround)} • {displayValue(u.openness)}
+                  {formatValue(u.status)} • {formatValue(u.backGround)} • {formatValue(u.openness)}
                 </Typography>
               </Box>
               {onClose && (
@@ -603,7 +585,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               אימייל
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.email)}
+                              {formatValue(u.email)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -616,7 +598,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               טלפון
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.phone)}
+                              {formatValue(u.phone)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -629,7 +611,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               תעודת זהות
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.tz)}
+                              {formatValue(u.tz)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -642,7 +624,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               תאריך שריפה
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.burnDate)}
+                              {formatValue(u.burnDate)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -655,7 +637,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               כתובת
                             </Typography>
                             <Typography variant="h6">
-                              {displayValue(u.address)}, {displayValue(u.city)}, {displayValue(u.country)}
+                              {formatValue(u.address)}, {formatValue(u.city)}, {formatValue(u.country)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -665,9 +647,9 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                           עדה וזרם
                         </Typography>
                         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                          <Chip label={displayValue(u.class)} size="medium" variant="outlined" />
-                          <Chip label={displayValue(u.backGround)} size="medium" variant="outlined" />
-                          <Chip label={displayValue(u.openness)} size="medium" variant="outlined" />
+                          <Chip label={formatValue(u.class)} size="medium" variant="outlined" />
+                          <Chip label={formatValue(u.backGround)} size="medium" variant="outlined" />
+                          <Chip label={formatValue(u.openness)} size="medium" variant="outlined" />
                         </Box>
                       </Grid>
                       <Grid item xs={12} md={6}>
@@ -678,7 +660,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               גובה (ס"מ)
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.height)}
+                              {formatValue(u.height)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -691,7 +673,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               מראה כללי
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.generalAppearance)}
+                              {formatValue(u.generalAppearance)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -704,7 +686,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               מראה
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.appearance)}
+                              {formatValue(u.appearance)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -717,7 +699,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               איפור פנים
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.facePaint)}
+                              {formatValue(u.facePaint)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -730,7 +712,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               כיסוי ראש
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.headCovering)}
+                              {formatValue(u.headCovering)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -743,7 +725,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               חליפה
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.suit)}
+                              {formatValue(u.suit)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -756,12 +738,12 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               זקן
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.beard)}
+                              {formatValue(u.beard)}
                             </Typography>
                           </Box>
                         </DetailItem>
                       </Grid>
-                      {isMale && u.hot && (
+                      {isMale && (
                         <Grid item xs={12} md={6}>
                           <DetailItem>
                             <FavoriteIcon sx={{ color: "#b87333", fontSize: 28 }} />
@@ -770,7 +752,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 חם
                               </Typography>
                               <Typography variant="h6" fontWeight="600">
-                                {displayValue(u.hot)}
+                                {formatValue(u.hot)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -782,7 +764,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                             בריאות תקינה
                           </Typography>
                           <Chip
-                            label={u.healthCondition ? "כן" : "לא"}
+                            label={formatValue(u.healthCondition)}
                             color={u.healthCondition ? "success" : "error"}
                             variant="outlined"
                           />
@@ -794,7 +776,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                             פנוי לשידוך
                           </Typography>
                           <Chip
-                            label={u.statusVacant ? "כן" : "לא"}
+                            label={formatValue(u.statusVacant)}
                             color={u.statusVacant ? "success" : "error"}
                             variant="outlined"
                           />
@@ -806,7 +788,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                             מחוץ לעיר
                           </Typography>
                           <Chip
-                            label={u.anOutsider ? "כן" : "לא"}
+                            label={formatValue(u.anOutsider)}
                             color={u.anOutsider ? "success" : "error"}
                             variant="outlined"
                           />
@@ -818,37 +800,26 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                             מעשן
                           </Typography>
                           <Chip
-                            label={u.smoker ? "כן" : "לא"}
+                            label={formatValue(u.smoker)}
                             color={u.smoker ? "error" : "success"}
                             variant="outlined"
                           />
                         </DetailItem>
                       </Grid>
-                      {(isMale && u.driversLicense) || (!isMale && u.drivingLicense) ? (
+                      {(isMale && u.driversLicense !== undefined) || (!isMale && u.drivingLicense !== undefined) ? (
                         <Grid item xs={12} md={6}>
                           <DetailItem>
                             <Typography variant="subtitle2" color="text.secondary" sx={{ flexBasis: "100%" }}>
                               רישיון נהיגה
                             </Typography>
                             <Chip
-                              label={
-                                (isMale ? u.driversLicense : u.drivingLicense) === true ||
-                                (isMale ? u.driversLicense : u.drivingLicense) === "true"
-                                  ? "כן"
-                                  : "לא"
-                              }
-                              color={
-                                (isMale ? u.driversLicense : u.drivingLicense) === true ||
-                                (isMale ? u.driversLicense : u.drivingLicense) === "true"
-                                  ? "success"
-                                  : "error"
-                              }
+                              label={formatValue(isMale ? u.driversLicense : u.drivingLicense)}
+                              color={(isMale ? u.driversLicense : u.drivingLicense) ? "success" : "error"}
                               variant="outlined"
                             />
                           </DetailItem>
                         </Grid>
                       ) : null}
-
                       {u.moreInformation && (
                         <Grid item xs={12}>
                           <Divider sx={{ my: 3 }} />
@@ -905,7 +876,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   ישיבה קטנה
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.smallYeshiva)}
+                                  {formatValue(u.smallYeshiva)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -918,7 +889,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   ישיבה גדולה
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.bigYeshiva)}
+                                  {formatValue(u.bigYeshiva)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -931,7 +902,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   קיבוץ / מקום שהות
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.kibbutz)}
+                                  {formatValue(u.kibbutz)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -944,7 +915,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   עיסוק
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.occupation)}
+                                  {formatValue(u.occupation)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -957,7 +928,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   סגנון ישיבה מועדף
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.preferredSeminarStyle)}
+                                  {formatValue(u.preferredSeminarStyle)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -970,7 +941,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   מסלול מקצועי מועדף
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.preferredProfessionalPath)}
+                                  {formatValue(u.preferredProfessionalPath)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -986,7 +957,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   תיכון
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.highSchool)}
+                                  {formatValue(u.highSchool)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -999,7 +970,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   סמינר
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.seminar)}
+                                  {formatValue(u.seminar)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -1012,7 +983,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   מסלול לימוד
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.studyPath)}
+                                  {formatValue(u.studyPath)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -1025,7 +996,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   מוסד חינוכי נוסף
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.additionalEducationalInstitution)}
+                                  {formatValue(u.additionalEducationalInstitution)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -1038,7 +1009,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   עיסוק נוכחי
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.currentOccupation)}
+                                  {formatValue(u.currentOccupation)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -1051,7 +1022,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   עיסוק
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.occupation)}
+                                  {formatValue(u.occupation)}
                                 </Typography>
                               </Box>
                             </DetailItem>
@@ -1064,26 +1035,24 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                   סגנון ישיבה מועדף
                                 </Typography>
                                 <Typography variant="h6" fontWeight="600">
-                                  {displayValue(u.preferredSittingStyle)}
+                                  {formatValue(u.preferredSittingStyle)}
                                 </Typography>
                               </Box>
                             </DetailItem>
                           </Grid>
-                          {u.hat && (
-                            <Grid item xs={12} md={6}>
-                              <DetailItem>
-                                <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
-                                <Box>
-                                  <Typography variant="subtitle2" color="text.secondary">
-                                    כיסוי ראש לבחור
-                                  </Typography>
-                                  <Typography variant="h6" fontWeight="600">
-                                    {displayValue(u.hat)}
-                                  </Typography>
-                                </Box>
-                              </DetailItem>
-                            </Grid>
-                          )}
+                          <Grid item xs={12} md={6}>
+                            <DetailItem>
+                              <InfoIcon sx={{ color: "#b87333", fontSize: 28 }} />
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                  כיסוי ראש לבחור
+                                </Typography>
+                                <Typography variant="h6" fontWeight="600">
+                                  {formatValue(u.hat)}
+                                </Typography>
+                              </Box>
+                            </DetailItem>
+                          </Grid>
                         </>
                       )}
                     </Grid>
@@ -1120,7 +1089,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               גיל מינימלי
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.ageFrom)}
+                              {formatValue(u.ageFrom)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -1133,7 +1102,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               גיל מקסימלי
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.ageTo)}
+                              {formatValue(u.ageTo)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -1146,7 +1115,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               מועדון / חוג
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(u.club)}
+                              {formatValue(u.club)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -1159,7 +1128,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               {isMale ? "ציפיות מבן/בת זוג" : "מעוניינת בבחור"}
                             </Typography>
                             <Typography variant="h6" fontWeight="600">
-                              {displayValue(isMale ? u.expectationsFromPartner : u.interestedInBoy)}
+                              {formatValue(isMale ? u.expectationsFromPartner : u.interestedInBoy)}
                             </Typography>
                           </Box>
                         </DetailItem>
@@ -1181,7 +1150,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                             borderLeft: "4px solid #b87333",
                           }}
                         >
-                          {displayValue(u.importantTraitsInMe)}
+                          {formatValue(u.importantTraitsInMe)}
                         </Typography>
                       </Grid>
                       <Grid item xs={12}>
@@ -1198,7 +1167,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                             borderLeft: "4px solid #d4af37",
                           }}
                         >
-                          {displayValue(u.importantTraitsIAmLookingFor || u.importantTraitsIMLookingFor)}
+                          {formatValue(u.importantTraitsIAmLookingFor || u.importantTraitsIMLookingFor)}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -1236,10 +1205,10 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 אב
                               </Typography>
                               <Typography variant="h5" fontWeight="600">
-                                {displayValue(familyData.fatherName)}
+                                {formatValue(familyData.fatherName)}
                               </Typography>
                               <Typography variant="body1" color="text.secondary">
-                                {displayValue(familyData.fatherOrigin)} • {displayValue(familyData.fatherOccupation)}
+                                {formatValue(familyData.fatherOrigin)} • {formatValue(familyData.fatherOccupation)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1252,10 +1221,10 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 אם
                               </Typography>
                               <Typography variant="h5" fontWeight="600">
-                                {displayValue(familyData.motherName)}
+                                {formatValue(familyData.motherName)}
                               </Typography>
                               <Typography variant="body1" color="text.secondary">
-                                {displayValue(familyData.motherOrigin)} • {displayValue(familyData.motherOccupation)}
+                                {formatValue(familyData.motherOrigin)} • {formatValue(familyData.motherOccupation)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1268,7 +1237,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 ישיבת האב
                               </Typography>
                               <Typography variant="h6" fontWeight="600">
-                                {displayValue(familyData.fatherYeshiva)}
+                                {formatValue(familyData.fatherYeshiva)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1281,7 +1250,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 השתייכות האב
                               </Typography>
                               <Typography variant="h6" fontWeight="600">
-                                {displayValue(familyData.fatherAffiliation)}
+                                {formatValue(familyData.fatherAffiliation)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1294,7 +1263,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 סמינר האם
                               </Typography>
                               <Typography variant="h6" fontWeight="600">
-                                {displayValue(familyData.motherGraduateSeminar)}
+                                {formatValue(familyData.motherGraduateSeminar)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1307,7 +1276,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 שם קודם של האם
                               </Typography>
                               <Typography variant="h6" fontWeight="600">
-                                {displayValue(familyData.motherPreviousName)}
+                                {formatValue(familyData.motherPreviousName)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1320,7 +1289,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 רב המשפחה
                               </Typography>
                               <Typography variant="h6" fontWeight="600">
-                                {displayValue(familyData.familyRabbi)}
+                                {formatValue(familyData.familyRabbi)}
                               </Typography>
                             </Box>
                           </DetailItem>
@@ -1331,7 +1300,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               הורים נשואים
                             </Typography>
                             <Chip
-                              label={familyData.parentsStatus ? "כן" : "לא"}
+                              label={formatValue(familyData.parentsStatus)}
                               color={familyData.parentsStatus ? "success" : "error"}
                               variant="outlined"
                             />
@@ -1343,7 +1312,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                               מצב בריאות תקין
                             </Typography>
                             <Chip
-                              label={familyData.healthStatus ? "כן" : "לא"}
+                              label={formatValue(familyData.healthStatus)}
                               color={familyData.healthStatus ? "success" : "error"}
                               variant="outlined"
                             />
@@ -1412,15 +1381,15 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                                 </Avatar>
                                 <Box sx={{ flex: 1 }}>
                                   <Typography variant="h6" fontWeight="600" gutterBottom>
-                                    {displayValue(contact.name)}
+                                    {formatValue(contact.name)}
                                   </Typography>
                                   {contact.contactType && (
                                     <Typography variant="body1" color="text.secondary" gutterBottom>
-                                      {displayValue(contact.contactType)}
+                                      {formatValue(contact.contactType)}
                                     </Typography>
                                   )}
                                   <Typography variant="h6" fontWeight="600" color="#b87333">
-                                    {displayValue(contact.phone)}
+                                    {formatValue(contact.phone)}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -1440,7 +1409,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
         <InfoCard>
           <CardContent sx={{ p: 4 }}>
             <SectionTitle>
-              <PhoneIcon />
+              <ContactPhoneIcon />
               פרטי קשר נוספים
             </SectionTitle>
             <Grid container spacing={3}>
@@ -1452,7 +1421,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                       טלפון אב
                     </Typography>
                     <Typography variant="h6" fontWeight="600">
-                      {displayValue(u.fatherPhone)}
+                      {formatValue(u.fatherPhone)}
                     </Typography>
                   </Box>
                 </DetailItem>
@@ -1465,7 +1434,7 @@ const UserProfile = ({ candidateData, onClose }: UserProfileProps) => {
                       טלפון אם
                     </Typography>
                     <Typography variant="h6" fontWeight="600">
-                      {displayValue(u.motherPhone)}
+                      {formatValue(u.motherPhone)}
                     </Typography>
                   </Box>
                 </DetailItem>
