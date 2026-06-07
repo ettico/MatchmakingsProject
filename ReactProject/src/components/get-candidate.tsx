@@ -509,10 +509,14 @@ const CandidatesPage = () => {
 
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
 
-      // שולחים רק את סטטוס הפנוי/לא פנוי כדי לא לגרום ל-Bad Request משדות לא תואמים.
+      // PUT בדרך כלל מצפה לאובייקט מלא. שולחים את כל המועמד עם הסטטוס המעודכן.
+      const { role, token, password, ...candidateWithoutRole } = candidate as any
       const updateData = {
+        ...candidateWithoutRole,
         statusVacant: newStatus,
       }
+
+      console.log("sending status update payload:", updateData)
 
       await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
         headers,
