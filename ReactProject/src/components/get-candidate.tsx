@@ -509,10 +509,10 @@ const CandidatesPage = () => {
 
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
 
-      // שולחים את כל האובייקט עם הסטטוס המעודכן.
-      // שדה role נוסף בצד הלקוח בלבד ולא קיים במודל השרת — מסירים אותו.
-      const { role, ...candidateWithoutRole } = candidate as any
-      const updateData = { ...candidateWithoutRole, statusVacant: newStatus }
+      // שולחים רק את סטטוס הפנוי/לא פנוי כדי לא לגרום ל-Bad Request משדות לא תואמים.
+      const updateData = {
+        statusVacant: newStatus,
+      }
 
       await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
         headers,
@@ -525,6 +525,7 @@ const CandidatesPage = () => {
     } catch (error: any) {
       console.error("שגיאה בעדכון סטטוס:", error)
       if (error.response) {
+        console.error("תגובה מהשרת בעת עדכון סטטוס:", error.response.data)
         setError(`שגיאה בעדכון סטטוס: ${error.response.status}`)
       } else {
         setError("לא ניתן להתחבר לשרת")
