@@ -38,6 +38,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
 } from "@mui/material"
 import { styled, useTheme, alpha } from "@mui/material/styles"
 import {
@@ -279,6 +280,15 @@ const CandidatesPage = () => {
   const [aiSearchLoading, setAiSearchLoading] = useState(false)
   const [statusUpdateLoading, setStatusUpdateLoading] = useState<number | null>(null)
   const [candidateNotesDialog, setCandidateNotesDialog] = useState<Candidate | null>(null)
+  const [notification, setNotification] = useState<{
+    open: boolean
+    message: string
+    severity: "success" | "error" | "warning" | "info"
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  })
 
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api"
 
@@ -509,16 +519,14 @@ const CandidatesPage = () => {
 
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
 
-      // PUT בדרך כלל מצפה לאובייקט מלא. שולחים את כל המועמד עם הסטטוס המעודכן.
-      const { role, token, password, ...candidateWithoutRole } = candidate as any
+      // שולחים רק את סטטוס הפנוי/לא פנוי בـ POST
       const updateData = {
-        ...candidateWithoutRole,
         statusVacant: newStatus,
       }
 
-      console.log("sending status update payload:", updateData)
+      console.log("sending status update via POST:", updateData)
 
-      await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
+      await axios.post(`${ApiUrl}/${endpoint}/${candidateId}/update-status`, updateData, {
         headers,
         timeout: 15000,
       })
@@ -526,6 +534,13 @@ const CandidatesPage = () => {
       setCandidates((prev) =>
         prev.map((c) => (c.id === candidateId ? { ...c, statusVacant: newStatus } : c))
       )
+
+      setError(null)
+      setNotification({
+        open: true,
+        message: "סטטוס עודכן בהצלחה!",
+        severity: "success",
+      })
     } catch (error: any) {
       console.error("שגיאה בעדכון סטטוס:", error)
       if (error.response) {
@@ -1560,6 +1575,20 @@ const CandidatesPage = () => {
           </Box>
         </NotesDrawer>
         <Outlet />
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={4000}
+          onClose={() => setNotification({ ...notification, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <Alert
+            onClose={() => setNotification({ ...notification, open: false })}
+            severity={notification.severity}
+            sx={{ width: "100%" }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </ThemeProvider>
   )
