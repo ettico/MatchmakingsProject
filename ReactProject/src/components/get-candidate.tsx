@@ -488,7 +488,7 @@ const CandidatesPage = () => {
   }
 
   const handleCandidateAISearch = (candidate: Candidate) => {
-    navigate("/ai-match-search", {
+    navigate( `${ApiUrl}/ai/search-candidates`, {
       state: {
         candidate: candidate,
         searchType: "match",
