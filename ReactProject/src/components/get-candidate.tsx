@@ -431,9 +431,28 @@ const CandidatesPage = () => {
     localStorage.setItem("favorites", JSON.stringify(newFavorites))
   }
 
-  const handleOpenDetails = (candidate: Candidate) => {
-    setSelectedCandidate(candidate)
+  const handleOpenDetails = async (candidate: Candidate) => {
     setOpenDialog(true)
+    
+    // טעינת הנתונים המלאים של המועמד מהשרת
+    try {
+      const headers = getAuthHeaders()
+      const endpoint = candidate.role === "Male" ? "Male" : "Women"
+      const response = await axios.get(`${ApiUrl}/${endpoint}/${candidate.id}`, {
+        headers,
+        timeout: 15000,
+      })
+      
+      // שלח את הנתונים המלאים שהתקבלו מהשרת
+      setSelectedCandidate({
+        ...response.data,
+        role: candidate.role,
+      })
+    } catch (error: any) {
+      console.error("שגיאה בטעינת פרטי המועמד:", error)
+      // אם הטעינה נכשלה, תשתמש בנתונים שקיימים
+      setSelectedCandidate(candidate)
+    }
   }
 
   const handleCloseDetails = () => {
@@ -519,14 +538,23 @@ const CandidatesPage = () => {
 
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
 
-      // שולחים רק את סטטוס הפנוי/לא פנוי בـ POST
-      const updateData = {
-        statusVacant: newStatus,
-      }
+      // בנייה של payload עם כל השדות שאינם null ובלי שדות פנימיים
+      const { role, token, password, ...candidateWithoutInternals } = candidate as any
+      const updateData: any = {}
+      
+      // העתקת רק שדות שאינם null
+      Object.keys(candidateWithoutInternals).forEach((key) => {
+        if (candidateWithoutInternals[key] !== null && candidateWithoutInternals[key] !== undefined) {
+          updateData[key] = candidateWithoutInternals[key]
+        }
+      })
+      
+      // ודא שהסטטוס המעודכן נכלל
+      updateData.statusVacant = newStatus
 
-      console.log("sending status update via POST:", updateData)
+      console.log("sending status update via PUT:", updateData)
 
-      await axios.post(`${ApiUrl}/${endpoint}/${candidateId}/update-status`, updateData, {
+      await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
         headers,
         timeout: 15000,
       })
