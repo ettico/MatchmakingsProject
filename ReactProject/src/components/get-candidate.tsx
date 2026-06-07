@@ -508,7 +508,11 @@ const CandidatesPage = () => {
       }
 
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
-      const updateData = { statusVacant: newStatus }
+
+      // שולחים את כל האובייקט עם הסטטוס המעודכן.
+      // שדה role נוסף בצד הלקוח בלבד ולא קיים במודל השרת — מסירים אותו.
+      const { role, ...candidateWithoutRole } = candidate as any
+      const updateData = { ...candidateWithoutRole, statusVacant: newStatus }
 
       await axios.put(`${ApiUrl}/${endpoint}/${candidateId}`, updateData, {
         headers,
