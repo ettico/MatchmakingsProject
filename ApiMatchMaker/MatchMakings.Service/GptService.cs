@@ -22,7 +22,7 @@ namespace MatchMakings.Service
                 throw new Exception("API key is missing. Please set the environment variable 'AI_KEY'.");
 
             _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey.Trim());
         }
 
         public async Task<List<MatchResult>> GetMatchesFromGptAsync(string candidateJson, string allCandidatesJson)
