@@ -517,13 +517,13 @@ const CandidatesPage = () => {
   }
 
   const handleCandidateAISearch = (candidate: Candidate) => {
-    navigate( `/match`, {
+    console.log("Auth check:", user)
+    navigate( `/matchmaker-auth/allMales/match`, {
       state: {
         candidate: candidate,
         searchType: "match",
       },
     })
-    console.log("Auth check:", user)
   }
 
   const updateCandidateStatus = async (candidateId: number, newStatus: boolean) => {
