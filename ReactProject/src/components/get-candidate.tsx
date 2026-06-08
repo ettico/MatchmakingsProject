@@ -442,13 +442,14 @@ const CandidatesPage = () => {
         headers,
         timeout: 15000,
       })
-      console.log(response);
       
       // שלח את הנתונים המלאים שהתקבלו מהשרת
       setSelectedCandidate({
         ...response.data,
         role: candidate.role,
       })
+      console.log(selectedCandidate);
+      
     } catch (error: any) {
       console.error("שגיאה בטעינת פרטי המועמד:", error)
       // אם הטעינה נכשלה, תשתמש בנתונים שקיימים
