@@ -517,7 +517,7 @@ const CandidatesPage = () => {
   }
 
   const handleCandidateAISearch = (candidate: Candidate) => {
-    navigate( `${ApiUrl}/ai/search-candidates`, {
+    navigate( `${ApiUrl}/ai/MatchAI/get-gpt-matches`, {
       state: {
         candidate: candidate,
         searchType: "match",
