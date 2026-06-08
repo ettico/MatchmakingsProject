@@ -43,15 +43,10 @@ const routes = createBrowserRouter([
     children: [
       { path: "login/:userType", element: <Login  /> },
       { path: "signup/:userType", element: <SignIn /> },
-      { path: "allMales", element: <GetCandidates1 />,children:[
-          { path: "match/:role/:id", element: <MatchCandidates/> } // 👈 הוספנו את זה
-      ] },
-      // { path: "allMales/details/:role/:id", element: <Details /> },
+      { path: "allMales", element: <GetCandidates1 /> },
+      { path: "match/:role/:id", element: <MatchCandidates /> },
       { path: "post-details-matchmaker", element: <MatchMakerForm />, },
       { path: "matchmaker-notes", element: <MatchmakerNotes />, },
-
-
-
     ],
   },
   // {
