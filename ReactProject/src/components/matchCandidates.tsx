@@ -26,7 +26,7 @@ function MatchCandidates() {
   const [viewingProfile, setViewingProfile] = useState<Male | Women | null>(null);
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const ApiUrl = "https://matchmakingsprojectserver.onrender.com/api";
 
