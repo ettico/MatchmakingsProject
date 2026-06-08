@@ -517,7 +517,7 @@ const CandidatesPage = () => {
   }
 
   const handleCandidateAISearch = (candidate: Candidate) => {
-    navigate( `match/${candidate.role}/${candidate.id}`, {
+    navigate( `/matchmaker-auth/match/${candidate.role}/${candidate.id}`, {
       state: {
         candidate: candidate,
         searchType: "match",
