@@ -498,7 +498,7 @@ const CandidatesPage = () => {
     try {
       const headers = getAuthHeaders()
       const response = await axios.post(
-        `${ApiUrl}/ai/search-candidates`,
+        `${ApiUrl}/MatchAI/get-gpt-matches`,
         { query: searchQuery },
         { headers, timeout: 30000 },
       )
@@ -517,7 +517,7 @@ const CandidatesPage = () => {
   }
 
   const handleCandidateAISearch = (candidate: Candidate) => {
-    navigate( `${ApiUrl}/ai/MatchAI/get-gpt-matches`, {
+    navigate( `${ApiUrl}/MatchAI/get-gpt-matches`, {
       state: {
         candidate: candidate,
         searchType: "match",
