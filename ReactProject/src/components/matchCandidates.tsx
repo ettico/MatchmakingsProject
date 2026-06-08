@@ -48,6 +48,7 @@ function MatchCandidates() {
     setError(null);
 
     try {
+      console.log("Fetching matches for ID:", numericId);
       const response = await axios.post(
         `${ApiUrl}/MatchAI/get-gpt-matches`,
         numericId,
@@ -58,6 +59,7 @@ function MatchCandidates() {
           }
         }
       );
+      console.log("Matches response:", response.data);
       const filteredMatches = response.data.filter((item: { score: number }) => item.score > 60);
       setMatches(filteredMatches);
     } catch (err: any) {
