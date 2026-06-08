@@ -442,6 +442,7 @@ const CandidatesPage = () => {
         headers,
         timeout: 15000,
       })
+      console.log(response);
       
       // שלח את הנתונים המלאים שהתקבלו מהשרת
       setSelectedCandidate({
