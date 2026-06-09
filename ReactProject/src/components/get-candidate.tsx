@@ -438,6 +438,8 @@ const CandidatesPage = () => {
     try {
       const headers = getAuthHeaders()
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
+      console.log(endpoint);
+      console.log(candidate.id);
       const response = await axios.get(`${ApiUrl}/${endpoint}/${candidate.id}`, {
         headers,
         timeout: 15000,
