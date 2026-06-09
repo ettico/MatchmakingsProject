@@ -437,9 +437,10 @@ const CandidatesPage = () => {
     // טעינת הנתונים המלאים של המועמד מהשרת
     try {
       const headers = getAuthHeaders()
-      const endpoint = candidate.role === "Male" ? "Male" : "Women"
-      console.log(endpoint);
+      console.log(candidate.role);
       console.log(candidate.id);
+      const endpoint = candidate.role === "Male" ? "Male" : "Women"
+      
       const response = await axios.get(`${ApiUrl}/${endpoint}/${candidate.id}`, {
         headers,
         timeout: 15000,
