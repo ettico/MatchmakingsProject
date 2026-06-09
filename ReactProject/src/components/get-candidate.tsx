@@ -439,10 +439,8 @@ const CandidatesPage = () => {
       const headers = getAuthHeaders()
      
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
-const fullUrl = `https://matchmakingsprojectserver.onrender.com/api/${endpoint}/${candidate.id}`;
-      
-      console.log("מנסה לפנות לכתובת:", fullUrl);
-            const response = await axios.get(fullUrl, {
+      console.log("מנסה לפנות לכתובת:", endpoint);
+      const response = await axios.get(`${ApiUrl}/${endpoint}/${candidate.id}`, {
         headers,
         timeout: 15000,
       })
@@ -452,7 +450,7 @@ const fullUrl = `https://matchmakingsprojectserver.onrender.com/api/${endpoint}/
         ...response.data,
         role: candidate.role,
       })
-      console.log(response.data);
+      console.log(selectedCandidate);
       
     } catch (error: any) {
       console.error("שגיאה בטעינת פרטי המועמד:", error)
