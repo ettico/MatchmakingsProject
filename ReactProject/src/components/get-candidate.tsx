@@ -437,11 +437,12 @@ const CandidatesPage = () => {
     // טעינת הנתונים המלאים של המועמד מהשרת
     try {
       const headers = getAuthHeaders()
-      console.log(candidate.role);
-      console.log(candidate.id);
+     
       const endpoint = candidate.role === "Male" ? "Male" : "Women"
+const fullUrl = `https://matchmakingsprojectserver.onrender.com/api/${endpoint}/${candidate.id}`;
       
-      const response = await axios.get(`${ApiUrl}/${endpoint}/${candidate.id}`, {
+      console.log("מנסה לפנות לכתובת:", fullUrl);
+            const response = await axios.get(fullUrl, {
         headers,
         timeout: 15000,
       })
