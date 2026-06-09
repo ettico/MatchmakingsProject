@@ -452,7 +452,7 @@ const fullUrl = `https://matchmakingsprojectserver.onrender.com/api/${endpoint}/
         ...response.data,
         role: candidate.role,
       })
-      console.log(selectedCandidate);
+      console.log(response.data);
       
     } catch (error: any) {
       console.error("שגיאה בטעינת פרטי המועמד:", error)
